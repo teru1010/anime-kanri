@@ -479,10 +479,11 @@ button,input,select,textarea{font-family:inherit}
 <button class="topbtn" id="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 <div class="toast" id="toast"></div>
 
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, set, get, update, remove, onValue, off }
-  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+<!-- Firebase compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+// Firebase compat SDK loaded above
 
 // ============================================================
 // Firebase 設定
@@ -496,8 +497,8 @@ const firebaseConfig = {
   messagingSenderId: "774896632570",
   appId: "1:774896632570:web:bd0aa7d66682e892037f43"
 };
-const app = initializeApp(firebaseConfig);
-const db  = getDatabase(app);
+const app = firebase.initializeApp(firebaseConfig);
+const db  = firebase.database();
 
 // ============================================================
 // 状態
@@ -708,26 +709,26 @@ function applyLang(){
 async function fbSet(path, data){
   sync('ing');
   try{
-    await set(ref(db, path), data);
+    await db.ref(path).set(data);
     sync('ok');
   }catch(e){ sync('err'); showToast(e.message,true); throw e; }
 }
 async function fbUpdate(path, data){
   sync('ing');
   try{
-    await update(ref(db, path), data);
+    await db.ref(path).update(data);
     sync('ok');
   }catch(e){ sync('err'); showToast(e.message,true); throw e; }
 }
 async function fbRemove(path){
   sync('ing');
   try{
-    await remove(ref(db, path));
+    await db.ref(path).remove();
     sync('ok');
   }catch(e){ sync('err'); showToast(e.message,true); throw e; }
 }
 async function fbGet(path){
-  const snap = await get(ref(db, path));
+  const snap = await db.ref(path).once('value');
   return snap.exists() ? snap.val() : null;
 }
 
