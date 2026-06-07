@@ -899,19 +899,22 @@ async function loadAll(){
       // Firebaseにデータあり
       orders = window.orders = Object.values(snap.orders).map(o=>{
       o=normDates(o);
-      // noteを文字列に変換（数値が入っている場合の対策）
-      if(o.note!==undefined&&o.note!==null&&typeof o.note!=='string'){
-        o.note=String(o.note);
-        // Firebaseのデータも修正
-        if(o.note&&o.note!=='') firebase.database().ref('/orders/'+o.id+'/note').set(o.note);
-        else firebase.database().ref('/orders/'+o.id+'/note').set('');
-      }
+      if(typeof o.note!=='string') o.note='';
       return o;
+    });
+    // noteが数値だったデータをFirebaseで修正
+    orders.filter(o=>o.note==='').forEach(o=>{
+      db.ref('/orders/'+o.id+'/note').set('');
     });
       masters = snap.masters || {customers:[],titles:[]};
       cutsRawCache = snap.cutsRaw || {};
       orders.forEach(o=>{
         if(cutsRawCache[o.id]) o.cutsRaw=cutsRawCache[o.id];
+        // noteが文字列でない場合（数値など）は空文字に修正してFirebaseを更新
+        if(o.note!==undefined&&o.note!==null&&typeof o.note!=='string'){
+          db.ref('/orders/'+o.id+'/note').set('');
+          o.note='';
+        }
         // cutsが空でcutsRawがある場合は自動生成してFirebaseに保存
         if(o.cutsRaw && (!o.cuts || (Array.isArray(o.cuts)?o.cuts.length===0:Object.keys(o.cuts).length===0))){
           const ids=parseCuts(o.cutsRaw);
@@ -942,6 +945,11 @@ async function loadAll(){
       cutsRawCache = initCuts;
       orders.forEach(o=>{
         if(cutsRawCache[o.id]) o.cutsRaw=cutsRawCache[o.id];
+        // noteが文字列でない場合（数値など）は空文字に修正してFirebaseを更新
+        if(o.note!==undefined&&o.note!==null&&typeof o.note!=='string'){
+          db.ref('/orders/'+o.id+'/note').set('');
+          o.note='';
+        }
         // cutsが空でcutsRawがある場合は自動生成してFirebaseに保存
         if(o.cutsRaw && (!o.cuts || (Array.isArray(o.cuts)?o.cuts.length===0:Object.keys(o.cuts).length===0))){
           const ids=parseCuts(o.cutsRaw);
@@ -1642,7 +1650,9 @@ async function saveOrder(){
   const qty=parseInt(document.getElementById('f-qty').value)||0;
   const cutsRaw=document.getElementById('f-cuts').value.trim();
   const cutIds=cutsRaw?parseCuts(cutsRaw):[];
-  if(qty&&cutIds.length>qty){alert(`カット番号が${qty}件を超えています`);return;}
+  if(qty&&cutIds.length>qty){
+    if(!confirm('カット番号('+cutIds.length+'件)が受注数量('+qty+'件)を超えています。このまま保存しますか？')) return;
+  }
   // マスター更新
   if(!masters.customers.find(c=>c.name===cust))
     masters.customers.push({name:cust,color:colorOf(cust)});
@@ -1671,7 +1681,8 @@ async function saveOrder(){
     qty, unitPrice:up, totalPriceEx:tex, totalPriceIn:tin,
     atUnitPrice:ap, atTotalPrice:at, margin:mg, marginPct:mpct,
     note:document.getElementById('f-note').value.trim(),
-    status:'受注済', cuts:cutsObj
+    status:editingId?(orders.find(x=>x.id===editingId)||{status:'受注済'}).status:'受注済',
+    cuts:cutsObj
   };
   // cutsRawをキャッシュ
   if(cutsRaw){
