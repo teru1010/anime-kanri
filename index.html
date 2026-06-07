@@ -502,6 +502,9 @@ button,input,select,textarea{font-family:inherit}
 <div class="toast" id="toast"></div>
 
 <!-- Firebase compat SDK -->
+
+
+
 <script src="https://unpkg.com/firebase@8.10.1/firebase-app.js"></script>
 <script src="https://unpkg.com/firebase@8.10.1/firebase-database.js"></script>
 <script>
@@ -1743,16 +1746,15 @@ window.filterCbo=filterCbo; window.pickCbo=pickCbo; window.onTitleInput=onTitleI
 window.searchCut=searchCut; window.clearSearch=clearSearch; window.clearPrintRange=clearPrintRange;
 window.calcAmt=calcAmt; window.updLimit=updLimit;
 
-// DOMContentLoaded後に実行
-document.addEventListener('DOMContentLoaded', function(){
+// script はbody末尾なのでDOMは確実に存在する
+// Firebaseも上のscriptタグで読み込み済み
+applyLang();
+if(!checkAuth()){
+  currentLang='ja';
+  localStorage.setItem('animeLang','ja');
   applyLang();
-  if(!checkAuth()){
-    currentLang='ja';
-    localStorage.setItem('animeLang','ja');
-    applyLang();
-  }
-  loadAll();
-});
+}
+loadAll();
 </script>
 </body>
 </html>
