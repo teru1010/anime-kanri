@@ -320,7 +320,7 @@ button,input,select,textarea{font-family:inherit}
       <select id="flt-st" onchange="renderList()" style="font-size:12px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
         <option value="" id="opt-all">すべて</option>
         <option id="opt-or">受注済</option>
-        <option id="opt-wip">進行中</option>
+        <option id="opt-wip">作業中</option>
         <option id="opt-dn">納品済</option>
         <option id="opt-iv">請求済</option>
         <option value="uninvoiced" id="opt-un">未請求</option>
@@ -446,7 +446,7 @@ button,input,select,textarea{font-family:inherit}
       <select id="grp-flt" onchange="renderGroup()">
         <option value="" id="go-fall">すべてのステータス</option>
         <option id="go-for">受注済</option>
-        <option id="go-fwip">進行中</option>
+        <option id="go-fwip">作業中</option>
         <option id="go-fdn">納品済</option>
         <option id="go-fiv">請求済</option>
         <option value="uninvoiced" id="go-fun">未請求</option>
@@ -494,7 +494,7 @@ button,input,select,textarea{font-family:inherit}
         <div class="fg"><label id="lbl-delinv">請求日</label><input type="date" id="d-inv" onchange="saveDates()"></div>
         <div class="fg s2"><label id="lbl-delst">ステータス</label>
           <select id="d-st" onchange="saveDates()">
-            <option id="dst-or">受注済</option><option id="dst-wip">進行中</option>
+            <option id="dst-or">受注済</option><option id="dst-wip">作業中</option>
             <option id="dst-dn">納品済</option><option id="dst-iv">請求済</option>
           </select></div>
       </div>
@@ -625,7 +625,7 @@ ja:{
   lblAp:'発注単価・非課税（円）', lblAt:'発注合計・非課税',
   lblMg:'粗利（税込受注－発注）', lblMp:'粗利率', lblNote:'備考',
   lblGrp:'表示分類：',
-  optAll:'すべて', optOr:'受注済', optWip:'進行中', optDn:'納品済',
+  optAll:'すべて', optOr:'受注済', optWip:'作業中', optDn:'納品済',
   optIv:'請求済', optUn:'未請求', optFall:'すべてのステータス',
   optDesc:'新しい順', optAsc:'古い順', optGoAsc:'古い順', optGoDesc:'新しい順',
   goAll:'すべて', goMonth:'受注月', goTitle:'タイトル', goCust:'顧客',
@@ -634,7 +634,7 @@ ja:{
   progSub:'完了カット数 ／ 受注カット数・納期近い順',
   dDelTtl:'🚚 納品・請求ステータス',
   lblDelDl:'納品日', lblDelInv:'請求日', lblDelSt:'ステータス',
-  dstOr:'受注済', dstWip:'進行中', dstDn:'納品済', dstIv:'請求済',
+  dstOr:'受注済', dstWip:'作業中', dstDn:'納品済', dstIv:'請求済',
   cutHint:'カードをクリックで完了 ／ 未完了を切り替え',
   cutEmpty:'カット番号未登録。「編集」から入力してください。',
   cboxLbl:'カット番号を一括入力',
@@ -650,7 +650,7 @@ ja:{
   cutDone:'完了', cutUndone:'未完', cutDel:'×', cutAdd:'＋ 追加',
   cutAddPH:'カット番号を追加（例：C021, 100-105）',
   dueOver:'⚠ 納期超過', dueToday:'⚡ 本日納期', dueSoon:'⏰ 納期まで', days:'日',
-  emptyList:'受注データがありません', emptyProg:'進行中の案件はありません',
+  emptyList:'受注データがありません', emptyProg:'作業中の案件はありません',
   emptyGrp:'データがありません', orderNotSet:'受注日未設定',
   loadMsg:'データ読込中...', loadDone:'件読み込みました',
   confirmDel:'を削除しますか？', confirmDelFull:'を削除しますか？\nこの操作は取り消せません。',
@@ -710,7 +710,7 @@ vi:{
 
 function t(k){ return (DICT[currentLang]&&DICT[currentLang][k])||DICT.ja[k]||k; }
 function tSt(s){
-  const m={受注済:'optOr',進行中:'optWip',納品済:'optDn',請求済:'optIv'};
+  const m={受注済:'optOr',作業中:'optWip',納品済:'optDn',請求済:'optIv'};
   return m[s]?t(m[s]):s;
 }
 // 作業工程の翻訳（JA→VN）
@@ -801,7 +801,7 @@ function applyLang(){
   // 詳細ステータスselectの翻訳
   const dst=document.getElementById('d-st');
   if(dst){
-    const stJa=['受注済','進行中','納品済','請求済'];
+    const stJa=['受注済','作業中','納品済','請求済'];
     const stKeys=['dstOr','dstWip','dstDn','dstIv'];
     Array.from(dst.options).forEach((opt,i)=>{
       opt.textContent=t(stKeys[i]);
@@ -918,13 +918,16 @@ function dueBadge(due,st){
 function getStatus(o){
   if(o.invoiceDate) return '請求済';
   if(o.deliveryDate) return '納品済';
-  const done=(o.cuts||[]).filter(c=>c.done).length;
-  const total=(o.cuts||[]).length;
-  if(done>0&&done<total) return '進行中';
+  // 明示的にステータスが設定されている場合はそれを優先
+  if(o.status&&o.status!=='受注済') return o.status;
+  const cuts=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
+  const done=cuts.filter(c=>c.done).length;
+  const total=cuts.length;
+  if(done>0&&done<total) return '作業中';
   if(done>0&&done===total) return '納品済';
   return o.status||'受注済';
 }
-function pillCls(s){ return {受注済:'p-or',進行中:'p-wip',納品済:'p-dn',請求済:'p-iv'}[s]||'p-or'; }
+function pillCls(s){ return {受注済:'p-or',作業中:'p-wip',納品済:'p-dn',請求済:'p-iv'}[s]||'p-or'; }
 function progOf(o){
   const done=(o.cuts||[]).filter(c=>c.done).length;
   const total=Number(o.qty)||0;
@@ -961,6 +964,11 @@ function showView(v){
   if(v==='progress') renderProg();
   if(v==='group') renderGroup();
   if(v==='new'&&!editingId) resetForm();
+  // カット進捗入力欄をクリア
+  const cai=document.getElementById('cut-add-input');
+  const cap=document.getElementById('cut-add-preview');
+  if(cai) cai.value='';
+  if(cap) cap.textContent='';
   updateBadges();
 }
 function updateBadges(){
@@ -1459,7 +1467,7 @@ async function saveCutsToFb(o){
 function autoStatus(o){
   const done=(o.cuts||[]).filter(c=>c.done).length;
   const total=(o.cuts||[]).length;
-  if(done>0&&done<total) o.status='進行中';
+  if(done>0&&done<total) o.status='作業中';
   else if(done>0&&done===total) o.status='納品済';
 }
 function updateSumCard(o){
@@ -1476,10 +1484,18 @@ async function saveDates(){
   o.deliveryDate=document.getElementById('d-del').value;
   o.invoiceDate=document.getElementById('d-inv').value;
   o.status=document.getElementById('d-st').value;
+  // window.ordersも確実に更新
+  const idx=window.orders.findIndex(x=>x.id===currentId);
+  if(idx>=0){
+    window.orders[idx].deliveryDate=o.deliveryDate;
+    window.orders[idx].invoiceDate=o.invoiceDate;
+    window.orders[idx].status=o.status;
+  }
   const st=getStatus(o);
-  document.getElementById('d-pill').innerHTML=`<span class="pill ${pillCls(st)}">${tSt(st)}</span>`;
+  document.getElementById('d-pill').innerHTML='<span class="pill '+pillCls(st)+'">'+tSt(st)+'</span>';
   document.getElementById('d-due').innerHTML=dueBadge(o.dueDate,st);
-  await fbUpdate(`/orders/${o.id}`,{deliveryDate:o.deliveryDate,invoiceDate:o.invoiceDate,status:o.status});
+  await fbUpdate('/orders/'+o.id,{deliveryDate:o.deliveryDate,invoiceDate:o.invoiceDate,status:o.status});
+  showToast(t('saved'));
 }
 
 // ============================================================
