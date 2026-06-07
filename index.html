@@ -576,8 +576,7 @@ ja:{
   emptyList:'受注データがありません', emptyProg:'進行中の案件はありません',
   emptyGrp:'データがありません', orderNotSet:'受注日未設定',
   loadMsg:'データ読込中...', loadDone:'件読み込みました',
-  confirmDel:'を削除しますか？', confirmDelFull:'を削除しますか？
-この操作は取り消せません。',
+  confirmDel:'を削除しますか？', confirmDelFull:'を削除しますか？\nこの操作は取り消せません。',
   infoCustomer:'顧客・担当', infoDate:'受注日 / 納期',
   infoQtyUp:'数量・受注単価', infoAp:'発注単価（AT）',
 },
@@ -1551,8 +1550,8 @@ function renderDd(type,q){
   const dd=document.getElementById('dd-'+type);
   let rawList;
   if(type==='ct'){
-    const set={};orders.forEach(o=>{if(o.contact)set[o.contact]=true;});
-    rawList=Object.keys(set).map(n=>({name:n,color:colorOf(n)}));
+    const s={};orders.forEach(o=>{if(o.contact)s[o.contact]=true;});
+    rawList=Object.keys(s).map(n=>({name:n,color:colorOf(n)}));
   } else if(type==='cust'){
     rawList=masters.customers;
   } else {
@@ -1569,12 +1568,25 @@ function renderDd(type,q){
     return a.name.localeCompare(b.name,'ja');
   });
   const filtered=q?list.filter(x=>x.name.toLowerCase().includes(q.toLowerCase())):list;
-  let html=filtered.map(x=>`<div class="cbo-item" onmousedown="pickCbo('${type}','${x.name.replace(/\/g,'\\').replace(/'/g,"\'")}')">
-    <span class="cbo-dot" style="background:${x.color||'#999'}"></span>${x.name}
-    ${type==='ttl'&&x.abbr?`<span style="font-size:11px;color:var(--txt3)">(${x.abbr})</span>`:''}</div>`).join('');
-  const isNew=q&&!list.find(x=>x.name===q);
-  if(isNew) html+=`<div class="cbo-new" onmousedown="pickCbo('${type}','${q.replace(/\/g,'\\').replace(/'/g,"\'")}')">＋「${q}」を追加</div>`;
-  dd.innerHTML=html||`<div style="padding:8px 10px;font-size:12px;color:var(--txt3)">入力して追加できます</div>`;
+  // データをwindowに一時保存してシンプルなidで参照
+  window._cboData=window._cboData||{};
+  let out=filtered.map((x,i)=>{
+    const key='k'+Date.now()+i;
+    window._cboData[key]={type,name:x.name};
+    const abbr=type==='ttl'&&x.abbr?'<span style="font-size:11px;color:#8A9ABB"> ('+x.abbr+')</span>':'';
+    return '<div class="cbo-item" onmousedown="pickCboKey(\''+key+'\')"><span class="cbo-dot" style="background:'+(x.color||'#999')+'"></span>'+x.name+abbr+'</div>';
+  }).join('');
+  if(q&&!list.find(x=>x.name===q)){
+    const key='k'+Date.now()+'new';
+    window._cboData[key]={type,name:q};
+    out+='<div class="cbo-new" onmousedown="pickCboKey(\''+key+'\')">＋「'+q+'」を追加</div>';
+  }
+  dd.innerHTML=out||'<div style="padding:8px 10px;font-size:12px;color:#8A9ABB">入力して追加できます</div>';
+}
+
+function pickCboKey(key){
+  const d=(window._cboData||{})[key];
+  if(d) pickCbo(d.type,d.name);
 }
 function pickCbo(type,val){
   document.getElementById('f-'+type).value=val;
