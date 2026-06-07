@@ -197,13 +197,14 @@ button,input,select,textarea{font-family:inherit}
   background:var(--bl);border-radius:50%;display:flex;align-items:center;
   justify-content:center;opacity:0}
 .cc.dn .ck{opacity:1}
-.cc-acts{display:flex;gap:2px;margin-top:3px;justify-content:center}
-.cc-act{font-size:9px;padding:1px 5px;border-radius:99px;border:none;
-  cursor:pointer;white-space:nowrap;font-weight:500}
-.cc-act.done-btn{background:#0060E0;color:#fff}
-.cc-act.un-btn{background:#E0ECFF;color:var(--bl-dk)}
-.cc-act.del-btn{background:transparent;color:#aaa;font-size:10px;padding:0 3px}
+.cc-acts{display:flex;gap:2px;margin-top:3px;justify-content:center;align-items:center}
+.cc-act{font-size:13px;line-height:1;border:none;background:transparent;
+  cursor:pointer;padding:1px 3px;border-radius:3px}
+.cc-act.done-btn{color:#bbb} /* 未完了：灰色の○ */
+.cc-act.un-btn{color:#0060E0;font-weight:700} /* 完了済：青い✓ */
+.cc-act.del-btn{color:#ccc;font-size:11px;padding:0 2px}
 .cc-act.del-btn:hover{color:var(--rd)}
+.cc.dn .cc-act.un-btn{color:#0060E0}
 .cut-add-area{margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .cut-add-area input{font-size:13px;padding:6px 10px;border:0.5px solid var(--bdr2);
   border-radius:var(--r);background:var(--sur);color:var(--txt);flex:1;min-width:150px}
@@ -272,6 +273,14 @@ button,input,select,textarea{font-family:inherit}
 
 /* MISC */
 .lh{display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+/* デバッグ確認済みフラグ */
+.card.verified{border-left:4px solid #22c55e;border-color:#22c55e}
+.verified-btn{font-size:11px;padding:3px 8px;border-radius:99px;cursor:pointer;
+  border:0.5px solid #22c55e;background:#f0fdf4;color:#166534;margin-left:auto}
+.verified-btn.on{background:#22c55e;color:#fff}
+.debug-bar{background:#fef9c3;border:0.5px solid #eab308;border-radius:var(--r);
+  padding:6px 12px;margin-bottom:10px;font-size:12px;color:#713f12;
+  display:flex;align-items:center;gap:8px}
 .lh h2{font-size:15px;font-weight:500;flex:1}
 .empty{text-align:center;padding:3rem 1rem;color:var(--txt3);font-size:13px}
 .empty i{font-size:30px;display:block;margin-bottom:10px}
@@ -305,6 +314,8 @@ button,input,select,textarea{font-family:inherit}
     <div class="sync"><div class="sdot" id="sdot" style="display:none"></div><span id="slbl"></span></div>
     <button class="lbtn on" id="btn-ja" onclick="selectLang('ja')">🇯🇵 JP</button>
     <button class="lbtn" id="btn-vi" onclick="selectLang('vi')">🇻🇳 VN</button>
+    <button class="lbtn" id="btn-debug" onclick="toggleDebugMode()"
+      title="デバッグモード" style="opacity:.5">🔧</button>
   </div>
 </header>
 
@@ -339,6 +350,11 @@ button,input,select,textarea{font-family:inherit}
       <div id="srch-hint" style="font-size:12px;color:var(--txt2)"></div>
     </div>
     <div id="srch-result" style="display:none;margin-bottom:1rem"></div>
+    <div id="debug-bar" class="debug-bar" style="display:none">
+      🔧 デバッグモード：各カードに「確認済み」ボタンが表示されます
+      <button class="btn sm" onclick="toggleDebugMode()" style="margin-left:auto">デバッグ終了</button>
+      <button class="btn sm" onclick="clearVerified()" style="color:var(--rd)">確認済みクリア</button>
+    </div>
     <div id="list-body"></div>
   </div>
 
@@ -647,7 +663,7 @@ ja:{
   taxIn:'税込', taxEx:'税抜',
   work:'作業', qty:'数量', dueLabel:'納期', customer:'顧客', contact:'担当',
   saved:'保存しました', deleted:'削除しました',
-  cutDone:'完了', cutUndone:'未完', cutDel:'×', cutAdd:'＋ 追加',
+  cutDone:'○', cutUndone:'✓', cutDel:'×', cutAdd:'＋ 追加',
   cutAddPH:'カット番号を追加（例：C021, 100-105）',
   dueOver:'⚠ 納期超過', dueToday:'⚡ 本日納期', dueSoon:'⏰ 納期まで', days:'日',
   emptyList:'受注データがありません', emptyProg:'作業中の案件はありません',
@@ -697,7 +713,7 @@ vi:{
   work:'Công đoạn', qty:'Số lượng', dueLabel:'Hạn giao',
   customer:'Khách hàng', contact:'Phụ trách',
   saved:'Đã lưu', deleted:'Đã xóa',
-  cutDone:'Xong', cutUndone:'Chưa', cutDel:'×', cutAdd:'＋ Thêm',
+  cutDone:'○', cutUndone:'✓', cutDel:'×', cutAdd:'＋ Thêm',
   cutAddPH:'Thêm số cảnh（VD：C021, 100-105）',
   dueOver:'⚠ Quá hạn', dueToday:'⚡ Hạn hôm nay', dueSoon:'⏰ Còn', days:' ngày',
   emptyList:'Không có dữ liệu', emptyProg:'Không có đơn đang thực hiện',
@@ -745,6 +761,33 @@ function selectLang(lang){
     else if(vid==='group')renderGroup();
     else if(vid==='detail'&&currentId)showDetail(currentId);
   }
+}
+
+// ============================================================
+// デバッグ用「確認済み」フラグ
+// ============================================================
+let debugMode = false;
+function toggleDebugMode(){
+  debugMode = !debugMode;
+  const bar = document.getElementById('debug-bar');
+  const btn = document.getElementById('btn-debug');
+  if(bar) bar.style.display = debugMode ? 'flex' : 'none';
+  if(btn) btn.style.opacity = debugMode ? '1' : '.5';
+  renderList();
+}
+function toggleVerified(id){
+  const verified = JSON.parse(localStorage.getItem('animeVerified')||'{}');
+  verified[id] = !verified[id];
+  localStorage.setItem('animeVerified', JSON.stringify(verified));
+  renderList();
+}
+function clearVerified(){
+  localStorage.removeItem('animeVerified');
+  renderList();
+}
+function isVerified(id){
+  const verified = JSON.parse(localStorage.getItem('animeVerified')||'{}');
+  return !!verified[id];
 }
 
 function applyLang(){
@@ -1033,9 +1076,10 @@ function makeCard(o){
       <div class="pbar-lbl"><span>${done}/${total}</span><span>${pct}%</span></div>
       <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
     </div>
-    <div class="acts" onclick="event.stopPropagation()">
+    <div class="acts" onclick="event.stopPropagation()" style="flex-wrap:wrap">
       <button class="btn sm" onclick="showDetail('${o.id}')">✂ ${t('cutProgTitle').replace('✂ ','')}</button>
       <button class="btn sm" onclick="editOrder('${o.id}')">${t('btnEdit')}</button>
+      ${debugMode?`<button class="verified-btn ${isVerified(o.id)?'on':''}" onclick="toggleVerified('${o.id}')">${isVerified(o.id)?'✔ 確認済み':'○ 未確認'}</button>`:''}
     </div>
   </div>`;
 }
@@ -1975,7 +2019,7 @@ window.deleteFromForm=deleteFromForm; window.cancelForm=cancelForm;
 window.saveOrder=saveOrder; window.saveDates=saveDates;
 window.markAll=markAll; window.previewAddCuts=previewAddCuts; window.toggleCut=toggleCut; window.toggleGroup=toggleGroup; window.deleteCut=deleteCut; window.deleteCutGroup=deleteCutGroup; window.addCuts=addCuts; window.toggleGroupKey=toggleGroupKey; window.deleteCutGroupKey=deleteCutGroupKey; window.ccAct=ccAct;
 window.renderGroup=renderGroup; window.onTitleFilterChange=onTitleFilterChange; window.toggleGrp=toggleGrp; window.printGroup=printGroup;
-window.renderList=renderList; window.loadAll=loadAll;
+window.renderList=renderList; window.loadAll=loadAll; window.toggleDebugMode=toggleDebugMode; window.toggleVerified=toggleVerified; window.clearVerified=clearVerified;
 window.selectLang=selectLang;
 window.openCbo=openCbo; window.closeCbo=closeCbo;
 window.filterCbo=filterCbo; window.pickCbo=pickCbo; window.onTitleInput=onTitleInput;
