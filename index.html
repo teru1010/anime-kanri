@@ -433,6 +433,10 @@ button,input,select,textarea{font-family:inherit}
         style="display:none;font-size:13px;padding:6px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
         <option value="">すべてのタイトル</option>
       </select>
+      <select id="grp-ep-filter" onchange="renderGroup()"
+        style="display:none;font-size:13px;padding:6px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
+        <option value="">すべての話数</option>
+      </select>
       <select id="grp-sort" onchange="renderGroup()">
         <option value="asc" id="go-asc">古い順</option>
         <option value="desc" id="go-desc">新しい順</option>
@@ -477,9 +481,11 @@ button,input,select,textarea{font-family:inherit}
       <div class="cgrid" id="cut-grid"></div>
       <div style="font-size:12px;color:var(--txt3);margin-top:8px" id="cut-hint">ボタンで完了／未完・削除が可能です</div>
       <div class="cut-add-area">
-        <input type="text" id="cut-add-input" placeholder="カット番号を追加（例：C021, 100-105）">
+        <input type="text" id="cut-add-input" placeholder="カット番号を追加（例：C021, 100-105）"
+          oninput="previewAddCuts()">
         <button class="btn pri sm" onclick="addCuts()" id="btn-cut-add">＋ 追加</button>
       </div>
+      <div id="cut-add-preview" style="font-size:12px;margin-top:4px;color:var(--bl)"></div>
     </div>
     <div class="fcard">
       <div class="fttl" id="d-del-ttl">🚚 納品・請求ステータス</div>
@@ -1263,6 +1269,7 @@ function renderCuts(o){
 
 async function toggleGroup(ids){
   const o=orders.find(x=>x.id===currentId); if(!o) return;
+  if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   const gc=ids.map(id=>(o.cuts||[]).find(c=>String(c.id)===String(id))).filter(Boolean);
   const allDone=gc.length>0&&gc.every(c=>c.done);
   gc.forEach(c=>{ c.done=!allDone; c.date=!allDone?today():''; });
@@ -1274,7 +1281,8 @@ async function toggleGroup(ids){
 }
 async function toggleCut(cid){
   const o=orders.find(x=>x.id===currentId); if(!o) return;
-  const c=(o.cuts||[]).find(x=>String(x.id)===String(cid)); if(!c) return;
+  if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
+  const c=o.cuts.find(x=>String(x.id)===String(cid)); if(!c) return;
   c.done=!c.done; c.date=c.done?today():'';
   renderCuts(o); autoStatus(o);
   document.getElementById('d-st').value=getStatus(o);
@@ -1283,9 +1291,11 @@ async function toggleCut(cid){
   await saveCutsToFb(o);
 }
 async function markAll(){
-  const o=orders.find(x=>x.id===currentId); if(!o||(o.cuts||[]).length===0) return;
-  const allDone=(o.cuts||[]).every(c=>c.done);
-  (o.cuts||[]).forEach(c=>{ c.done=!allDone; c.date=!allDone?today():''; });
+  const o=orders.find(x=>x.id===currentId); if(!o) return;
+  if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
+  if(o.cuts.length===0) return;
+  const allDone=o.cuts.every(c=>c.done);
+  o.cuts.forEach(c=>{ c.done=!allDone; c.date=!allDone?today():''; });
   renderCuts(o); autoStatus(o); updateSumCard(o);
   await saveCutsToFb(o);
   showToast(t('saved'));
@@ -1315,15 +1325,40 @@ async function deleteCutGroup(ids){
   await saveCutsToFb(o);
   showToast('削除しました');
 }
+function previewAddCuts(){
+  const o=orders.find(x=>x.id===currentId); if(!o) return;
+  const val=document.getElementById('cut-add-input').value.trim();
+  const el=document.getElementById('cut-add-preview');
+  if(!el) return;
+  if(!val){el.textContent='';return;}
+  const ids=parseCuts(val);
+  const qty=Number(o.qty)||0;
+  const current=Array.isArray(o.cuts)?o.cuts.length:Object.keys(o.cuts||{}).length;
+  const after=current+ids.length;
+  if(qty&&after>qty){
+    el.style.color='var(--rd)';
+    el.textContent='⚠ '+ids.length+'件追加→合計'+after+'件（受注数量'+qty+'件を超過）';
+  } else {
+    el.style.color='var(--bl)';
+    el.textContent=ids.length+'件追加→合計'+after+'件'+(qty?'（受注数量'+qty+'件）':'');
+  }
+}
 async function addCuts(){
   const o=orders.find(x=>x.id===currentId); if(!o) return;
   const input=document.getElementById('cut-add-input');
   const val=input.value.trim();
   if(!val){ showToast('カット番号を入力してください',true); return; }
   const newIds=parseCuts(val);
-  const existIds=(o.cuts||[]).map(c=>String(c.id));
+  // cutsがArrayでない場合はArrayに変換
+  if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
+  const existIds=o.cuts.map(c=>String(c.id));
   const addIds=newIds.filter(id=>!existIds.includes(id));
   if(addIds.length===0){ showToast('既に登録済みです',true); return; }
+  // 受注数量チェック
+  const qty=Number(o.qty)||0;
+  if(qty && o.cuts.length+addIds.length > qty){
+    if(!confirm(`受注数量${qty}件を超えます（現在${o.cuts.length}件＋追加${addIds.length}件）。続けますか？`)) return;
+  }
   addIds.forEach(id=>{ o.cuts.push({id,done:false,date:''}); });
   // cutsRawに追記
   if(o.cutsRaw){
@@ -1806,7 +1841,7 @@ window.showView=showView; window.showDetail=showDetail;
 window.editOrder=editOrder; window.deleteOrder=deleteOrder;
 window.deleteFromForm=deleteFromForm; window.cancelForm=cancelForm;
 window.saveOrder=saveOrder; window.saveDates=saveDates;
-window.markAll=markAll; window.toggleCut=toggleCut; window.toggleGroup=toggleGroup; window.deleteCut=deleteCut; window.deleteCutGroup=deleteCutGroup; window.addCuts=addCuts;
+window.markAll=markAll; window.previewAddCuts=previewAddCuts; window.toggleCut=toggleCut; window.toggleGroup=toggleGroup; window.deleteCut=deleteCut; window.deleteCutGroup=deleteCutGroup; window.addCuts=addCuts;
 window.renderGroup=renderGroup; window.onTitleFilterChange=onTitleFilterChange; window.toggleGrp=toggleGrp; window.printGroup=printGroup;
 window.renderList=renderList; window.loadAll=loadAll;
 window.selectLang=selectLang;
