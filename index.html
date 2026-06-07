@@ -2,731 +2,883 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>アニメ制作受注管理</title>
 <style>
 :root{
-  /* ロゴカラー基調：メインブルー #0060E0 ／ アクセント #E02080 */
-  --bg:#F2F5FB;--surface:#FFFFFF;--surface2:#EBF0FA;--surface3:#DDE5F5;
-  --border:rgba(0,80,180,0.10);--border2:rgba(0,80,180,0.20);
-  --text:#0A1A3A;--text2:#4A5A7A;--text3:#8A9ABB;
-
-  /* メインカラー：ロゴブルー */
-  --green:#0060E0;--green-bg:#E0ECFF;--green-dark:#003A8C;--green-mid:#5090E8;
-
-  /* アクセント：ロゴピンク */
-  --pink:#E02080;--pink-bg:#FCEAF3;--pink-dark:#8C0048;--pink-mid:#E870AF;
-
-  /* サポートカラー */
-  --amber:#C07010;--amber-bg:#FEF3E0;
-  --blue:#0060E0;--blue-bg:#E0ECFF;
-  --purple:#5A44B0;--purple-bg:#EEEDFB;
-  --red:#C02030;--red-bg:#FCEAEC;
-  --r:8px;--r-sm:5px;--r-lg:12px;
-  --shadow:0 1px 4px rgba(0,60,180,.10),0 1px 2px rgba(0,60,180,.06);
+  --bg:#F2F5FB;--sur:#fff;--sur2:#EBF0FA;--sur3:#DDE5F5;
+  --bdr:rgba(0,80,180,.10);--bdr2:rgba(0,80,180,.20);
+  --txt:#0A1A3A;--txt2:#4A5A7A;--txt3:#8A9ABB;
+  --bl:#0060E0;--bl-bg:#E0ECFF;--bl-dk:#003A8C;--bl-md:#5090E8;
+  --pk:#E02080;--pk-bg:#FCEAF3;--pk-dk:#8C0048;--pk-md:#E870AF;
+  --am:#C07010;--am-bg:#FEF3E0;
+  --gn:#0060E0;--gn-bg:#E0ECFF;--gn-dk:#003A8C;--gn-md:#5090E8;
+  --rd:#C02030;--rd-bg:#FCEAEC;
+  --r:8px;--rl:12px;--rs:5px;
+  --sh:0 1px 4px rgba(0,60,180,.10),0 1px 2px rgba(0,60,180,.06);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',sans-serif;
-  background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
-button{font-family:inherit}
+  background:var(--bg);color:var(--txt);font-size:14px;min-height:100vh}
+button,input,select,textarea{font-family:inherit}
 
-/* ===== SETUP ===== */
-#setup{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;
-  justify-content:center;z-index:200;padding:1rem}
-.setup-card{background:var(--surface);border-radius:var(--r-lg);border:0.5px solid var(--border2);
-  padding:2rem;width:500px;max-width:100%;box-shadow:var(--shadow)}
-.setup-card h1{font-size:20px;font-weight:600;margin-bottom:6px;
-  display:flex;align-items:center;gap:8px}
-.setup-card p{font-size:13px;color:var(--text2);margin-bottom:1.5rem;line-height:1.7}
-.setup-steps{background:var(--surface2);border-radius:var(--r);padding:1rem;margin-bottom:1.25rem}
-.setup-steps h3{font-size:11px;font-weight:600;color:var(--text2);
-  text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
-.step-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:7px;font-size:12px;color:var(--text2);line-height:1.5}
-.step-num{background:var(--green);color:#fff;border-radius:50%;width:18px;height:18px;
-  min-width:18px;display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-weight:700;margin-top:1px}
-.setup-card label{font-size:11px;font-weight:600;color:var(--text2);
-  text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px}
-.setup-card input{width:100%;padding:10px 12px;border:0.5px solid var(--border2);
-  border-radius:var(--r);background:var(--surface2);color:var(--text);
-  font-size:13px;margin-bottom:.5rem}
-.setup-card input:focus{outline:2px solid var(--green);border-color:var(--green)}
-.url-hint{font-size:11px;color:var(--text3);margin-bottom:1.25rem}
-.btn-connect{width:100%;padding:11px;background:var(--green);color:#fff;border:none;
-  border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s}
-.btn-connect:hover{opacity:.88}
-.btn-connect:disabled{opacity:.4;cursor:not-allowed}
-#setup-error{font-size:12px;color:var(--red);margin-top:8px;display:none}
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#0060E0 0%,#0048B0 60%,#C01870 100%);
+  height:48px;display:flex;align-items:center;padding:0 1rem;gap:0;
+  position:sticky;top:0;z-index:100;border-bottom:none}
+.logo{font-size:15px;font-weight:600;color:#fff;margin-right:1.25rem;white-space:nowrap}
+.logo span{color:#FFD0E8}
+.nav{display:flex;height:48px;flex:1;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nt{padding:0 12px;height:100%;display:flex;align-items:center;gap:4px;
+  font-size:13px;font-weight:500;color:rgba(255,255,255,.7);cursor:pointer;
+  border-bottom:2.5px solid transparent;white-space:nowrap;transition:all .12s}
+.nt:hover{color:#fff}
+.nt.on{color:#fff;border-bottom-color:#FFD0E8}
+.nbadge{background:rgba(255,255,255,.2);color:rgba(255,255,255,.85);
+  border-radius:99px;font-size:10px;padding:1px 6px;border:0.5px solid rgba(255,255,255,.3)}
+.nt.on .nbadge{background:#FFD0E8;color:var(--pk-dk)}
+.hdr-r{display:flex;align-items:center;gap:5px;margin-left:8px;flex-shrink:0}
+.lbtn{padding:3px 9px;border-radius:99px;border:0.5px solid rgba(255,255,255,.4);
+  background:rgba(255,255,255,.15);color:#fff;font-size:11px;cursor:pointer;transition:background .15s}
+.lbtn:hover,.lbtn.on{background:rgba(255,255,255,.4)}
+.sync{font-size:11px;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:4px;margin-right:4px}
+.sdot{width:6px;height:6px;border-radius:50%;background:#4ade80}
+.sdot.ing{background:#fbbf24;animation:pulse .8s infinite}
+.sdot.err{background:#f87171}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* ===== HEADER ===== */
-.app-header{background:linear-gradient(135deg,#0060E0 0%,#0048B0 60%,#C01870 100%);border-bottom:none;
-  padding:0 1.25rem;display:flex;align-items:center;gap:0;height:48px;position:sticky;top:0;z-index:100}
-.app-logo{font-size:15px;font-weight:600;margin-right:1.5rem;white-space:nowrap;color:#fff}
-.app-logo span{color:#FFD0E8}
-
-/* NAV TABS */
-.nav-tabs{display:flex;height:100%;gap:0;flex:1}
-.nav-tab{padding:0 14px;height:100%;display:flex;align-items:center;gap:5px;
-  font-size:13px;font-weight:500;color:rgba(255,255,255,0.75);cursor:pointer;
-  border-bottom:2px solid transparent;transition:all .12s;white-space:nowrap}
-.nav-tab:hover{color:#fff}
-.nav-tab.active{color:#fff;border-bottom-color:#FFD0E8}
-.nav-badge{display:inline-flex;align-items:center;justify-content:center;
-  min-width:18px;height:18px;padding:0 5px;background:rgba(255,255,255,0.20);
-  color:rgba(255,255,255,0.85);border-radius:99px;font-size:10px;border:0.5px solid rgba(255,255,255,0.30)}
-.nav-tab.active .nav-badge{background:#FFD0E8;color:var(--pink-dark);border-color:#FFD0E8}
-.header-right{display:flex;align-items:center;gap:8px;margin-left:auto}
-.sync-indicator{font-size:11px;color:rgba(255,255,255,0.7);display:flex;align-items:center;gap:4px}
-.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
-.sync-dot.syncing{background:var(--amber);animation:pulse .8s infinite}
-.sync-dot.error{background:var(--red)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-
-/* ===== MAIN ===== */
-.app-main{padding:1.25rem;max-width:1200px;margin:0 auto}
-.view{display:none}.view.active{display:block}
+/* MAIN */
+.main{padding:1.25rem;max-width:1200px;margin:0 auto}
+.view{display:none}.view.on{display:block}
 
 /* BUTTONS */
 .btn{padding:6px 12px;border-radius:var(--r);font-size:13px;cursor:pointer;
-  border:0.5px solid var(--border2);background:var(--surface);color:var(--text);
-  transition:background .12s;display:inline-flex;align-items:center;gap:5px;font-family:inherit}
-.btn:hover{background:var(--surface2)}
-.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}
-.btn.primary:hover{background:var(--green-dark)}
+  border:0.5px solid var(--bdr2);background:var(--sur);color:var(--txt);
+  transition:background .12s;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{background:var(--sur2)}
+.btn.pri{background:var(--bl);color:#fff;border-color:var(--bl)}
+.btn.pri:hover{background:var(--bl-dk)}
 .btn.sm{padding:4px 9px;font-size:12px}
-.btn.danger{color:var(--red)}.btn.danger:hover{background:var(--red-bg)}
+.btn.dng{color:var(--rd)}.btn.dng:hover{background:var(--rd-bg)}
 
 /* STATUS PILLS */
 .pill{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:500;white-space:nowrap}
-.p-ordered{background:#E0ECFF;color:#003A8C;border:0.5px solid #80B0F0}
-.p-wip{background:#FEF3E0;color:#7A4400;border:0.5px solid #E8B050}
-.p-done{background:#E0ECFF;color:#003A8C;border:0.5px solid #80B0F0}
-.p-invoiced{background:var(--pink-bg);color:var(--pink-dark);border:0.5px solid var(--pink-mid)}
+.p-or{background:#E0ECFF;color:#003A8C;border:0.5px solid #80B0F0}
+.p-wip{background:var(--am-bg);color:#7A4400;border:0.5px solid #E8B050}
+.p-dn{background:#E0ECFF;color:#003A8C;border:0.5px solid #80B0F0}
+.p-iv{background:var(--pk-bg);color:var(--pk-dk);border:0.5px solid var(--pk-md)}
 
 /* DUE WARN */
-.due-warn{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;
-  padding:2px 8px;border-radius:99px;background:var(--red-bg);color:#6B1818;
+.due{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:500;
+  padding:2px 8px;border-radius:99px;background:var(--rd-bg);color:#6B1818;
   border:0.5px solid #EE9090;white-space:nowrap}
-.due-soon{background:var(--amber-bg);color:#5C3800;border-color:#E8A030}
+.due.soon{background:var(--am-bg);color:#5C3800;border-color:#E8A030}
 
-/* TITLE BANNER */
-.title-banner{border-radius:var(--r);padding:10px 14px;margin-bottom:8px;
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.tb-name{font-size:16px;font-weight:500;flex:1;min-width:0;display:flex;align-items:baseline;gap:5px}
-.tb-abbr{font-size:12px;font-weight:400;opacity:.75}
-.tb-tags{display:flex;gap:5px;flex-wrap:wrap}
-.tb-tag{font-size:12px;font-weight:500;padding:3px 10px;border-radius:99px;white-space:nowrap}
+/* CARD */
+.card{background:var(--sur);border:0.5px solid var(--bdr);border-radius:var(--rl);
+  padding:1rem 1.25rem;margin-bottom:10px;cursor:pointer;
+  transition:border-color .12s,box-shadow .12s;box-shadow:var(--sh)}
+.card:hover{border-color:var(--bdr2);box-shadow:0 2px 6px rgba(0,0,0,.1)}
 
-/* ORDER CARDS */
-.order-card{background:var(--surface);border:0.5px solid var(--border);
-  border-radius:var(--r-lg);padding:1rem 1.25rem;margin-bottom:10px;
-  cursor:pointer;transition:border-color .12s,box-shadow .12s;box-shadow:var(--shadow)}
-.order-card:hover{border-color:var(--border2);box-shadow:0 2px 6px rgba(0,0,0,.1)}
-.oc-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}
-.oc-sub{font-size:12px;color:var(--text2);flex:1}
-.oc-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));
-  gap:4px 10px;font-size:12px;color:var(--text2);margin-bottom:8px}
-.oc-meta b{color:var(--text);font-weight:500}
-.oc-actions{display:flex;gap:5px;flex-wrap:wrap}
-.prog-wrap{margin-bottom:8px}
-.prog-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:3px}
-.prog-bar{height:4px;background:var(--surface3);border-radius:99px;overflow:hidden}
-.prog-fill{height:100%;background:linear-gradient(90deg,#0060E0,#4090F0);border-radius:99px;transition:width .3s}
+/* BANNER */
+.banner{border-radius:var(--r);padding:9px 12px;margin-bottom:8px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px}
+.bn-l{font-size:15px;font-weight:500;flex:1;min-width:0;display:flex;align-items:baseline;gap:4px}
+.bn-abbr{font-size:12px;font-weight:400;opacity:.75}
+.bn-ep{font-size:13px;font-weight:500;opacity:.85}
+.bn-r{font-size:12px;opacity:.7;white-space:nowrap;flex-shrink:0}
+
+/* META ROW */
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));
+  gap:3px 10px;font-size:12px;color:var(--txt2);margin-bottom:8px}
+.meta b{color:var(--txt);font-weight:500}
+.sub{font-size:12px;color:var(--txt2);margin-bottom:5px}
+.acts{display:flex;gap:5px;flex-wrap:wrap}
+
+/* PROGRESS BAR */
+.pbar{margin-bottom:8px}
+.pbar-lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--txt2);margin-bottom:3px}
+.pbar-bg{height:4px;background:var(--sur3);border-radius:99px;overflow:hidden}
+.pbar-fill{height:100%;background:linear-gradient(90deg,#0060E0,#4090F0);
+  border-radius:99px;transition:width .3s}
+
+/* MONTH HEADER */
+.mhdr{display:flex;align-items:center;padding:6px 4px 5px;
+  border-bottom:2px solid var(--bl);margin-bottom:4px}
+.mhdr span{background:var(--bl);color:#fff;padding:2px 10px;
+  border-radius:99px;font-size:12px;font-weight:600}
 
 /* FORM */
-.form-card{background:var(--surface);border:0.5px solid var(--border);
-  border-radius:var(--r-lg);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow)}
-.form-card-title{font-size:15px;font-weight:500;margin-bottom:1rem;
-  padding-bottom:.75rem;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px}
+.fcard{background:var(--sur);border:0.5px solid var(--bdr);border-radius:var(--rl);
+  padding:1.25rem;margin-bottom:1rem;box-shadow:var(--sh)}
+.fttl{font-size:15px;font-weight:500;margin-bottom:1rem;padding-bottom:.75rem;
+  border-bottom:0.5px solid var(--bdr);display:flex;align-items:center;gap:8px}
 .fg{display:flex;flex-direction:column;gap:4px}
-.fg label{font-size:11px;font-weight:500;color:var(--text2);
+.fg label{font-size:11px;font-weight:500;color:var(--txt2);
   text-transform:uppercase;letter-spacing:.05em}
 .fg input,.fg select,.fg textarea{font-size:13px;padding:7px 10px;
-  border:0.5px solid var(--border2);border-radius:var(--r);
-  background:var(--surface);color:var(--text);width:100%;font-family:inherit}
-.fg input:focus,.fg select:focus,.fg textarea:focus{outline:2px solid var(--green);border-color:var(--green)}
-.fg input[readonly]{background:var(--surface2);color:var(--text2)}
-.fg input.auto{background:var(--green-bg);color:var(--green-dark)}
+  border:0.5px solid var(--bdr2);border-radius:var(--r);
+  background:var(--sur);color:var(--txt);width:100%}
+.fg input:focus,.fg select:focus,.fg textarea:focus{
+  outline:2px solid var(--bl);border-color:var(--bl)}
+.fg input[readonly]{background:var(--sur2);color:var(--txt2)}
 .fgrid{display:grid;gap:10px 14px}
 .g4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .s2{grid-column:span 2}.s3{grid-column:span 3}.s4{grid-column:span 4}
-.sep{grid-column:1/-1;border:none;border-top:0.5px solid var(--border);margin:4px 0}
-.slabel{grid-column:1/-1;font-size:11px;font-weight:500;color:var(--text2);
+.sep{grid-column:1/-1;border:none;border-top:0.5px solid var(--bdr);margin:2px 0}
+.slbl{grid-column:1/-1;font-size:11px;font-weight:600;color:var(--txt2);
   text-transform:uppercase;letter-spacing:.06em}
-.form-footer{display:flex;gap:8px;justify-content:flex-end;
-  margin-top:1rem;padding-top:.75rem;border-top:0.5px solid var(--border)}
+.ffoot{display:flex;gap:8px;justify-content:flex-end;
+  margin-top:1rem;padding-top:.75rem;border-top:0.5px solid var(--bdr)}
 
-/* COMBOBOX */
-.combo-wrap{position:relative}
-.combo-input{width:100%;font-size:13px;padding:7px 28px 7px 10px;
-  border:0.5px solid var(--border2);border-radius:var(--r);
-  background:var(--surface);color:var(--text)}
-.combo-input:focus{outline:2px solid var(--green);border-color:var(--green)}
-.combo-arr{position:absolute;right:8px;top:50%;transform:translateY(-50%);
-  pointer-events:none;color:var(--text3);font-size:12px}
-.combo-dd{position:absolute;top:calc(100% + 2px);left:0;right:0;
-  background:var(--surface);border:0.5px solid var(--border2);
-  border-radius:var(--r);z-index:50;max-height:180px;overflow-y:auto;display:none;
+/* COMBO */
+.cbo{position:relative}
+.cbo-i{width:100%;font-size:13px;padding:7px 28px 7px 10px;
+  border:0.5px solid var(--bdr2);border-radius:var(--r);
+  background:var(--sur);color:var(--txt)}
+.cbo-i:focus{outline:2px solid var(--bl);border-color:var(--bl)}
+.cbo-a{position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  pointer-events:none;color:var(--txt3);font-size:12px}
+.cbo-dd{position:absolute;top:calc(100% + 2px);left:0;right:0;
+  background:var(--sur);border:0.5px solid var(--bdr2);border-radius:var(--r);
+  z-index:50;max-height:180px;overflow-y:auto;display:none;
   box-shadow:0 4px 12px rgba(0,0,0,.1)}
-.combo-dd.open{display:block}
-.combo-item{padding:7px 10px;font-size:13px;cursor:pointer;
-  display:flex;align-items:center;gap:8px;color:var(--text)}
-.combo-item:hover{background:var(--surface2)}
-.combo-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.combo-new{padding:7px 10px;font-size:12px;color:var(--green);cursor:pointer;
-  border-top:0.5px solid var(--border);display:flex;align-items:center;gap:5px}
-.combo-new:hover{background:var(--green-bg)}
+.cbo-dd.open{display:block}
+.cbo-item{padding:7px 10px;font-size:13px;cursor:pointer;
+  display:flex;align-items:center;gap:8px;color:var(--txt)}
+.cbo-item:hover{background:var(--sur2)}
+.cbo-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cbo-new{padding:7px 10px;font-size:12px;color:var(--bl);cursor:pointer;
+  border-top:0.5px solid var(--bdr);display:flex;align-items:center;gap:5px}
+.cbo-new:hover{background:var(--bl-bg)}
 
 /* CUT INPUT */
-.cut-input-box{background:#E0ECFF;border:0.5px solid #80B0F0;
+.cbox{background:var(--bl-bg);border:0.5px solid var(--bl-md);
   border-radius:var(--r);padding:10px 12px}
-.cut-input-box .ci-label{font-size:12px;font-weight:500;color:#003A8C;
-  margin-bottom:5px;display:flex;align-items:center;gap:5px}
-.cut-input-box .ci-hint{font-size:11px;color:#0060E0;margin-bottom:6px;line-height:1.6}
-.cut-input-box .ci-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.cut-input-box input{flex:1;min-width:180px;font-size:13px;padding:6px 10px;
-  border:0.5px solid #80B0F0;border-radius:var(--r);background:#fff;color:#003A8C}
-.cut-limit{font-size:12px;color:var(--green);white-space:nowrap}
+.cbox-lbl{font-size:12px;font-weight:500;color:var(--bl-dk);margin-bottom:4px}
+.cbox-hint{font-size:11px;color:var(--bl);margin-bottom:6px;line-height:1.6}
+.cbox-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cbox-row input{flex:1;min-width:180px;font-size:13px;padding:6px 10px;
+  border:0.5px solid var(--bl-md);border-radius:var(--r);background:#fff;color:var(--bl-dk)}
+.climit{font-size:12px;color:var(--bl);white-space:nowrap}
 
 /* SUM CARDS */
-.sum-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:1rem}
-.sum-card{border-radius:var(--r);padding:.75rem 1rem}
-.sum-card .sl{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
-.sum-card .sv{font-size:18px;font-weight:500}
-.sum-card .ssv{font-size:11px;margin-top:3px}
-.sc-blue{background:#E0ECFF}.sc-blue .sl{color:#0060E0}.sc-blue .sv{color:#003A8C}.sc-blue .ssv{color:#0060E0}
-.sc-amber{background:var(--pink-bg)}.sc-amber .sl{color:var(--pink)}.sc-amber .sv{color:var(--pink-dark)}.sc-amber .ssv{color:var(--pink)}
-.sc-teal{background:#E6F4FF}.sc-teal .sl{color:#0070D0}.sc-teal .sv{color:#003A8C}.sc-teal .ssv{color:#0070D0}
-.sc-gray{background:var(--surface2)}.sc-gray .sl{color:var(--text2)}.sc-gray .sv{color:var(--text)}
+.sumrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
+  gap:10px;margin-bottom:1rem}
+.sc{border-radius:var(--r);padding:.75rem 1rem}
+.sc .sl{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.sc .sv{font-size:18px;font-weight:500}
+.sc .ss{font-size:11px;margin-top:3px}
+.sc-bl{background:#E0ECFF}.sc-bl .sl{color:var(--bl)}.sc-bl .sv{color:#0A2D6A}.sc-bl .ss{color:var(--bl)}
+.sc-pk{background:var(--pk-bg)}.sc-pk .sl{color:var(--pk)}.sc-pk .sv{color:var(--pk-dk)}.sc-pk .ss{color:var(--pk)}
+.sc-gn{background:#E6F4FF}.sc-gn .sl{color:#0070D0}.sc-gn .sv{color:#003A8C}.sc-gn .ss{color:#0070D0}
+.sc-gy{background:var(--sur2)}.sc-gy .sl{color:var(--txt2)}.sc-gy .sv{color:var(--txt)}
 
-/* CUT SECTION */
-.cut-search-card{
-  background:var(--surface);border:1.5px solid var(--green);
-  border-radius:var(--r-lg);padding:1rem 1.25rem;margin-bottom:10px;
-  box-shadow:0 2px 8px rgba(0,96,224,.12)
-}
-.cut-search-card .cs-title{
-  font-size:15px;font-weight:500;margin-bottom:.5rem;
-  display:flex;align-items:center;gap:8px;flex-wrap:wrap
-}
-.cut-search-card .cs-cut{
-  display:inline-flex;align-items:center;gap:6px;
-  background:var(--green-bg);color:var(--green-dark);
-  padding:3px 10px;border-radius:99px;font-size:13px;font-weight:600;
-  border:0.5px solid var(--green-mid)
-}
-.cut-search-card .cs-grid{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
-  gap:4px 12px;font-size:12px;color:var(--text2);margin-top:.5rem
-}
-.cut-search-card .cs-grid b{color:var(--text);font-weight:500}
-.cut-search-card .cs-done{
-  display:inline-flex;align-items:center;gap:4px;
-  background:#E0ECFF;color:#003A8C;padding:2px 8px;
-  border-radius:99px;font-size:11px;font-weight:500
-}
-.cut-search-card .cs-todo{
-  background:var(--amber-bg);color:#5C3800;padding:2px 8px;
-  border-radius:99px;font-size:11px;font-weight:500;display:inline-block
-}
-.cut-search-card .cs-btn{
-  margin-top:.75rem;display:flex;gap:6px;flex-wrap:wrap
-}
-.cut-search-empty{
-  text-align:center;padding:1.5rem;color:var(--text3);
-  font-size:13px;background:var(--surface2);border-radius:var(--r);
-}
-.cut-search-input:focus{outline:2px solid var(--green);border-color:var(--green)}
-.cut-search-highlight{background:#FFF5A0;border-radius:3px;padding:0 2px}
-.cut-section{background:var(--surface);border:0.5px solid var(--border);
-  border-radius:var(--r-lg);padding:1rem 1.25rem;margin-bottom:1rem;box-shadow:var(--shadow)}
-.cut-sec-hd{display:flex;align-items:center;gap:8px;margin-bottom:.75rem;flex-wrap:wrap}
-.cut-sec-hd h3{font-size:14px;font-weight:500;flex:1}
-.cut-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:5px}
-.cut-card{aspect-ratio:1;border-radius:var(--r);border:0.5px solid var(--border2);
-  background:var(--surface);display:flex;flex-direction:column;align-items:center;
+/* CUT GRID */
+.csec{background:var(--sur);border:0.5px solid var(--bdr);
+  border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:1rem;box-shadow:var(--sh)}
+.csec-hd{display:flex;align-items:center;gap:8px;margin-bottom:.75rem;flex-wrap:wrap}
+.csec-hd h3{font-size:14px;font-weight:500;flex:1}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:5px}
+.cc{aspect-ratio:1;border-radius:var(--r);border:0.5px solid var(--bdr2);
+  background:var(--sur);display:flex;flex-direction:column;align-items:center;
   justify-content:center;cursor:pointer;position:relative;
   transition:border-color .12s,background .12s;user-select:none}
-.cut-card:hover{border-color:var(--green)}
-.cut-card.done{background:#E0ECFF;border-color:#80B0F0}
-.cut-card .cn{font-size:12px;font-weight:500;color:var(--text)}
-.cut-card.done .cn{color:#003A8C}
-.cut-card .cd{font-size:10px;color:var(--text3);margin-top:2px}
-.cut-card.done .cd{color:#0060E0}
-.cut-card .ck{position:absolute;top:3px;right:3px;width:13px;height:13px;
-  background:#0060E0;border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0}
-.cut-card.done .ck{opacity:1}
+.cc:hover{border-color:var(--bl)}
+.cc.dn{background:#E0ECFF;border-color:#80B0F0}
+.cc .cn{font-size:11px;font-weight:500;text-align:center;padding:0 3px;word-break:break-all;line-height:1.3}
+.cc .cd{font-size:10px;color:var(--txt3);margin-top:2px}
+.cc.dn .cn{color:var(--bl-dk)}.cc.dn .cd{color:var(--bl)}
+.cc .ck{position:absolute;top:3px;right:3px;width:13px;height:13px;
+  background:var(--bl);border-radius:50%;display:flex;align-items:center;
+  justify-content:center;opacity:0}
+.cc.dn .ck{opacity:1}
 
 /* INFO GRID */
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:13px;margin-bottom:1rem}
-.ir{display:flex;flex-direction:column;gap:2px}
-.ir .ik{font-size:11px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
-.ir .iv{color:var(--text);font-weight:500}
+.igrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;
+  font-size:13px;margin-bottom:1rem}
+.ir .ik{font-size:11px;color:var(--txt2);font-weight:500;
+  text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.ir .iv{color:var(--txt);font-weight:500}
 
-/* GROUP VIEW */
-.group-ctrl{display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
-.group-ctrl label{font-size:12px;color:var(--text2);font-weight:500}
-.group-ctrl select{font-size:13px;padding:6px 10px;border:0.5px solid var(--border2);
-  border-radius:var(--r);background:var(--surface);color:var(--text)}
-.grp-section{margin-bottom:1.5rem}
-.grp-hd{display:flex;align-items:center;gap:10px;padding:8px 14px;
-  border-radius:var(--r);background:var(--surface2);margin-bottom:8px;cursor:pointer}
-.grp-hd h3{font-size:14px;font-weight:500;flex:1}
-.grp-summary{display:flex;gap:14px;font-size:12px;flex-wrap:wrap}
-.grp-summary b{color:var(--text)}
-.grp-body{border-left:3px solid;padding-left:10px;border-radius:0 var(--r) var(--r) 0;margin-bottom:4px}
-.prog-card{background:var(--surface);border:0.5px solid var(--border);
-  border-radius:var(--r-lg);padding:1rem 1.25rem;margin-bottom:10px;
-  cursor:pointer;transition:border-color .12s;box-shadow:var(--shadow)}
-.prog-card.warn{border-color:#EE9090;border-width:1px}
+/* GROUP */
+.gc{display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.gc label{font-size:12px;color:var(--txt2);font-weight:500}
+.gc select{font-size:13px;padding:6px 10px;border:0.5px solid var(--bdr2);
+  border-radius:var(--r);background:var(--sur);color:var(--txt)}
+.gsec{margin-bottom:1.5rem}
+.ghd{display:flex;align-items:center;gap:10px;padding:8px 14px;
+  border-radius:var(--r);background:var(--sur2);margin-bottom:8px;cursor:pointer}
+.ghd h3{font-size:14px;font-weight:500;flex:1}
+.gsub{display:flex;gap:14px;font-size:12px;flex-wrap:wrap}
+.gsub b{color:var(--txt)}
+.gbody{border-left:3px solid;padding-left:10px}
 
-/* PRINT TABLE */
-.print-tbl{width:100%;border-collapse:collapse;font-size:12px}
-.print-tbl th{background:var(--green-bg);color:var(--green-dark);padding:5px 7px;
-  text-align:left;font-weight:500;border:0.5px solid var(--green-mid);white-space:nowrap}
-.print-tbl td{padding:4px 7px;border:0.5px solid var(--border);vertical-align:middle}
-.print-tbl tr:nth-child(even) td{background:var(--surface2)}
-.print-tbl .sub-row td{font-weight:500;background:var(--blue-bg)}
-.print-tbl .total-row td{font-weight:600;background:var(--green-bg)}
+/* SEARCH */
+.srch-card{background:var(--sur);border:1.5px solid var(--bl);
+  border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:10px;
+  box-shadow:0 2px 8px rgba(0,96,224,.12)}
+.srch-card .sct{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:.5rem}
+.srch-cut{display:inline-flex;align-items:center;gap:5px;
+  background:var(--bl-bg);color:var(--bl-dk);padding:3px 10px;
+  border-radius:99px;font-size:13px;font-weight:600;border:0.5px solid var(--bl-md)}
+.srch-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:3px 12px;font-size:12px;color:var(--txt2);margin-top:.5rem}
+.srch-meta b{color:var(--txt);font-weight:500}
+.srch-acts{margin-top:.75rem;display:flex;gap:6px;flex-wrap:wrap}
+.cdone{display:inline-flex;align-items:center;gap:4px;background:#E0ECFF;
+  color:#003A8C;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:500}
+.ctodo{background:var(--am-bg);color:#5C3800;padding:2px 8px;
+  border-radius:99px;font-size:11px;font-weight:500;display:inline-block}
 
+/* DETAIL */
+.dhd{display:flex;align-items:center;gap:8px;margin-bottom:.75rem;flex-wrap:wrap}
+.back{font-size:12px;color:var(--txt2);cursor:pointer;display:flex;align-items:center;
+  gap:4px;padding:5px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);
+  background:var(--sur)}
+.back:hover{background:var(--sur2)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;
+  transform:translateX(-50%) translateY(60px);
+  background:var(--txt);color:var(--bg);padding:9px 18px;
+  border-radius:99px;font-size:13px;font-weight:500;
+  transition:transform .2s;z-index:999;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--rd);color:#fff}
+
+/* TOP BTN */
+.topbtn{position:fixed;bottom:24px;right:24px;width:44px;height:44px;
+  border-radius:50%;background:var(--pk);color:#fff;border:none;
+  font-size:20px;cursor:pointer;display:none;align-items:center;
+  justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.2);
+  transition:opacity .2s,transform .2s;z-index:90}
+.topbtn:hover{opacity:.88;transform:translateY(-2px)}
+.topbtn.show{display:flex}
+
+/* MISC */
 .lh{display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
 .lh h2{font-size:15px;font-weight:500;flex:1}
-.detail-hd{display:flex;align-items:center;gap:8px;margin-bottom:.75rem;flex-wrap:wrap}
-.back-btn{font-size:12px;color:var(--text2);cursor:pointer;display:flex;align-items:center;
-  gap:4px;padding:5px 10px;border:0.5px solid var(--border2);border-radius:var(--r);
-  background:var(--surface);font-family:inherit}
-.back-btn:hover{background:var(--surface2)}
-.empty{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:13px}
+.empty{text-align:center;padding:3rem 1rem;color:var(--txt3);font-size:13px}
 .empty i{font-size:30px;display:block;margin-bottom:10px}
-.loading{display:flex;align-items:center;justify-content:center;padding:3rem;
-  gap:10px;color:var(--text3);font-size:13px}
-.spin{width:18px;height:18px;border:2px solid var(--border2);
-  border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite}
+.loading{display:flex;align-items:center;justify-content:center;
+  padding:3rem;gap:10px;color:var(--txt3);font-size:13px}
+.spin{width:18px;height:18px;border:2px solid var(--bdr2);
+  border-top-color:var(--bl);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);
-  background:var(--text);color:var(--bg);padding:9px 18px;border-radius:99px;
-  font-size:13px;font-weight:500;transition:transform .2s;z-index:999;white-space:nowrap}
-.toast.show{transform:translateX(-50%) translateY(0)}
-.toast.err{background:var(--red);color:#fff}
-
-/* ===== TOP BUTTON ===== */
-.top-btn{
-  position:fixed;bottom:24px;right:24px;
-  width:44px;height:44px;border-radius:50%;
-  background:var(--pink);color:#fff;border:none;
-  font-size:20px;cursor:pointer;
-  display:none;align-items:center;justify-content:center;
-  box-shadow:0 2px 8px rgba(0,0,0,.2);
-  transition:opacity .2s,transform .2s;z-index:90;
-  line-height:1;
-}
-.top-btn:hover{opacity:.88;transform:translateY(-2px)}
-.top-btn.visible{display:flex}
-@media print{.top-btn{display:none!important}}
 
 @media print{
-  #app-header,.nav-tabs,.btn,.oc-actions,.back-btn,.group-ctrl{display:none!important}
-  .print-tbl th{background:#c8e6d4!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .print-tbl .total-row td{background:#c8e6d4!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .print-tbl .sub-row td{background:#cce0f5!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .hdr,.nav,.btn,.acts,.back,.gc,.topbtn{display:none!important}
+}
+@media(max-width:600px){
+  .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .s3,.s4{grid-column:span 2}
 }
 </style>
 </head>
 <body>
 
-<!-- SETUP -->
-<div id="setup">
-  <div class="setup-card">
-    <h1>✂ アニメ制作受注管理</h1>
-    <p>Google スプレッドシートと連携します。GASのWebアプリURLを入力してください。</p>
-    <div class="setup-steps">
-      <h3>GAS URLの取得手順</h3>
-      <div class="step-row"><span class="step-num">1</span><span>スプレッドシートの「拡張機能」→「Apps Script」を開く</span></div>
-      <div class="step-row"><span class="step-num">2</span><span>「デプロイ」→「デプロイを管理」→URLをコピー</span></div>
-      <div class="step-row"><span class="step-num">3</span><span>下に貼り付けて「接続」をクリック</span></div>
-    </div>
-    <label>GAS WebアプリURL</label>
-    <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/...">
-    <div class="url-hint">※ script.google.com/macros/s/ から始まるURLです</div>
-    <button class="btn-connect" id="connect-btn" onclick="connectGAS()">接続してスタート</button>
-    <div id="setup-error"></div>
+<header class="hdr">
+  <div class="logo">✂ <span id="logo-txt">受注管理</span></div>
+  <nav class="nav">
+    <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
+    <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
+    <div class="nt" onclick="showView('progress')" id="tab-progress">カット進捗<span class="nbadge" id="b-prog">0</span></div>
+    <div class="nt" onclick="showView('group')" id="tab-group">グループ表示</div>
+  </nav>
+  <div class="hdr-r">
+    <div class="sync"><div class="sdot" id="sdot"></div><span id="slbl">--</span></div>
+    <button class="lbtn on" id="btn-ja" onclick="selectLang('ja')">🇯🇵 JP</button>
+    <button class="lbtn" id="btn-vi" onclick="selectLang('vi')">🇻🇳 VN</button>
   </div>
-</div>
+</header>
 
-<!-- APP -->
-<div id="app" style="display:none">
-  <header class="app-header" id="app-header">
-    <div class="app-logo">✂ <span>受注管理</span></div>
-    <nav class="nav-tabs">
-      <div class="nav-tab active" onclick="showView('list')" id="tab-list">受注一覧<span class="nav-badge" id="b-all">0</span></div>
-      <div class="nav-tab" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
-      <div class="nav-tab" onclick="showView('progress')" id="tab-progress">カット進捗<span class="nav-badge" id="b-prog">0</span></div>
-      <div class="nav-tab" onclick="showView('group')" id="tab-group">グループ表示</div>
-    </nav>
-    <div class="header-right">
-      <div class="sync-indicator"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">同期済み</span></div>
-      <button class="btn sm" onclick="resetSetup()" style="font-size:11px;color:var(--text3)">設定変更</button>
+<main class="main">
+  <!-- LIST -->
+  <div class="view on" id="view-list">
+    <div class="lh">
+      <h2 id="h-list">受注一覧</h2>
+      <select id="list-sort" onchange="renderList()" style="font-size:12px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
+        <option value="desc" id="opt-desc">新しい順</option>
+        <option value="asc" id="opt-asc">古い順</option>
+      </select>
+      <select id="flt-st" onchange="renderList()" style="font-size:12px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
+        <option value="" id="opt-all">すべて</option>
+        <option id="opt-or">受注済</option>
+        <option id="opt-wip">進行中</option>
+        <option id="opt-dn">納品済</option>
+        <option id="opt-iv">請求済</option>
+        <option value="uninvoiced" id="opt-un">未請求</option>
+      </select>
+      <button class="btn pri" onclick="showView('new')" id="btn-new">＋ 新規受注</button>
+      <button class="btn" onclick="loadAll()" id="btn-refresh">↺ 更新</button>
     </div>
-  </header>
-
-  <main class="app-main">
-    <!-- LIST -->
-    <div class="view active" id="view-list">
-      <div class="lh">
-        <h2>受注一覧</h2>
-        <select id="list-sort" onchange="renderList()" style="font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text)">
-          <option value="desc">新しい順</option>
-          <option value="asc">古い順</option>
-        </select>
-        <select id="flt-status" onchange="renderList()" style="font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text)">
-          <option value="">すべて</option><option>受注済</option><option>進行中</option><option>納品済</option><option>請求済</option>
-        </select>
-        <button class="btn primary" onclick="showView('new')">＋ 新規受注</button>
-        <button class="btn" onclick="loadAll()">↺ 更新</button>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+      <div style="position:relative;flex:1;min-width:200px;max-width:360px">
+        <input type="text" id="cut-search-input" oninput="searchCut()"
+          placeholder="✂ カット番号で検索（例：C9999, 9999）"
+          style="width:100%;font-size:13px;padding:7px 36px 7px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
+        <span onclick="clearSearch()" id="srch-clr"
+          style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--txt3);font-size:16px;display:none">×</span>
       </div>
-      <!-- カット番号検索 -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
-        <div style="position:relative;flex:1;min-width:200px;max-width:360px">
-          <input type="text" id="cut-search-input"
-            placeholder="✂ カット番号で検索（例：C9999, 9999）"
-            oninput="searchCut()"
-            style="width:100%;font-size:13px;padding:7px 36px 7px 10px;
-              border:0.5px solid var(--border2);border-radius:var(--r);
-              background:var(--surface);color:var(--text)">
-          <span onclick="clearCutSearch()" id="cut-search-clear"
-            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);
-              cursor:pointer;color:var(--text3);font-size:16px;display:none">×</span>
-        </div>
-        <div id="cut-search-hint" style="font-size:12px;color:var(--text2)"></div>
-      </div>
-      <!-- 検索結果 -->
-      <div id="cut-search-result" style="display:none;margin-bottom:1rem"></div>
-      <div id="list-body"></div>
+      <div id="srch-hint" style="font-size:12px;color:var(--txt2)"></div>
     </div>
+    <div id="srch-result" style="display:none;margin-bottom:1rem"></div>
+    <div id="list-body"></div>
+  </div>
 
-    <!-- NEW/EDIT -->
-    <div class="view" id="view-new">
-      <div class="form-card">
-        <div class="form-card-title">📄 <span id="form-ttl">新規受注入力</span></div>
-        <div class="fgrid g4">
-          <div class="fg"><label>受注日</label><input type="date" id="f-order-date"></div>
-          <div class="fg"><label>納期</label><input type="date" id="f-due-date"></div>
-          <div class="fg"><label>納入日</label><input type="date" id="f-delivery-date"></div>
-          <div class="fg"><label>請求日</label><input type="date" id="f-invoice-date"></div>
-          <hr class="sep"><div class="slabel">作品情報</div>
-          <div class="fg s2"><label>顧客</label>
-            <div class="combo-wrap">
-              <input class="combo-input" type="text" id="f-customer" placeholder="顧客名を入力または選択" autocomplete="off"
-                oninput="filterCombo('customer')" onfocus="openCombo('customer')" onblur="delayClose('customer')">
-              <span class="combo-arr">▾</span>
-              <div class="combo-dd" id="dd-customer"></div>
+  <!-- NEW/EDIT -->
+  <div class="view" id="view-new">
+    <div class="fcard">
+      <div class="fttl">📄 <span id="form-ttl">新規受注入力</span></div>
+      <div class="fgrid g4">
+        <div class="fg"><label id="lbl-od">受注日</label><input type="date" id="f-od"></div>
+        <div class="fg"><label id="lbl-due">納期</label><input type="date" id="f-due"></div>
+        <div class="fg"><label id="lbl-dl">納入日</label><input type="date" id="f-dl"></div>
+        <div class="fg"><label id="lbl-inv">請求日</label><input type="date" id="f-inv"></div>
+        <hr class="sep"><div class="slbl" id="slbl-work">作品情報</div>
+        <div class="fg s2"><label id="lbl-cust">顧客</label>
+          <div class="cbo"><input class="cbo-i" type="text" id="f-cust"
+            oninput="filterCbo('cust')" onfocus="openCbo('cust')" onblur="closeCbo('cust')">
+            <span class="cbo-a">▾</span><div class="cbo-dd" id="dd-cust"></div></div></div>
+        <div class="fg"><label id="lbl-ct">担当者</label>
+          <div class="cbo"><input class="cbo-i" type="text" id="f-ct"
+            oninput="filterCbo('ct')" onfocus="openCbo('ct')" onblur="closeCbo('ct')">
+            <span class="cbo-a">▾</span><div class="cbo-dd" id="dd-ct"></div></div></div>
+        <div class="fg"></div>
+        <div class="fg s2"><label id="lbl-ttl">作品タイトル</label>
+          <div class="cbo"><input class="cbo-i" type="text" id="f-ttl"
+            oninput="onTitleInput()" onfocus="openCbo('ttl')" onblur="closeCbo('ttl')">
+            <span class="cbo-a">▾</span><div class="cbo-dd" id="dd-ttl"></div></div></div>
+        <div class="fg"><label id="lbl-abbr">略語 <span id="abbr-auto" style="font-size:10px;color:var(--bl);display:none">（自動）</span></label>
+          <input type="text" id="f-abbr" maxlength="8"></div>
+        <div class="fg"><label id="lbl-ep">話数</label><input type="text" id="f-ep" maxlength="6"></div>
+        <div class="fg s2"><label id="lbl-proc">作業工程</label>
+          <select id="f-proc">
+            <option>LO</option><option>2G</option><option>LO作監</option><option>動画</option>
+            <option>仕上</option><option>動仕</option><option>BG</option>
+            <option>動画検査</option><option>仕上検査</option><option>その他</option>
+          </select></div>
+        <div class="fg"></div><div class="fg"></div>
+        <hr class="sep"><div class="slbl" id="slbl-amt">受注・発注金額（受注は税抜入力）</div>
+        <div class="fg"><label id="lbl-qty">数量（カット数）</label><input type="number" id="f-qty" min="1" oninput="calcAmt();updLimit()"></div>
+        <div class="fg"><label id="lbl-up">受注単価・税抜（円）</label><input type="number" id="f-up" oninput="calcAmt()"></div>
+        <div class="fg"><label id="lbl-tex">受注合計・税抜</label><input type="text" id="f-tex" readonly></div>
+        <div class="fg"><label id="lbl-tin">受注合計・税込</label><input type="text" id="f-tin" readonly style="background:var(--bl-bg);color:#0A2D6A;font-weight:500"></div>
+        <div class="fg"><label id="lbl-ap">発注単価・非課税（円）</label><input type="number" id="f-ap" oninput="calcAmt()"></div>
+        <div class="fg"><label id="lbl-at">発注合計・非課税</label><input type="text" id="f-at" readonly></div>
+        <div class="fg"><label id="lbl-mg">粗利（税込受注－発注）</label><input type="text" id="f-mg" readonly style="background:var(--bl-bg);color:#0A2D6A;font-weight:500"></div>
+        <div class="fg"><label id="lbl-mp">粗利率</label><input type="text" id="f-mp" readonly style="background:var(--bl-bg);color:#0A2D6A;font-weight:500"></div>
+        <hr class="sep"><div class="slbl" id="slbl-cuts">カット番号（受注時に一括入力）</div>
+        <div class="s4">
+          <div class="cbox">
+            <div class="cbox-lbl">✂ <span id="cbox-lbl-txt">カット番号を一括入力</span></div>
+            <div class="cbox-hint" id="cbox-hint">カンマ区切り：C001, C002　／　連番（チルダ）：001~100<br>兼用カット（ハイフンまたは_）：243-247=2件, 278-285-295=3件</div>
+            <div class="cbox-row">
+              <input type="text" id="f-cuts" placeholder="例：C001~C020, 243-247, 278-285-295">
+              <span class="climit" id="cut-limit"></span>
             </div>
+            <div id="cut-preview" style="margin-top:6px;font-size:12px;color:var(--bl)"></div>
           </div>
-          <div class="fg"><label>担当者</label>
-            <div class="combo-wrap">
-              <input class="combo-input" type="text" id="f-contact" placeholder="担当者名を入力または選択" autocomplete="off"
-                oninput="filterCombo('contact')" onfocus="openCombo('contact')" onblur="delayClose('contact')">
-              <span class="combo-arr">▾</span>
-              <div class="combo-dd" id="dd-contact"></div>
-            </div>
-          </div>
-          <div class="fg"></div>
-          <div class="fg s2"><label>作品タイトル</label>
-            <div class="combo-wrap">
-              <input class="combo-input" type="text" id="f-title" placeholder="タイトルを入力または選択" autocomplete="off"
-                oninput="onTitleInput()" onfocus="openCombo('title')" onblur="delayClose('title')">
-              <span class="combo-arr">▾</span>
-              <div class="combo-dd" id="dd-title"></div>
-            </div>
-          </div>
-          <div class="fg"><label>略語 <span id="abbr-lbl" style="font-size:10px;color:var(--green);display:none">（自動）</span></label>
-            <input type="text" id="f-abbr" placeholder="例：TMS" maxlength="8"></div>
-          <div class="fg"><label>話数</label><input type="text" id="f-episode" placeholder="例：10 / PV" maxlength="4"></div>
-          <div class="fg s2"><label>作業工程</label>
-            <select id="f-process">
-              <option>LO</option><option>2G</option><option>LO作監</option><option>動画</option>
-              <option>仕上</option><option>動仕</option><option>BG</option>
-              <option>動画検査</option><option>仕上検査</option><option>その他</option>
-            </select>
-          </div>
-          <div class="fg"></div><div class="fg"></div>
-          <hr class="sep"><div class="slabel">受注・発注金額（受注は税抜入力）</div>
-          <div class="fg"><label>数量（カット数）</label><input type="number" id="f-qty" placeholder="0" min="1" oninput="calcAmt();updLimit()"></div>
-          <div class="fg"><label>受注単価・税抜（円）</label><input type="number" id="f-unit-price" placeholder="0" oninput="calcAmt()"></div>
-          <div class="fg"><label>受注合計・税抜</label><input type="text" id="f-tex" readonly placeholder="自動計算"></div>
-          <div class="fg"><label>受注合計・税込</label><input type="text" id="f-tin" readonly placeholder="自動計算" style="background:var(--blue-bg);color:#0A2D6A;font-weight:500"></div>
-          <div class="fg"><label>発注単価・非課税（円）</label><input type="number" id="f-at-price" placeholder="0" oninput="calcAmt()"></div>
-          <div class="fg"><label>発注合計・非課税</label><input type="text" id="f-at-total" readonly placeholder="自動計算"></div>
-          <div class="fg"><label>粗利（税込受注－発注）</label><input type="text" id="f-margin" readonly placeholder="自動計算" style="background:var(--green-bg);color:var(--green-dark);font-weight:500"></div>
-          <div class="fg"><label>粗利率</label><input type="text" id="f-mpct" readonly placeholder="自動計算" style="background:var(--green-bg);color:var(--green-dark);font-weight:500"></div>
-          <hr class="sep"><div class="slabel">カット番号（受注時に一括入力）</div>
-          <div class="s4">
-            <div class="cut-input-box">
-              <div class="ci-label">✂ カット番号を一括入力</div>
-              <div class="ci-hint">
-              カンマ区切り：C001, C002, C005<br>
-              連番（チルダ）：001~100 または 001～100<br>
-              兼用カット（ハイフンまたは_）：243-247=2件, 278-285-295=3件, 001_030=2件
-            </div>
-              <div class="ci-row">
-                <input type="text" id="f-cuts" placeholder="例：C001-C020 または C001, C003, C005">
-                <span class="cut-limit" id="cut-limit"></span>
-              </div>
-              <div id="cut-preview" style="margin-top:7px;font-size:12px;color:var(--green)"></div>
-            </div>
-          </div>
-          <hr class="sep"><div class="slabel">備考</div>
-          <div class="fg s4"><textarea id="f-note" rows="2" placeholder="備考・メモ"
-            style="font-size:13px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--r);resize:vertical;background:var(--surface);color:var(--text);width:100%;font-family:inherit"></textarea></div>
         </div>
-        <div class="form-footer">
-          <button class="btn danger" id="form-del-btn" onclick="deleteFromForm()" style="display:none;margin-right:auto">🗑 この受注を削除</button>
-          <button class="btn" onclick="cancelForm()">キャンセル</button>
-          <button class="btn primary" id="save-btn" onclick="saveOrder()">💾 保存</button>
-        </div>
+        <hr class="sep"><div class="slbl" id="slbl-note">備考</div>
+        <div class="fg s4"><textarea id="f-note" rows="2"
+          style="font-size:13px;padding:7px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);resize:vertical;background:var(--sur);color:var(--txt);width:100%"></textarea></div>
+      </div>
+      <div class="ffoot">
+        <button class="btn dng" id="btn-del-form" onclick="deleteFromForm()" style="display:none;margin-right:auto" id="btn-del-form-el">🗑 この受注を削除</button>
+        <button class="btn" onclick="cancelForm()" id="btn-cancel">キャンセル</button>
+        <button class="btn pri" onclick="saveOrder()" id="btn-save">💾 保存</button>
       </div>
     </div>
+  </div>
 
-    <!-- PROGRESS -->
-    <div class="view" id="view-progress">
-      <div class="lh" style="margin-bottom:.75rem">
-        <h2>カット進捗</h2>
-        <span style="font-size:12px;color:var(--text2)">完了カット数 ／ 受注カット数・納期近い順</span>
-      </div>
-      <div id="progress-body"></div>
+  <!-- PROGRESS -->
+  <div class="view" id="view-progress">
+    <div class="lh">
+      <h2 id="h-prog">カット進捗</h2>
+      <span style="font-size:12px;color:var(--txt2)" id="prog-sub">完了カット数 ／ 受注カット数・納期近い順</span>
     </div>
+    <div id="prog-body"></div>
+  </div>
 
-    <!-- GROUP -->
-    <div class="view" id="view-group">
-      <div class="group-ctrl">
-        <label>表示分類：</label>
-        <select id="grp-by" onchange="renderGroup()">
-          <option value="all">すべて</option>
-          <option value="orderMonth">受注月</option>
-          <option value="title">タイトル</option>
-          <option value="customer">顧客</option>
-        </select>
-        <select id="grp-sort" onchange="renderGroup()" style="font-size:13px;padding:6px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text)">
-          <option value="asc">古い順</option>
-          <option value="desc">新しい順</option>
-        </select>
-        <select id="grp-status" onchange="renderGroup()">
-          <option value="">すべてのステータス</option><option>受注済</option><option>進行中</option><option>納品済</option><option>請求済</option><option value="uninvoiced">未請求</option>
-        </select>
-        <button class="btn" onclick="printGroup()">🖨 印刷</button>
-      </div>
-      <div id="group-body"></div>
+  <!-- GROUP -->
+  <div class="view" id="view-group">
+    <div class="gc">
+      <label id="lbl-grp">表示分類：</label>
+      <select id="grp-by" onchange="renderGroup()">
+        <option value="all" id="go-all">すべて</option>
+        <option value="orderMonth" id="go-month">受注月</option>
+        <option value="title" id="go-title">タイトル</option>
+        <option value="customer" id="go-cust">顧客</option>
+      </select>
+      <select id="grp-sort" onchange="renderGroup()">
+        <option value="asc" id="go-asc">古い順</option>
+        <option value="desc" id="go-desc">新しい順</option>
+      </select>
+      <select id="grp-flt" onchange="renderGroup()">
+        <option value="" id="go-fall">すべてのステータス</option>
+        <option id="go-for">受注済</option>
+        <option id="go-fwip">進行中</option>
+        <option id="go-fdn">納品済</option>
+        <option id="go-fiv">請求済</option>
+        <option value="uninvoiced" id="go-fun">未請求</option>
+      </select>
+      <button class="btn" onclick="printGroup()" id="btn-print">🖨 印刷</button>
     </div>
+    <div id="grp-body"></div>
+  </div>
 
-    <!-- DETAIL -->
-    <div class="view" id="view-detail">
-      <div class="detail-hd">
-        <button class="back-btn" onclick="showView('list')">← 一覧へ</button>
-        <div style="flex:1"></div>
-        <div id="d-due-warn"></div>
-        <div id="d-pill"></div>
+  <!-- DETAIL -->
+  <div class="view" id="view-detail">
+    <div class="dhd">
+      <button class="back" onclick="showView('list')" id="btn-back">← 一覧へ</button>
+      <div style="flex:1"></div>
+      <div id="d-due"></div>
+      <div id="d-pill"></div>
+    </div>
+    <div id="d-banner" style="margin-bottom:1rem"></div>
+    <div class="sumrow" id="d-sum"></div>
+    <div class="igrid" id="d-info"></div>
+    <div class="csec">
+      <div class="csec-hd">
+        <h3 id="h-cut">✂ カット進捗</h3>
+        <span id="cut-prog-txt" style="font-size:12px;color:var(--txt2)"></span>
+        <button class="btn sm" onclick="markAll()" id="btn-alldone">全完了</button>
       </div>
-      <div id="d-banner" style="margin-bottom:1rem"></div>
-      <div class="sum-row" id="d-sum"></div>
-      <div class="info-grid" id="d-info"></div>
-      <div class="cut-section">
-        <div class="cut-sec-hd">
-          <h3>✂ カット進捗</h3>
-          <span id="cut-prog-txt" style="font-size:12px;color:var(--text2)"></span>
-          <button class="btn sm" onclick="markAll()">全完了</button>
-        </div>
-        <div class="prog-wrap">
-          <div class="prog-label"><span>進捗（完了 ／ 受注カット数）</span><span id="d-prog-pct">0%</span></div>
-          <div class="prog-bar"><div class="prog-fill" id="d-prog-fill" style="width:0%"></div></div>
-        </div>
-        <div class="cut-grid" id="cut-grid"></div>
-        <div style="font-size:12px;color:var(--text3);margin-top:8px">カードをクリックで完了 ／ 未完了を切り替え</div>
+      <div class="pbar">
+        <div class="pbar-lbl"><span id="prog-lbl">進捗（完了 ／ 受注カット数）</span><span id="d-prog-pct">0%</span></div>
+        <div class="pbar-bg"><div class="pbar-fill" id="d-prog-fill" style="width:0%"></div></div>
       </div>
-      <div class="form-card">
-        <div class="form-card-title">🚚 納品・請求ステータス</div>
-        <div class="fgrid g4">
-          <div class="fg"><label>納品日</label><input type="date" id="d-del" onchange="saveDates()"></div>
-          <div class="fg"><label>請求日</label><input type="date" id="d-inv" onchange="saveDates()"></div>
-          <div class="fg s2"><label>ステータス</label>
-            <select id="d-status" onchange="saveDates()">
-              <option>受注済</option><option>進行中</option><option>納品済</option><option>請求済</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button class="btn danger" onclick="deleteOrder()">🗑 削除</button>
-        <button class="btn" onclick="editOrder()">✏ 編集</button>
+      <div class="cgrid" id="cut-grid"></div>
+      <div style="font-size:12px;color:var(--txt3);margin-top:8px" id="cut-hint">カードをクリックで完了 ／ 未完了を切り替え</div>
+    </div>
+    <div class="fcard">
+      <div class="fttl" id="d-del-ttl">🚚 納品・請求ステータス</div>
+      <div class="fgrid g4">
+        <div class="fg"><label id="lbl-deldl">納品日</label><input type="date" id="d-del" onchange="saveDates()"></div>
+        <div class="fg"><label id="lbl-delinv">請求日</label><input type="date" id="d-inv" onchange="saveDates()"></div>
+        <div class="fg s2"><label id="lbl-delst">ステータス</label>
+          <select id="d-st" onchange="saveDates()">
+            <option id="dst-or">受注済</option><option id="dst-wip">進行中</option>
+            <option id="dst-dn">納品済</option><option id="dst-iv">請求済</option>
+          </select></div>
       </div>
     </div>
-  </main>
-</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn dng" onclick="deleteOrder()" id="btn-del-det">🗑 削除</button>
+      <button class="btn" onclick="editOrder()" id="btn-edit-det">✏ 編集</button>
+    </div>
+  </div>
+</main>
 
-<button class="top-btn" id="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="トップへ戻る">↑</button>
+<button class="topbtn" id="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 <div class="toast" id="toast"></div>
 
+<!-- Firebase compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
-const TAX=0.1;
-const COLORS=['#378ADD','#1A9B70','#7F77DD','#D85A30','#D4537E','#BA7517','#639922'];
-const BANNERS=[
-  {bg:'#E0ECFF',bd:'#80B0F0',tx:'#003A8C',tag:'#B0CDF8',tgt:'#003A8C'},   // ロゴブルー
-  {bg:'#FCEAF3',bd:'#E870AF',tx:'#7A0040',tag:'#F4B0D4',tgt:'#7A0040'},   // ロゴピンク
-  {bg:'#EAF4FF',bd:'#60A0E8',tx:'#003070',tag:'#A0C8F4',tgt:'#003070'},   // ライトブルー
-  {bg:'#FDF0F8',bd:'#E090C8',tx:'#600038',tag:'#F0C0E0',tgt:'#600038'},   // ライトピンク
-  {bg:'#E8F0FF',bd:'#7090D8',tx:'#182878',tag:'#B0C0F0',tgt:'#182878'},   // インディゴ
-  {bg:'#FFF0F8',bd:'#D878B0',tx:'#680048',tag:'#F0B8D8',tgt:'#680048'},   // ディープピンク
-];
-const BCOLS=['#0060E0','#E02080','#4080D0','#C01870','#2050C0','#D04090'];
+window.addEventListener('load', function() {
+// Firebase compat SDK loaded above
 
-let GAS_URL='', orders=[], masters={customers:[],titles:[]}, cutsCache={};
-let currentId=null, editingId=null;
+// ============================================================
+// Firebase 設定
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyAZeqQadzeU6YaArxk40t_2GnMMMk20qp8",
+  authDomain: "anime-kanri.firebaseapp.com",
+  databaseURL: "https://anime-kanri-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "anime-kanri",
+  storageBucket: "anime-kanri.firebasestorage.app",
+  messagingSenderId: "774896632570",
+  appId: "1:774896632570:web:bd0aa7d66682e892037f43"
+};
+const app = firebase.initializeApp(firebaseConfig);
+const db  = firebase.database();
 
-/* ===== SETUP ===== */
-function init(){
-  const saved=localStorage.getItem('animeGasUrl');
-  if(saved){GAS_URL=saved;document.getElementById('gas-url-input').value=saved;startApp();}
+// ============================================================
+// 状態
+// ============================================================
+let orders  = [];
+let masters = { customers: [], titles: [] };
+let cutsRawCache = {};
+let currentId  = null;
+let editingId  = null;
+let currentLang = localStorage.getItem('animeLang') || 'ja';
+const TAX = 0.10;
+
+// ============================================================
+// 初期データ（Firebaseが空の場合のみ投入）
+// ============================================================
+const INIT_ORDERS  = [{"id":"imp0000","title":"ゴーストコンサート","abbr":"GC","episode":"9","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"","dueDate":"","deliveryDate":"2025-12-24","invoiceDate":"2025-12-31","qty":27,"unitPrice":3000,"totalPriceEx":81000,"totalPriceIn":89100,"atUnitPrice":0,"atTotalPrice":0,"margin":89100,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0001","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2025-12-03","dueDate":"","deliveryDate":"2025-12-26","invoiceDate":"2025-12-31","qty":52,"unitPrice":4000,"totalPriceEx":208000,"totalPriceIn":228800,"atUnitPrice":0,"atTotalPrice":0,"margin":228800,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0002","title":"マジハロ","abbr":"MH9","episode":"","process":"2G","customer":"魁","contact":"深澤","orderDate":"","dueDate":"","deliveryDate":"","invoiceDate":"2025-12-31","qty":5,"unitPrice":7000,"totalPriceEx":35000,"totalPriceIn":38500,"atUnitPrice":0,"atTotalPrice":0,"margin":38500,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0003","title":"マジハロ","abbr":"MH9","episode":"","process":"動仕","customer":"魁","contact":"深澤","orderDate":"","dueDate":"","deliveryDate":"","invoiceDate":"2025-12-31","qty":185,"unitPrice":500,"totalPriceEx":92500,"totalPriceIn":101750,"atUnitPrice":0,"atTotalPrice":0,"margin":101750,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0004","title":"邪心ちゃんドロップキック","abbr":"","episode":"","process":"2G","customer":"魁","contact":"深澤","orderDate":"","dueDate":"","deliveryDate":"","invoiceDate":"2025-12-31","qty":34,"unitPrice":7000,"totalPriceEx":238000,"totalPriceIn":261800,"atUnitPrice":0,"atTotalPrice":0,"margin":261800,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0005","title":"邪心ちゃんドロップキック","abbr":"","episode":"","process":"動仕","customer":"魁","contact":"深澤","orderDate":"","dueDate":"","deliveryDate":"","invoiceDate":"2025-12-31","qty":474,"unitPrice":500,"totalPriceEx":237000,"totalPriceIn":260700,"atUnitPrice":0,"atTotalPrice":0,"margin":260700,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0006","title":"ゴーストコンサート","abbr":"GC","episode":"7","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-15","dueDate":"2026-01-16","deliveryDate":"2026-01-12","invoiceDate":"2026-01-31","qty":12,"unitPrice":5500,"totalPriceEx":66000,"totalPriceIn":72600,"atUnitPrice":0,"atTotalPrice":0,"margin":72600,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0007","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-15","dueDate":"2026-01-16","deliveryDate":"2026-01-21","invoiceDate":"2026-01-31","qty":50,"unitPrice":5500,"totalPriceEx":275000,"totalPriceIn":302500,"atUnitPrice":0,"atTotalPrice":0,"margin":302500,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0008","title":"ゴーストコンサート","abbr":"GC","episode":"9","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"","dueDate":"","deliveryDate":"2026-01-30","invoiceDate":"2026-01-31","qty":30,"unitPrice":3000,"totalPriceEx":90000,"totalPriceIn":99000,"atUnitPrice":0,"atTotalPrice":0,"margin":99000,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0009","title":"狂乱令嬢ニア・リストン","abbr":"","episode":"5","process":"LO","customer":"Brave Pictures","contact":"萩本","orderDate":"2025-12-21","dueDate":"2025-12-26","deliveryDate":"2025-12-26","invoiceDate":"2026-01-31","qty":19,"unitPrice":3000,"totalPriceEx":57000,"totalPriceIn":62700,"atUnitPrice":0,"atTotalPrice":0,"margin":62700,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0010","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"","dueDate":"2026-01-31","deliveryDate":"2026-01-21","invoiceDate":"2026-01-31","qty":60,"unitPrice":5500,"totalPriceEx":330000,"totalPriceIn":363000,"atUnitPrice":0,"atTotalPrice":0,"margin":363000,"marginPct":100,"note":"C143 ~C275 ","status":"請求済","cuts":[]},{"id":"imp0011","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"","dueDate":"","deliveryDate":"2026-03-29","invoiceDate":"2026-02-28","qty":3,"unitPrice":4000,"totalPriceEx":12000,"totalPriceIn":13200,"atUnitPrice":3400,"atTotalPrice":10200,"margin":3000,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0012","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-03-30","deliveryDate":"2026-01-28","invoiceDate":"2026-02-28","qty":9,"unitPrice":5000,"totalPriceEx":45000,"totalPriceIn":49500,"atUnitPrice":0,"atTotalPrice":0,"margin":49500,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0013","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-03-30","deliveryDate":"2026-02-02","invoiceDate":"2026-02-28","qty":16,"unitPrice":5000,"totalPriceEx":80000,"totalPriceIn":88000,"atUnitPrice":0,"atTotalPrice":0,"margin":88000,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0014","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-03-30","deliveryDate":"2026-02-10","invoiceDate":"2026-02-28","qty":24,"unitPrice":5000,"totalPriceEx":120000,"totalPriceIn":132000,"atUnitPrice":0,"atTotalPrice":0,"margin":132000,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0015","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-03-30","deliveryDate":"2026-02-13","invoiceDate":"2026-02-28","qty":11,"unitPrice":5000,"totalPriceEx":55000,"totalPriceIn":60500,"atUnitPrice":0,"atTotalPrice":0,"margin":60500,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0016","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-03-30","deliveryDate":"2026-02-26","invoiceDate":"2026-02-28","qty":31,"unitPrice":5000,"totalPriceEx":155000,"totalPriceIn":170500,"atUnitPrice":0,"atTotalPrice":0,"margin":170500,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0017","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-03-30","deliveryDate":"2026-02-28","invoiceDate":"2026-02-28","qty":13,"unitPrice":5000,"totalPriceEx":65000,"totalPriceIn":71500,"atUnitPrice":0,"atTotalPrice":0,"margin":71500,"marginPct":100,"note":"","status":"請求済","cuts":[]},{"id":"imp0018","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2025-12-03","dueDate":"","deliveryDate":"2026-02-02","invoiceDate":"2026-02-28","qty":13,"unitPrice":4000,"totalPriceEx":52000,"totalPriceIn":57200,"atUnitPrice":0,"atTotalPrice":0,"margin":57200,"marginPct":100,"note":"シーン014(238_242,240,241)、横堀(0010_1,0010_2) シーン07(093),08(072,075,076,077,078,079)","status":"請求済","cuts":[]},{"id":"imp0019","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2025-12-22","dueDate":"","deliveryDate":"2026-02-03","invoiceDate":"2026-02-28","qty":45,"unitPrice":4000,"totalPriceEx":180000,"totalPriceIn":198000,"atUnitPrice":0,"atTotalPrice":0,"margin":198000,"marginPct":100,"note":"01(002),02(006),03(019,020,023,025A,090,091,092), 04(027),05(029,030,036,037,039),06(040,041,043), 08(066,069,070,071,073,086_088),010(094,095,096,097,099,100,102,103_217,104),011(191,228,229,230),013(219,220),014(238_242,240,241)","status":"請求済","cuts":[]},{"id":"imp0020","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-02-03","dueDate":"","deliveryDate":"2026-02-07","invoiceDate":"2026-02-28","qty":8,"unitPrice":4000,"totalPriceEx":32000,"totalPriceIn":35200,"atUnitPrice":0,"atTotalPrice":0,"margin":35200,"marginPct":100,"note":"シーン013(223-225,231,232,233,234,235,236)","status":"請求済","cuts":[]},{"id":"imp0021","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-02-03","dueDate":"","deliveryDate":"2026-02-08","invoiceDate":"2026-02-28","qty":7,"unitPrice":4000,"totalPriceEx":28000,"totalPriceIn":30800,"atUnitPrice":0,"atTotalPrice":0,"margin":30800,"marginPct":100,"note":"シーン017(055,056,057,058,059,060,063)","status":"請求済","cuts":[]},{"id":"imp0022","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-02-09","dueDate":"2026-02-11","deliveryDate":"2026-02-13","invoiceDate":"2026-02-28","qty":3,"unitPrice":4000,"totalPriceEx":12000,"totalPriceIn":13200,"atUnitPrice":0,"atTotalPrice":0,"margin":13200,"marginPct":100,"note":" シーン06、シーン015。早くても2/12Up←OK。 042,245,246","status":"請求済","cuts":[]},{"id":"imp0023","title":"ゴーストコンサート","abbr":"GC","episode":"9","process":"2G","customer":"PartsCraft","contact":"鈴木","orderDate":"2026-01-30","dueDate":"2026-02-04","deliveryDate":"2026-02-09","invoiceDate":"2026-02-28","qty":2,"unitPrice":3000,"totalPriceEx":6000,"totalPriceIn":6600,"atUnitPrice":0,"atTotalPrice":0,"margin":6600,"marginPct":100,"note":"c169,c171","status":"請求済","cuts":[]},{"id":"imp0024","title":"踊る千年家族","abbr":"OSK","episode":"2","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2026-01-09","dueDate":"2026-02-13","deliveryDate":"2026-02-10","invoiceDate":"2026-02-28","qty":4,"unitPrice":3000,"totalPriceEx":12000,"totalPriceIn":13200,"atUnitPrice":0,"atTotalPrice":0,"margin":13200,"marginPct":100,"note":"C097-C100","status":"請求済","cuts":[]},{"id":"imp0025","title":"ゴーストコンサート","abbr":"GC","episode":"9","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-01-27","dueDate":"2026-02-07","deliveryDate":"2026-02-08","invoiceDate":"2026-02-28","qty":10,"unitPrice":3000,"totalPriceEx":30000,"totalPriceIn":33000,"atUnitPrice":0,"atTotalPrice":0,"margin":33000,"marginPct":100,"note":"C016は5000円、C022は10,000円,GIGA便にてUp","status":"請求済","cuts":[]},{"id":"imp0026","title":"遊技機（D63)","abbr":"TY","episode":"8","process":"BG","customer":"GROM","contact":"赤嶺","orderDate":"2026-02-03","dueDate":"2026-02-13","deliveryDate":"2026-02-13","invoiceDate":"2026-02-28","qty":5,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"","status":"請求済","cuts":[]},{"id":"imp0027","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-02-26","dueDate":"2026-03-02","deliveryDate":"2026-02-28","invoiceDate":"2026-02-28","qty":2,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"横堀_0015,_0016","status":"請求済","cuts":[]},{"id":"imp0028","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-02-16","dueDate":"2026-03-02","deliveryDate":"2026-03-02","invoiceDate":"2026-03-31","qty":30,"unitPrice":2500,"totalPriceEx":75000,"totalPriceIn":82500,"atUnitPrice":2125,"atTotalPrice":63750,"margin":18750,"marginPct":22.7,"note":"スケジュール詳細は20日までに連絡→3月2日まで、他カットは23日以降戻し見込み→20日受領3月2日まで","status":"請求済","cuts":[]},{"id":"imp0029","title":"幻想水滸伝","abbr":"GS","episode":"1","process":"LO","customer":"NK.PANDA","contact":"市原","orderDate":"2026-02-09","dueDate":"2026-03-11","deliveryDate":"2026-03-09","invoiceDate":"2026-03-09","qty":10,"unitPrice":3500,"totalPriceEx":35000,"totalPriceIn":38500,"atUnitPrice":2900,"atTotalPrice":29000,"margin":9500,"marginPct":24.7,"note":"Hパート（シーン28）のみ","status":"請求済","cuts":[]},{"id":"imp0030","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-02-26","dueDate":"2026-03-08","deliveryDate":"2026-03-06","invoiceDate":"2026-03-31","qty":8,"unitPrice":2500,"totalPriceEx":20000,"totalPriceIn":22000,"atUnitPrice":2125,"atTotalPrice":17000,"margin":5000,"marginPct":22.7,"note":"「GC_10_原画作業素材-0226」276,277,278,279,280,281,283,284","status":"請求済","cuts":[]},{"id":"imp0031","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-03-30","deliveryDate":"2026-03-02","invoiceDate":"2026-03-31","qty":14,"unitPrice":5000,"totalPriceEx":70000,"totalPriceIn":77000,"atUnitPrice":4250,"atTotalPrice":59500,"margin":17500,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0032","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-03-30","deliveryDate":"2026-03-06","invoiceDate":"2026-03-31","qty":10,"unitPrice":5000,"totalPriceEx":50000,"totalPriceIn":55000,"atUnitPrice":4250,"atTotalPrice":42500,"margin":12500,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0033","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-03-30","deliveryDate":"2026-03-09","invoiceDate":"2026-03-31","qty":20,"unitPrice":5000,"totalPriceEx":100000,"totalPriceIn":110000,"atUnitPrice":4250,"atTotalPrice":85000,"margin":25000,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0034","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-03-30","deliveryDate":"2026-03-11","invoiceDate":"2026-03-31","qty":16,"unitPrice":5000,"totalPriceEx":80000,"totalPriceIn":88000,"atUnitPrice":4250,"atTotalPrice":68000,"margin":20000,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0035","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-03-30","deliveryDate":"2026-03-16","invoiceDate":"2026-03-31","qty":18,"unitPrice":5000,"totalPriceEx":90000,"totalPriceIn":99000,"atUnitPrice":4250,"atTotalPrice":76500,"margin":22500,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0036","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-03-30","deliveryDate":"2026-03-18","invoiceDate":"2026-03-31","qty":16,"unitPrice":5000,"totalPriceEx":80000,"totalPriceIn":88000,"atUnitPrice":4250,"atTotalPrice":68000,"margin":20000,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0037","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-03-30","deliveryDate":"2026-03-20","invoiceDate":"2026-03-31","qty":20,"unitPrice":5000,"totalPriceEx":100000,"totalPriceIn":110000,"atUnitPrice":4250,"atTotalPrice":85000,"margin":25000,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0038","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-03-30","deliveryDate":"2026-03-26","invoiceDate":"2026-03-31","qty":15,"unitPrice":5000,"totalPriceEx":75000,"totalPriceIn":82500,"atUnitPrice":4250,"atTotalPrice":63750,"margin":18750,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0039","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2026-03-05","dueDate":"2026-03-17","deliveryDate":"2026-03-17","invoiceDate":"2026-03-31","qty":13,"unitPrice":2000,"totalPriceEx":26000,"totalPriceIn":28600,"atUnitPrice":1700,"atTotalPrice":22100,"margin":6500,"marginPct":22.7,"note":"「GC_10_原画作監入れ素材-0305」、8カットup3/11、5カット","status":"請求済","cuts":[]},{"id":"imp0040","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-03-06","dueDate":"2026-03-11","deliveryDate":"2026-03-13","invoiceDate":"2026-03-31","qty":1,"unitPrice":2500,"totalPriceEx":2500,"totalPriceIn":2750,"atUnitPrice":2125,"atTotalPrice":2125,"margin":625,"marginPct":22.7,"note":"「GC_10_原画作業素材-0306」159,160","status":"請求済","cuts":[]},{"id":"imp0041","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-03-03","dueDate":"2026-03-09","deliveryDate":"2026-03-09","invoiceDate":"2026-03-27","qty":16,"unitPrice":4000,"totalPriceEx":64000,"totalPriceIn":70400,"atUnitPrice":3400,"atTotalPrice":54400,"margin":16000,"marginPct":22.7,"note":"佐藤パート５、清水パート","status":"請求済","cuts":[]},{"id":"imp0042","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-03-10","dueDate":"2026-03-13","deliveryDate":"2026-03-16","invoiceDate":"2026-03-27","qty":7,"unitPrice":4000,"totalPriceEx":28000,"totalPriceIn":30800,"atUnitPrice":3400,"atTotalPrice":23800,"margin":7000,"marginPct":22.7,"note":"Google Drive 0310","status":"請求済","cuts":[]},{"id":"imp0043","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-03-10","dueDate":"2026-03-15","deliveryDate":"2026-03-10","invoiceDate":"2026-03-31","qty":2,"unitPrice":2500,"totalPriceEx":5000,"totalPriceIn":5500,"atUnitPrice":2125,"atTotalPrice":4250,"margin":1250,"marginPct":22.7,"note":"「GC_10_282_los」","status":"請求済","cuts":[]},{"id":"imp0044","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2026-03-10","dueDate":"2026-03-15","deliveryDate":"2026-03-11","invoiceDate":"2026-03-31","qty":8,"unitPrice":2000,"totalPriceEx":16000,"totalPriceIn":17600,"atUnitPrice":1700,"atTotalPrice":13600,"margin":4000,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0045","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-03-11","dueDate":"2026-03-16","deliveryDate":"2026-03-16","invoiceDate":"2026-03-31","qty":5,"unitPrice":2500,"totalPriceEx":12500,"totalPriceIn":13750,"atUnitPrice":2125,"atTotalPrice":10625,"margin":3125,"marginPct":22.7,"note":"GC_10_原画作業素材-0311-サイネージワークス様","status":"請求済","cuts":[]},{"id":"imp0046","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-03-11","dueDate":"2026-03-16","deliveryDate":"2026-03-18","invoiceDate":"2026-03-31","qty":5,"unitPrice":7500,"totalPriceEx":37500,"totalPriceIn":41250,"atUnitPrice":6375,"atTotalPrice":31875,"margin":9375,"marginPct":22.7,"note":"GC_10_200_los","status":"請求済","cuts":[]},{"id":"imp0047","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2026-03-11","dueDate":"2026-03-13","deliveryDate":"2026-03-13","invoiceDate":"2026-03-31","qty":1,"unitPrice":2000,"totalPriceEx":2000,"totalPriceIn":2200,"atUnitPrice":1700,"atTotalPrice":1700,"margin":500,"marginPct":22.7,"note":"GC_10_148_ge","status":"請求済","cuts":[]},{"id":"imp0048","title":"PA(パーフェクトアディッション）","abbr":"KMH","episode":"1","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-03-09","dueDate":"2026-03-13","deliveryDate":"2026-03-12","invoiceDate":"2026-03-27","qty":5,"unitPrice":1800,"totalPriceEx":9000,"totalPriceIn":9900,"atUnitPrice":1530,"atTotalPrice":7650,"margin":2250,"marginPct":22.7,"note":"260312_PA_BG_059,060,061,062,067","status":"請求済","cuts":[]},{"id":"imp0049","title":"H Project4","abbr":"M4","episode":"","process":"BG","customer":"ルナデジ","contact":"高原","orderDate":"2026-03-19","dueDate":"2026-03-22","deliveryDate":"2026-03-22","invoiceDate":"2026-03-31","qty":1,"unitPrice":8500,"totalPriceEx":8500,"totalPriceIn":9350,"atUnitPrice":7225,"atTotalPrice":7225,"margin":2125,"marginPct":22.7,"note":"受領の返信有り","status":"請求済","cuts":[]},{"id":"imp0050","title":"ナルト","abbr":"NAA","episode":"PA","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-03-19","dueDate":"2026-03-24","deliveryDate":"2026-03-25","invoiceDate":"2026-03-27","qty":10,"unitPrice":4000,"totalPriceEx":40000,"totalPriceIn":44000,"atUnitPrice":3400,"atTotalPrice":34000,"margin":10000,"marginPct":22.7,"note":"艶_001_ラフ～","status":"請求済","cuts":[]},{"id":"imp0051","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-03-19","dueDate":"2026-03-23","deliveryDate":"2026-03-21","invoiceDate":"2026-03-31","qty":2,"unitPrice":2500,"totalPriceEx":5000,"totalPriceIn":5500,"atUnitPrice":2125,"atTotalPrice":4250,"margin":1250,"marginPct":22.7,"note":"GC_10_原画作業素材-0319,041,046","status":"請求済","cuts":[]},{"id":"imp0052","title":"WIND BREAKER","abbr":"FURN","episode":"","process":"動仕","customer":"PartsCraft","contact":"高橋","orderDate":"2026-03-21","dueDate":"2026-03-23","deliveryDate":"2026-03-24","invoiceDate":"2026-03-31","qty":11,"unitPrice":1980,"totalPriceEx":21780,"totalPriceIn":23958,"atUnitPrice":1530,"atTotalPrice":16830,"margin":7128,"marginPct":29.8,"note":"Furin動画入素材","status":"請求済","cuts":[]},{"id":"imp0053","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-03-21","dueDate":"2026-03-25","deliveryDate":"2026-03-25","invoiceDate":"2026-03-31","qty":1,"unitPrice":6000,"totalPriceEx":6000,"totalPriceIn":6600,"atUnitPrice":5100,"atTotalPrice":5100,"margin":1500,"marginPct":22.7,"note":"C053","status":"請求済","cuts":[]},{"id":"imp0054","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-03-21","dueDate":"2026-03-24","deliveryDate":"2026-03-24","invoiceDate":"2026-03-31","qty":2,"unitPrice":3000,"totalPriceEx":6000,"totalPriceIn":6600,"atUnitPrice":2550,"atTotalPrice":5100,"margin":1500,"marginPct":22.7,"note":"「GC_10_原画作業素材-0321」C047、C055","status":"請求済","cuts":[]},{"id":"imp0055","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-03-24","dueDate":"2026-03-28","deliveryDate":"2026-03-26","invoiceDate":"2026-03-27","qty":17,"unitPrice":4000,"totalPriceEx":68000,"totalPriceIn":74800,"atUnitPrice":3400,"atTotalPrice":57800,"margin":17000,"marginPct":22.7,"note":"佐藤05,18　横堀18　清水27","status":"請求済","cuts":[]},{"id":"imp0056","title":"狂乱令嬢ニアリストン","abbr":"NIA","episode":"5","process":"2G","customer":"Brae Pictures","contact":"萩本","orderDate":"2026-03-24","dueDate":"2026-03-28","deliveryDate":"2026-03-28","invoiceDate":"2026-03-31","qty":6,"unitPrice":3000,"totalPriceEx":18000,"totalPriceIn":19800,"atUnitPrice":2550,"atTotalPrice":15300,"margin":4500,"marginPct":22.7,"note":"C108,113,114,115,121,122","status":"請求済","cuts":[]},{"id":"imp0057","title":"WIND BREAKER","abbr":"FURN","episode":"","process":"動仕","customer":"PartsCraft","contact":"高橋","orderDate":"2026-03-25","dueDate":"2026-03-26","deliveryDate":"2026-03-28","invoiceDate":"2026-03-31","qty":178,"unitPrice":1980,"totalPriceEx":352440,"totalPriceIn":387684,"atUnitPrice":1530,"atTotalPrice":272340,"margin":115344,"marginPct":29.8,"note":"28日24時まで適宜納品、260327(3c),260328(178)","status":"請求済","cuts":[]},{"id":"imp0058","title":"WIND BREAKER","abbr":"FURN","episode":"","process":"動仕","customer":"PartsCraft","contact":"高橋","orderDate":"2026-03-25","dueDate":"2026-03-29","deliveryDate":"2026-03-29","invoiceDate":"2026-03-31","qty":251,"unitPrice":1300,"totalPriceEx":326300,"totalPriceIn":358930,"atUnitPrice":1530,"atTotalPrice":384030,"margin":-25100,"marginPct":-7,"note":"","status":"請求済","cuts":[]},{"id":"imp0059","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-03-26","dueDate":"2026-03-28","deliveryDate":"2026-03-29","invoiceDate":"2026-04-28","qty":6,"unitPrice":4000,"totalPriceEx":24000,"totalPriceIn":26400,"atUnitPrice":3400,"atTotalPrice":20400,"margin":6000,"marginPct":22.7,"note":"佐藤051、横堀018-019","status":"請求済","cuts":[]},{"id":"imp0062","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-03-27","dueDate":"2026-03-31","deliveryDate":"2026-03-28","invoiceDate":"2026-04-30","qty":3,"unitPrice":4000,"totalPriceEx":12000,"totalPriceIn":13200,"atUnitPrice":3400,"atTotalPrice":10200,"margin":3000,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0063","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-03-27","dueDate":"2026-03-31","deliveryDate":"2026-03-30","invoiceDate":"2026-04-30","qty":4,"unitPrice":4000,"totalPriceEx":16000,"totalPriceIn":17600,"atUnitPrice":3400,"atTotalPrice":13600,"margin":4000,"marginPct":22.7,"note":"←艶(003,004,005,006)","status":"請求済","cuts":[]},{"id":"imp0064","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-04-01","dueDate":"2026-04-03","deliveryDate":"2026-04-03","invoiceDate":"2026-04-30","qty":5,"unitPrice":4000,"totalPriceEx":20000,"totalPriceIn":22000,"atUnitPrice":3400,"atTotalPrice":17000,"margin":5000,"marginPct":22.7,"note":"←260403_NAA_BG","status":"請求済","cuts":[]},{"id":"imp0065","title":"WDC","abbr":"WDC","episode":"","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-03-26","dueDate":"2026-04-01","deliveryDate":"2026-03-31","invoiceDate":"2026-04-30","qty":8,"unitPrice":4000,"totalPriceEx":32000,"totalPriceIn":35200,"atUnitPrice":3400,"atTotalPrice":27200,"margin":8000,"marginPct":22.7,"note":"←Google Drive0326-D1573","status":"請求済","cuts":[]},{"id":"imp0066","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2026-03-30","dueDate":"2026-04-09","deliveryDate":"2026-04-14","invoiceDate":"2026-04-30","qty":12,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"→OSK_06_LO作監素材-0330、第1便","status":"請求済","cuts":[]},{"id":"imp0067","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2026-04-02","dueDate":"","deliveryDate":"2026-04-22","invoiceDate":"2026-04-30","qty":17,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"←OSK_06_LO作監素材-0422","status":"請求済","cuts":[]},{"id":"imp0068","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2026-04-07","dueDate":"","deliveryDate":"","invoiceDate":"2026-04-30","qty":4,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"→OSK_06_LO作監素材-0407、第3便","status":"請求済","cuts":[]},{"id":"imp0069","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2026-04-21","dueDate":"","deliveryDate":"","invoiceDate":"2026-04-30","qty":34,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"→OSK_06_LO作監素材-0421、第4便","status":"請求済","cuts":[]},{"id":"imp0070","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2026-04-24","dueDate":"","deliveryDate":"2026-04-24","invoiceDate":"2026-04-30","qty":38,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"→OSK_06_LO作監素材-0424、第5便","status":"請求済","cuts":[]},{"id":"imp0071","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2026-04-24","dueDate":"","deliveryDate":"2026-05-22","invoiceDate":"2026-04-30","qty":25,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"","status":"請求済","cuts":[]},{"id":"imp0072","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"その他","customer":"PartsCraft","contact":"福西","orderDate":"2026-04-24","dueDate":"","deliveryDate":"","invoiceDate":"2026-04-30","qty":0,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"","status":"請求済","cuts":[]},{"id":"imp0073","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-04-05","deliveryDate":"2026-04-01","invoiceDate":"2026-04-30","qty":24,"unitPrice":5000,"totalPriceEx":120000,"totalPriceIn":132000,"atUnitPrice":4250,"atTotalPrice":102000,"margin":30000,"marginPct":22.7,"note":"←260401","status":"請求済","cuts":[]},{"id":"imp0074","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-04-05","deliveryDate":"2026-04-02","invoiceDate":"2026-04-30","qty":30,"unitPrice":5000,"totalPriceEx":150000,"totalPriceIn":165000,"atUnitPrice":4250,"atTotalPrice":127500,"margin":37500,"marginPct":22.7,"note":"←260402","status":"請求済","cuts":[]},{"id":"imp0075","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-04-05","deliveryDate":"2026-04-06","invoiceDate":"2026-04-30","qty":25,"unitPrice":5000,"totalPriceEx":125000,"totalPriceIn":137500,"atUnitPrice":4250,"atTotalPrice":106250,"margin":31250,"marginPct":22.7,"note":"←260405","status":"請求済","cuts":[]},{"id":"imp0076","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2025-12-11","dueDate":"2026-04-05","deliveryDate":"2026-04-07","invoiceDate":"2026-04-30","qty":9,"unitPrice":5000,"totalPriceEx":45000,"totalPriceIn":49500,"atUnitPrice":4250,"atTotalPrice":38250,"margin":11250,"marginPct":22.7,"note":"←260406　以上をもって上げ切り","status":"請求済","cuts":[]},{"id":"imp0077","title":"Canva","abbr":"","episode":"PV","process":"動仕","customer":"BravePicturtes","contact":"萩本","orderDate":"2026-04-04","dueDate":"2026-04-06","deliveryDate":"2026-04-06","invoiceDate":"2026-04-30","qty":14,"unitPrice":400,"totalPriceEx":5600,"totalPriceIn":6160,"atUnitPrice":340,"atTotalPrice":4760,"margin":1400,"marginPct":22.7,"note":"←260406_Canva#PV_doushi c14","status":"請求済","cuts":[]},{"id":"imp0078","title":"Canva","abbr":"","episode":"PV","process":"2G","customer":"BravePicturtes","contact":"萩本","orderDate":"2026-04-07","dueDate":"2026-04-08","deliveryDate":"2026-04-07","invoiceDate":"2026-04-30","qty":1,"unitPrice":4000,"totalPriceEx":4000,"totalPriceIn":4400,"atUnitPrice":3400,"atTotalPrice":3400,"margin":1000,"marginPct":22.7,"note":"←260407_Canva#PV_2gen_r c25","status":"請求済","cuts":[]},{"id":"imp0079","title":"Canva","abbr":"","episode":"PV","process":"動仕","customer":"BravePicturtes","contact":"萩本","orderDate":"2026-04-07","dueDate":"2026-04-08","deliveryDate":"2026-04-08","invoiceDate":"2026-04-30","qty":12,"unitPrice":400,"totalPriceEx":4800,"totalPriceIn":5280,"atUnitPrice":340,"atTotalPrice":4080,"margin":1200,"marginPct":22.7,"note":"←260408_Canva#PV_doushi c25","status":"請求済","cuts":[]},{"id":"imp0080","title":"Canva","abbr":"","episode":"PV","process":"動仕","customer":"BravePicturtes","contact":"萩本","orderDate":"2026-04-08","dueDate":"2026-04-08","deliveryDate":"2026-04-08","invoiceDate":"2026-04-30","qty":9,"unitPrice":400,"totalPriceEx":3600,"totalPriceIn":3960,"atUnitPrice":340,"atTotalPrice":3060,"margin":900,"marginPct":22.7,"note":"→260408_02_Canva#PV_doushi c28","status":"請求済","cuts":[]},{"id":"imp0081","title":"Gジェネレーション","abbr":"Black","episode":"Trial","process":"イラスト","customer":"ディッジ","contact":"伊波","orderDate":"2026-04-13","dueDate":"2026-04-15","deliveryDate":"2026-04-20","invoiceDate":"2026-04-30","qty":1,"unitPrice":25000,"totalPriceEx":25000,"totalPriceIn":27500,"atUnitPrice":21250,"atTotalPrice":21250,"margin":6250,"marginPct":22.7,"note":"→サイネージワークス_DH","status":"請求済","cuts":[]},{"id":"imp0082","title":"Gジェネレーション","abbr":"Black","episode":"","process":"イラスト","customer":"ディッジ","contact":"伊波","orderDate":"2026-04-23","dueDate":"2026-04-27","deliveryDate":"2026-04-27","invoiceDate":"2026-04-30","qty":13,"unitPrice":15000,"totalPriceEx":195000,"totalPriceIn":214500,"atUnitPrice":13000,"atTotalPrice":169000,"margin":45500,"marginPct":21.2,"note":"←https://drive.google.com/drive/folders/1EQePjuj9VZKvh3sz-2QgE81bqmsSK95S?usp=drive_link","status":"請求済","cuts":[]},{"id":"imp0083","title":"WIND BREAKER","abbr":"FURN","episode":"","process":"動仕","customer":"PartsCraft","contact":"高橋","orderDate":"2026-04-13","dueDate":"2026-04-14","deliveryDate":"2026-04-13","invoiceDate":"2026-04-30","qty":2,"unitPrice":570,"totalPriceEx":1140,"totalPriceIn":1254,"atUnitPrice":485,"atTotalPrice":970,"margin":284,"marginPct":22.6,"note":"→Giga便 FURN_FC_012b、←260413_FURN_doushi","status":"請求済","cuts":[]},{"id":"imp0084","title":"WIND BREAKER","abbr":"FURN","episode":"","process":"動仕","customer":"PartsCraft","contact":"高橋","orderDate":"2026-04-19","dueDate":"2026-04-21","deliveryDate":"2026-04-21","invoiceDate":"2026-04-30","qty":29,"unitPrice":570,"totalPriceEx":16530,"totalPriceIn":18183,"atUnitPrice":485,"atTotalPrice":14065,"margin":4118,"marginPct":22.6,"note":"→https://drive.google.com/drive/folders/1t1A2AaNlw248EiyCOKQzTz5H-WGNr_D2?usp=drive_link","status":"請求済","cuts":[]},{"id":"imp0085","title":"WIND BREAKER","abbr":"FURN","episode":"","process":"動仕","customer":"PartsCraft","contact":"高橋","orderDate":"2026-04-21","dueDate":"2026-04-23","deliveryDate":"2026-04-23","invoiceDate":"2026-04-30","qty":70,"unitPrice":570,"totalPriceEx":39900,"totalPriceIn":43890,"atUnitPrice":485,"atTotalPrice":33950,"margin":9940,"marginPct":22.6,"note":"","status":"請求済","cuts":[]},{"id":"imp0088","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2026-04-07","dueDate":"","deliveryDate":"2026-05-06","invoiceDate":"2026-05-31","qty":28,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"←","status":"請求済","cuts":[]},{"id":"imp0089","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2026-05-15","dueDate":"","deliveryDate":"2026-05-22","invoiceDate":"2026-05-31","qty":25,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"→LO作監素材-0515","status":"請求済","cuts":[]},{"id":"imp0090","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2026-05-22","dueDate":"","deliveryDate":"","invoiceDate":"2026-05-31","qty":12,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"→LO作監素材-0522","status":"請求済","cuts":[]},{"id":"imp0091","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2026-05-22","dueDate":"","deliveryDate":"","invoiceDate":"2026-05-31","qty":43,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"→LO作監素材-0522","status":"請求済","cuts":[]},{"id":"imp0092","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"原画","customer":"PartsCraft","contact":"福西","orderDate":"2026-05-18","dueDate":"","deliveryDate":"2026-05-28","invoiceDate":"2026-05-31","qty":8,"unitPrice":3500,"totalPriceEx":28000,"totalPriceIn":30800,"atUnitPrice":3000,"atTotalPrice":24000,"margin":6800,"marginPct":22.1,"note":"→原画入れ素材-0518","status":"請求済","cuts":[]},{"id":"imp0093","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"原画","customer":"PartsCraft","contact":"福西","orderDate":"2026-05-25","dueDate":"","deliveryDate":"2026-05-31","invoiceDate":"2026-05-31","qty":12,"unitPrice":3500,"totalPriceEx":42000,"totalPriceIn":46200,"atUnitPrice":3000,"atTotalPrice":36000,"margin":10200,"marginPct":22.1,"note":"→原画入れ素材-0525","status":"請求済","cuts":[]},{"id":"imp0094","title":"踊る千年家族","abbr":"OSK","episode":"7","process":"LO","customer":"PartsCraft","contact":"福西","orderDate":"2026-03-31","dueDate":"","deliveryDate":"2026-05-04","invoiceDate":"2026-05-31","qty":9,"unitPrice":3500,"totalPriceEx":31500,"totalPriceIn":34650,"atUnitPrice":3000,"atTotalPrice":27000,"margin":7650,"marginPct":22.1,"note":"作打無し、指示コンテ","status":"請求済","cuts":[]},{"id":"imp0095","title":"踊る千年家族","abbr":"OSK","episode":"7","process":"LO","customer":"PartsCraft","contact":"鈴木","orderDate":"2026-03-31","dueDate":"2026-05-11","deliveryDate":"2026-05-04","invoiceDate":"2026-05-31","qty":11,"unitPrice":3000,"totalPriceEx":33000,"totalPriceIn":36300,"atUnitPrice":2550,"atTotalPrice":28050,"margin":8250,"marginPct":22.7,"note":"→C215～","status":"請求済","cuts":[]},{"id":"imp0096","title":"踊る千年家族","abbr":"OSK","episode":"2","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-05-12","dueDate":"2026-05-12","deliveryDate":"2026-05-22","invoiceDate":"2026-05-31","qty":14,"unitPrice":2500,"totalPriceEx":35000,"totalPriceIn":38500,"atUnitPrice":2125,"atTotalPrice":29750,"margin":8750,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0097","title":"踊る千年家族","abbr":"OSK","episode":"2","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-05-26","dueDate":"2026-06-01","deliveryDate":"2026-05-31","invoiceDate":"2026-05-31","qty":12,"unitPrice":2500,"totalPriceEx":30000,"totalPriceIn":33000,"atUnitPrice":2125,"atTotalPrice":25500,"margin":7500,"marginPct":22.7,"note":"→OSK_02_g-0528、OSK_02_g-0526","status":"請求済","cuts":[]},{"id":"imp0098","title":"踊る千年家族","abbr":"OSK","episode":"2","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-05-26","dueDate":"","deliveryDate":"2026-05-30","invoiceDate":"2026-05-31","qty":5,"unitPrice":2500,"totalPriceEx":12500,"totalPriceIn":13750,"atUnitPrice":2125,"atTotalPrice":10625,"margin":3125,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0099","title":"踊る千年家族","abbr":"OSK","episode":"2","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-05-26","dueDate":"2026-06-01","deliveryDate":"2026-05-31","invoiceDate":"2026-05-31","qty":1,"unitPrice":5000,"totalPriceEx":5000,"totalPriceIn":5500,"atUnitPrice":4250,"atTotalPrice":4250,"margin":1250,"marginPct":22.7,"note":"C009のみ","status":"請求済","cuts":[]},{"id":"imp0100","title":"ゴーストコンサート","abbr":"GC","episode":"10","process":"動仕","customer":"PartsCraft","contact":"福西","orderDate":"2026-05-12","dueDate":"2026-05-14","deliveryDate":"2026-05-13","invoiceDate":"2026-05-31","qty":10,"unitPrice":380,"totalPriceEx":3800,"totalPriceIn":4180,"atUnitPrice":323,"atTotalPrice":3230,"margin":950,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0101","title":"ナルト","abbr":"","episode":"","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-05-15","dueDate":"2026-05-19","deliveryDate":"2026-05-18","invoiceDate":"2026-05-28","qty":7,"unitPrice":4000,"totalPriceEx":28000,"totalPriceIn":30800,"atUnitPrice":3400,"atTotalPrice":23800,"margin":7000,"marginPct":22.7,"note":"→シーン1~4","status":"請求済","cuts":[]},{"id":"imp0102","title":"ナルト","abbr":"","episode":"","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-05-15","dueDate":"2026-05-19","deliveryDate":"2026-05-19","invoiceDate":"2026-05-28","qty":9,"unitPrice":4000,"totalPriceEx":36000,"totalPriceIn":39600,"atUnitPrice":3400,"atTotalPrice":30600,"margin":9000,"marginPct":22.7,"note":"→シーン1~4","status":"請求済","cuts":[]},{"id":"imp0103","title":"ナルト","abbr":"","episode":"","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-05-15","dueDate":"2026-05-19","deliveryDate":"2026-05-19","invoiceDate":"2026-05-28","qty":5,"unitPrice":4000,"totalPriceEx":20000,"totalPriceIn":22000,"atUnitPrice":3400,"atTotalPrice":17000,"margin":5000,"marginPct":22.7,"note":"→シーン1~4","status":"請求済","cuts":[]},{"id":"imp0104","title":"ナルト","abbr":"","episode":"","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-05-18","dueDate":"2026-05-20","deliveryDate":"2026-05-21","invoiceDate":"2026-05-28","qty":5,"unitPrice":4000,"totalPriceEx":20000,"totalPriceIn":22000,"atUnitPrice":3400,"atTotalPrice":17000,"margin":5000,"marginPct":22.7,"note":"→シーン6","status":"請求済","cuts":[]},{"id":"imp0105","title":"ナルト","abbr":"","episode":"","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-05-25","dueDate":"2026-05-27","deliveryDate":"2026-05-28","invoiceDate":"2026-05-28","qty":3,"unitPrice":4000,"totalPriceEx":12000,"totalPriceIn":13200,"atUnitPrice":3400,"atTotalPrice":10200,"margin":3000,"marginPct":22.7,"note":"→シーン7入れきり","status":"請求済","cuts":[]},{"id":"imp0106","title":"CRESATA","abbr":"","episode":"PV","process":"BG","customer":"AGEMENT","contact":"植垣","orderDate":"2026-05-15","dueDate":"2026-05-27","deliveryDate":"2026-05-28","invoiceDate":"2026-05-28","qty":5,"unitPrice":10000,"totalPriceEx":50000,"totalPriceIn":55000,"atUnitPrice":8500,"atTotalPrice":42500,"margin":12500,"marginPct":22.7,"note":"元請けROCKET PANCH","status":"請求済","cuts":[]},{"id":"imp0107","title":"幻想水滸伝","abbr":"GS","episode":"1","process":"2G","customer":"NK.PANDA","contact":"市原","orderDate":"2026-05-18","dueDate":"2026-05-25","deliveryDate":"2026-05-25","invoiceDate":"2026-05-31","qty":12,"unitPrice":3000,"totalPriceEx":36000,"totalPriceIn":39600,"atUnitPrice":2550,"atTotalPrice":30600,"margin":9000,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0108","title":"幻想水滸伝","abbr":"GS","episode":"1","process":"2G","customer":"NK.PANDA","contact":"市原","orderDate":"2026-05-18","dueDate":"2026-05-25","deliveryDate":"2026-05-25","invoiceDate":"2026-05-31","qty":1,"unitPrice":6000,"totalPriceEx":6000,"totalPriceIn":6600,"atUnitPrice":5100,"atTotalPrice":5100,"margin":1500,"marginPct":22.7,"note":"GS01_S01-009_260316_LSのみ","status":"請求済","cuts":[]},{"id":"imp0109","title":"狂乱令嬢ニアリストン","abbr":"NIA","episode":"5","process":"2G","customer":"Brave Pictures","contact":"萩本","orderDate":"2026-05-19","dueDate":"2026-05-25","deliveryDate":"2026-05-25","invoiceDate":"2026-05-31","qty":9,"unitPrice":3000,"totalPriceEx":27000,"totalPriceIn":29700,"atUnitPrice":2550,"atTotalPrice":22950,"margin":6750,"marginPct":22.7,"note":"","status":"請求済","cuts":[]},{"id":"imp0112","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO作監","customer":"PartsCraft","contact":"福西","orderDate":"2026-04-07","dueDate":"","deliveryDate":"2026-06-01","invoiceDate":"","qty":17,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"","status":"納品済","cuts":[]},{"id":"imp0113","orderDate":"2026-06-05","dueDate":"","deliveryDate":"","invoiceDate":"","customer":"PartsCraft","contact":"福西","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"LO作監","qty":8,"unitPrice":0,"totalPriceEx":0,"totalPriceIn":0,"atUnitPrice":0,"atTotalPrice":0,"margin":0,"marginPct":null,"note":"","status":"受注済","cuts":[{"id":"069","done":false,"date":""},{"id":"070","done":false,"date":""},{"id":"071","done":false,"date":""},{"id":"072","done":false,"date":""},{"id":"073","done":false,"date":""},{"id":"074","done":false,"date":""},{"id":"075","done":false,"date":""},{"id":"076","done":false,"date":""}],"cutsRaw":"069~076"},{"id":"imp0114","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-06-03","dueDate":"","deliveryDate":"2026-06-03","invoiceDate":"","qty":7,"unitPrice":3500,"totalPriceEx":24500,"totalPriceIn":26950,"atUnitPrice":3000,"atTotalPrice":21000,"margin":5950,"marginPct":22.1,"note":"2.51891902132182e+19","status":"納品済","cuts":[],"cutsRaw":"025,189,190,213,218,229,233"},{"id":"imp0115","title":"踊る千年家族","abbr":"OSK","episode":"6","process":"2G","customer":"PartsCraft","contact":"福西","orderDate":"2026-06-03","dueDate":"","deliveryDate":"2026-06-05","invoiceDate":"","qty":18,"unitPrice":3500,"totalPriceEx":63000,"totalPriceIn":69300,"atUnitPrice":3000,"atTotalPrice":54000,"margin":15300,"marginPct":22.1,"note":"","status":"納品済","cuts":[],"cutsRaw":"012, 014, 016, 210, 219, 234, 240, 243-247, 264, 278-285-295, 282, 284-288-290-292"},{"id":"imp0116","title":"探偵はもう死んでいる2","abbr":"TMS","episode":"10","process":"LO","customer":"BravePictures","contact":"名古","orderDate":"2026-04-29","dueDate":"2026-06-10","deliveryDate":"","invoiceDate":"","qty":20,"unitPrice":3000,"totalPriceEx":60000,"totalPriceIn":66000,"atUnitPrice":2550,"atTotalPrice":51000,"margin":15000,"marginPct":22.7,"note":"","status":"受注済","cuts":[]},{"id":"imp0117","title":"幻想水滸伝","abbr":"GS","episode":"1","process":"2G","customer":"NK.PANDA","contact":"市原","orderDate":"2026-05-19","dueDate":"","deliveryDate":"2026-06-03","invoiceDate":"","qty":7,"unitPrice":3000,"totalPriceEx":21000,"totalPriceIn":23100,"atUnitPrice":2550,"atTotalPrice":17850,"margin":5250,"marginPct":22.7,"note":"260519_Nia05_原画戻し","status":"納品済","cuts":[]},{"id":"imp0118","title":"幻想水滸伝","abbr":"GS","episode":"1","process":"LO作監","customer":"NK.PANDA","contact":"市原","orderDate":"2026-05-22","dueDate":"2026-06-05","deliveryDate":"2026-06-04","invoiceDate":"","qty":10,"unitPrice":3500,"totalPriceEx":35000,"totalPriceIn":38500,"atUnitPrice":3000,"atTotalPrice":30000,"margin":8500,"marginPct":22.1,"note":"→260521_LO作監","status":"納品済","cuts":[]},{"id":"imp0119","title":"幻想水滸伝","abbr":"GS","episode":"1","process":"LO作監","customer":"NK.PANDA","contact":"市原","orderDate":"2026-05-29","dueDate":"2026-06-05","deliveryDate":"2026-06-04","invoiceDate":"","qty":3,"unitPrice":3500,"totalPriceEx":10500,"totalPriceIn":11550,"atUnitPrice":3000,"atTotalPrice":9000,"margin":2550,"marginPct":22.1,"note":"","status":"納品済","cuts":[]},{"id":"imp0120","title":"ナルト","abbr":"NAA","episode":"PV","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-06-03","dueDate":"2026-06-05","deliveryDate":"2026-06-04","invoiceDate":"","qty":1,"unitPrice":4000,"totalPriceEx":4000,"totalPriceIn":4400,"atUnitPrice":3400,"atTotalPrice":3400,"margin":1000,"marginPct":22.7,"note":"c29","status":"納品済","cuts":[]},{"id":"imp0121","title":"WDC","abbr":"","episode":"","process":"BG","customer":"AGEMENT","contact":"斉藤","orderDate":"2026-06-03","dueDate":"2026-06-08","deliveryDate":"","invoiceDate":"","qty":3,"unitPrice":4000,"totalPriceEx":12000,"totalPriceIn":13200,"atUnitPrice":3400,"atTotalPrice":10200,"margin":3000,"marginPct":22.7,"note":"D1571,1574,1576","status":"受注済","cuts":[]}];
+const INIT_MASTERS = {"customers":[{"name":"PartsCraft","color":"#378ADD"},{"name":"AGEMENT","color":"#378ADD"},{"name":"魁","color":"#378ADD"},{"name":"Brave Pictures","color":"#378ADD"},{"name":"GROM","color":"#378ADD"},{"name":"NK.PANDA","color":"#378ADD"},{"name":"ルナデジ","color":"#378ADD"},{"name":"Brae Pictures","color":"#378ADD"},{"name":"BravePicturtes","color":"#378ADD"},{"name":"ディッジ","color":"#378ADD"},{"name":"BravePictures","color":"#378ADD"}],"titles":[{"name":"ゴーストコンサート","abbr":"GC","color":"#1D9E75"},{"name":"ナルト","abbr":"NAA","color":"#1D9E75"},{"name":"マジハロ","abbr":"MH9","color":"#1D9E75"},{"name":"邪心ちゃんドロップキック","abbr":"","color":"#1D9E75"},{"name":"狂乱令嬢ニア・リストン","abbr":"","color":"#1D9E75"},{"name":"踊る千年家族","abbr":"OSK","color":"#1D9E75"},{"name":"遊技機（D63)","abbr":"TY","color":"#1D9E75"},{"name":"幻想水滸伝","abbr":"GS","color":"#1D9E75"},{"name":"PA(パーフェクトアディッション）","abbr":"KMH","color":"#1D9E75"},{"name":"H Project4","abbr":"M4","color":"#1D9E75"},{"name":"WIND BREAKER","abbr":"FURN","color":"#1D9E75"},{"name":"狂乱令嬢ニアリストン","abbr":"NIA","color":"#1D9E75"},{"name":"WDC","abbr":"WDC","color":"#1D9E75"},{"name":"Canva","abbr":"","color":"#1D9E75"},{"name":"Gジェネレーション","abbr":"Black","color":"#1D9E75"},{"name":"CRESATA","abbr":"","color":"#1D9E75"},{"name":"探偵はもう死んでいる2","abbr":"TMS","color":"#1D9E75"}]};
+const INIT_CUTS    = {"imp0115":"012, 014, 016, 210, 219, 234, 240, 243-247, 264, 278-285-295, 282, 284-288-290-292","imp0113":"069~076","mq1spf9xs3ge":"273, 275, 277, 297, 304, 305, 306, 307, 308, 310, 314, 311, 315, 312, 313, 316","imp0114":"025,189,190,213,218,229,233","mq21d6br56jd":"273, 275, 277, 294, 297, 304, 305, 306, 307, 308, 310, 314, 311, 315, 312, 313, 316","mq21xskn9r7o":"61, 71"};
+
+// ============================================================
+// 同期インジケーター
+// ============================================================
+function sync(s){
+  const d=document.getElementById('sdot');
+  const l=document.getElementById('slbl');
+  if(!d||!l) return;
+  if(s==='ing'){d.className='sdot ing';l.textContent=t('syncing');}
+  else if(s==='err'){d.className='sdot err';l.textContent=t('syncErr');}
+  else{d.className='sdot';l.textContent=t('synced');}
 }
-async function connectGAS(){
-  const url=document.getElementById('gas-url-input').value.trim();
-  const err=document.getElementById('setup-error');
-  if(!url||!url.includes('script.google.com')){err.style.display='block';err.textContent='正しいGAS URLを入力してください';return;}
-  err.style.display='none';
-  const btn=document.getElementById('connect-btn');
-  btn.disabled=true;btn.textContent='接続中...';
-  try{
-    GAS_URL=url;localStorage.setItem('animeGasUrl',url);
-    await startApp();
-  }catch(e){
-    err.style.display='block';err.textContent='接続エラー：'+e.message;
-    btn.disabled=false;btn.textContent='接続してスタート';
+
+// ============================================================
+// 言語辞書
+// ============================================================
+const DICT = {
+ja:{
+  synced:'同期済み', syncing:'同期中...', syncErr:'同期エラー',
+  appTitle:'受注管理',
+  tabList:'受注一覧', tabNew:'＋ 新規受注', tabProg:'カット進捗', tabGrp:'グループ表示',
+  btnNew:'＋ 新規受注', btnRefresh:'↺ 更新', btnCancel:'キャンセル',
+  btnSave:'💾 保存', btnDelForm:'🗑 この受注を削除', btnBack:'← 一覧へ',
+  btnDel:'🗑 削除', btnEdit:'✏ 編集', btnAllDone:'全完了', btnPrint:'🖨 印刷',
+  formNew:'新規受注入力', formEdit:'受注編集',
+  slWork:'作品情報', slAmt:'受注・発注金額（受注は税抜入力）',
+  slCuts:'カット番号（受注時に一括入力）', slNote:'備考',
+  lblOd:'受注日', lblDue:'納期', lblDl:'納入日', lblInv:'請求日',
+  lblCust:'顧客', lblCt:'担当者', lblTtl:'作品タイトル', lblAbbr:'略語',
+  lblEp:'話数', lblProc:'作業工程', lblQty:'数量（カット数）',
+  lblUp:'受注単価・税抜（円）', lblTex:'受注合計・税抜', lblTin:'受注合計・税込',
+  lblAp:'発注単価・非課税（円）', lblAt:'発注合計・非課税',
+  lblMg:'粗利（税込受注－発注）', lblMp:'粗利率', lblNote:'備考',
+  lblGrp:'表示分類：',
+  optAll:'すべて', optOr:'受注済', optWip:'進行中', optDn:'納品済',
+  optIv:'請求済', optUn:'未請求', optFall:'すべてのステータス',
+  optDesc:'新しい順', optAsc:'古い順', optGoAsc:'古い順', optGoDesc:'新しい順',
+  goAll:'すべて', goMonth:'受注月', goTitle:'タイトル', goCust:'顧客',
+  cutProgTitle:'✂ カット進捗', btnAlldone:'全完了',
+  progLbl:'進捗（完了 ／ 受注カット数）',
+  progSub:'完了カット数 ／ 受注カット数・納期近い順',
+  dDelTtl:'🚚 納品・請求ステータス',
+  lblDelDl:'納品日', lblDelInv:'請求日', lblDelSt:'ステータス',
+  dstOr:'受注済', dstWip:'進行中', dstDn:'納品済', dstIv:'請求済',
+  cutHint:'カードをクリックで完了 ／ 未完了を切り替え',
+  cutEmpty:'カット番号未登録。「編集」から入力してください。',
+  cboxLbl:'カット番号を一括入力',
+  cboxHint:'カンマ区切り：C001, C002　／　連番（チルダ）：001~100<br>兼用カット（ハイフンまたは_）：243-247=2件, 278-285-295=3件',
+  searchPH:'✂ カット番号で検索（例：C9999, 9999）',
+  searchHit:'件見つかりました', searchMiss:'は見つかりません',
+  cutSearchEdit:'✂ カット管理・編集', rcvEdit:'✏ 受注編集',
+  sumRcv:'受注・税抜', sumAt:'発注（AT・非課税）',
+  sumMg:'粗利（税込受注－発注）', sumCut:'カット進捗',
+  taxIn:'税込', taxEx:'税抜',
+  work:'作業', qty:'数量', dueLabel:'納期', customer:'顧客', contact:'担当',
+  saved:'保存しました', deleted:'削除しました',
+  dueOver:'⚠ 納期超過', dueToday:'⚡ 本日納期', dueSoon:'⏰ 納期まで', days:'日',
+  emptyList:'受注データがありません', emptyProg:'進行中の案件はありません',
+  emptyGrp:'データがありません', orderNotSet:'受注日未設定',
+  loadMsg:'データ読込中...', loadDone:'件読み込みました',
+  confirmDel:'を削除しますか？', confirmDelFull:'を削除しますか？\nこの操作は取り消せません。',
+  infoCustomer:'顧客・担当', infoDate:'受注日 / 納期',
+  infoQtyUp:'数量・受注単価', infoAp:'発注単価（AT）',
+},
+vi:{
+  synced:'Đã đồng bộ', syncing:'Đang đồng bộ...', syncErr:'Lỗi đồng bộ',
+  appTitle:'Quản lý đặt hàng',
+  tabList:'Danh sách', tabNew:'＋ Đặt mới', tabProg:'Tiến độ cảnh', tabGrp:'Nhóm',
+  btnNew:'＋ Đặt mới', btnRefresh:'↺ Cập nhật', btnCancel:'Hủy',
+  btnSave:'💾 Lưu', btnDelForm:'🗑 Xóa đơn này', btnBack:'← Danh sách',
+  btnDel:'🗑 Xóa', btnEdit:'✏ Sửa', btnAllDone:'Hoàn thành tất cả', btnPrint:'🖨 In',
+  formNew:'Nhập đặt hàng mới', formEdit:'Chỉnh sửa đặt hàng',
+  slWork:'Thông tin tác phẩm', slAmt:'Giá nhận & phát（chưa thuế）',
+  slCuts:'Số cảnh（nhập hàng loạt）', slNote:'Ghi chú',
+  lblOd:'Ngày đặt hàng', lblDue:'Hạn giao', lblDl:'Ngày giao', lblInv:'Ngày HĐ',
+  lblCust:'Khách hàng', lblCt:'Người phụ trách', lblTtl:'Tên tác phẩm', lblAbbr:'Ký hiệu',
+  lblEp:'Tập số', lblProc:'Công đoạn', lblQty:'Số lượng（cảnh）',
+  lblUp:'Đơn giá nhận（¥）', lblTex:'Tổng nhận（chưa thuế）', lblTin:'Tổng nhận（có thuế）',
+  lblAp:'Đơn giá phát（¥）', lblAt:'Tổng phát',
+  lblMg:'Lợi nhuận', lblMp:'Tỉ lệ lợi nhuận', lblNote:'Ghi chú',
+  lblGrp:'Phân loại：',
+  optAll:'Tất cả', optOr:'Đã đặt', optWip:'Đang làm', optDn:'Đã giao',
+  optIv:'Đã HĐ', optUn:'Chưa HĐ', optFall:'Tất cả trạng thái',
+  optDesc:'Mới nhất', optAsc:'Cũ nhất', optGoAsc:'Cũ nhất', optGoDesc:'Mới nhất',
+  goAll:'Tất cả', goMonth:'Tháng đặt', goTitle:'Tác phẩm', goCust:'Khách hàng',
+  cutProgTitle:'✂ Tiến độ cảnh', btnAlldone:'Hoàn thành tất cả',
+  progLbl:'Tiến độ（hoàn thành ／ số cảnh đặt）',
+  progSub:'Cảnh hoàn thành ／ Cảnh đặt・Gần hạn',
+  dDelTtl:'🚚 Trạng thái giao & HĐ',
+  lblDelDl:'Ngày giao hàng', lblDelInv:'Ngày xuất HĐ', lblDelSt:'Trạng thái',
+  dstOr:'Đã đặt', dstWip:'Đang làm', dstDn:'Đã giao', dstIv:'Đã HĐ',
+  cutHint:'Nhấn thẻ để đánh dấu hoàn thành / chưa',
+  cutEmpty:'Chưa có số cảnh. Vui lòng nhập từ mục Sửa.',
+  cboxLbl:'Nhập số cảnh hàng loạt',
+  cboxHint:'Cách nhau dấu phẩy：C001, C002　／　Dãy liên tiếp：001~100<br>Cảnh dùng chung：243-247=2 cảnh, 278-285-295=3 cảnh',
+  searchPH:'✂ Tìm số cảnh（VD：C9999, 9999）',
+  searchHit:' kết quả', searchMiss:'không tìm thấy',
+  cutSearchEdit:'✂ Quản lý cảnh', rcvEdit:'✏ Sửa đơn',
+  sumRcv:'Nhận・chưa thuế', sumAt:'Phát（AT）',
+  sumMg:'Lợi nhuận', sumCut:'Tiến độ cảnh',
+  taxIn:'có thuế', taxEx:'chưa thuế',
+  work:'Công đoạn', qty:'Số lượng', dueLabel:'Hạn giao',
+  customer:'Khách hàng', contact:'Phụ trách',
+  saved:'Đã lưu', deleted:'Đã xóa',
+  dueOver:'⚠ Quá hạn', dueToday:'⚡ Hạn hôm nay', dueSoon:'⏰ Còn', days:' ngày',
+  emptyList:'Không có dữ liệu', emptyProg:'Không có đơn đang thực hiện',
+  emptyGrp:'Không có dữ liệu', orderNotSet:'Chưa có ngày đặt',
+  loadMsg:'Đang tải dữ liệu...', loadDone:' đơn hàng',
+  confirmDel:'Xóa？', confirmDelFull:' — Xóa vĩnh viễn？',
+  infoCustomer:'Khách hàng・Phụ trách', infoDate:'Ngày đặt / Hạn giao',
+  infoQtyUp:'Số lượng・Đơn giá nhận', infoAp:'Đơn giá phát（AT）',
+}};
+
+function t(k){ return (DICT[currentLang]&&DICT[currentLang][k])||DICT.ja[k]||k; }
+function tSt(s){
+  const m={受注済:'optOr',進行中:'optWip',納品済:'optDn',請求済:'optIv'};
+  return m[s]?t(m[s]):s;
+}
+
+// ============================================================
+// 言語切替
+// ============================================================
+function selectLang(lang){
+  currentLang=lang;
+  localStorage.setItem('animeLang',lang);
+  applyLang();
+  const av=document.querySelector('.view.on');
+  if(av){
+    const vid=av.id.replace('view-','');
+    if(vid==='list')renderList();
+    else if(vid==='progress')renderProg();
+    else if(vid==='group')renderGroup();
+    else if(vid==='detail'&&currentId)showDetail(currentId);
   }
 }
-async function startApp(){
-  document.getElementById('setup').style.display='none';
-  document.getElementById('app').style.display='block';
-  await loadAll();
-}
-function resetSetup(){
-  document.getElementById('setup').style.display='flex';
-  document.getElementById('app').style.display='none';
-}
 
-/* ===== API ===== */
-function setSyncing(state){
-  const dot=document.getElementById('sync-dot');
-  const lbl=document.getElementById('sync-label');
-  if(state==='syncing'){dot.className='sync-dot syncing';lbl.textContent='同期中...';}
-  else if(state==='error'){dot.className='sync-dot error';lbl.textContent='エラー';}
-  else{dot.className='sync-dot';lbl.textContent='同期済み';}
-}
-async function apiGet(params){
-  const url=GAS_URL+'?'+new URLSearchParams(params);
-  const res=await fetch(url);
-  if(!res.ok)throw new Error('HTTP '+res.status);
-  const data=await res.json();
-  if(data.error)throw new Error(data.error);
-  return data;
-}
-// GASのCORS制限を回避：各フィールドを個別のGETパラメーターで送信
-async function apiPost(body){
-  const params = { action: body.action };
-  // 各フィールドを個別にJSON文字列化してパラメーターに追加
-  Object.keys(body).forEach(k => {
-    if(k === 'action') return;
-    const v = body[k];
-    params[k] = (typeof v === 'object' && v !== null) ? JSON.stringify(v) : String(v ?? '');
+function applyLang(){
+  // ボタンハイライト
+  document.getElementById('btn-ja').className='lbtn'+(currentLang==='ja'?' on':'');
+  document.getElementById('btn-vi').className='lbtn'+(currentLang==='vi'?' on':'');
+  // idとキーのマッピング
+  const map = {
+    'logo-txt':'appTitle',
+    'tab-list':'tabList','tab-new':'tabNew','tab-progress':'tabProg','tab-group':'tabGrp',
+    'h-list':'tabList','h-prog':'tabProg',
+    'btn-new':'btnNew','btn-refresh':'btnRefresh',
+    'btn-cancel':'btnCancel','btn-save':'btnSave',
+    'btn-del-form':'btnDelForm','btn-back':'btnBack',
+    'btn-del-det':'btnDel','btn-edit-det':'btnEdit',
+    'btn-alldone':'btnAllDone','btn-print':'btnPrint',
+    'form-ttl': editingId?'formEdit':'formNew',
+    'slbl-work':'slWork','slbl-amt':'slAmt','slbl-cuts':'slCuts','slbl-note':'slNote',
+    'lbl-od':'lblOd','lbl-due':'lblDue','lbl-dl':'lblDl','lbl-inv':'lblInv',
+    'lbl-cust':'lblCust','lbl-ct':'lblCt','lbl-ttl':'lblTtl','lbl-abbr':'lblAbbr',
+    'lbl-ep':'lblEp','lbl-proc':'lblProc','lbl-qty':'lblQty',
+    'lbl-up':'lblUp','lbl-tex':'lblTex','lbl-tin':'lblTin',
+    'lbl-ap':'lblAp','lbl-at':'lblAt','lbl-mg':'lblMg','lbl-mp':'lblMp',
+    'lbl-grp':'lblGrp',
+    'opt-all':'optAll','opt-or':'optOr','opt-wip':'optWip',
+    'opt-dn':'optDn','opt-iv':'optIv','opt-un':'optUn',
+    'opt-desc':'optDesc','opt-asc':'optAsc',
+    'go-all':'goAll','go-month':'goMonth','go-title':'goTitle','go-cust':'goCust',
+    'go-asc':'optGoAsc','go-desc':'optGoDesc',
+    'go-fall':'optFall','go-for':'optOr','go-fwip':'optWip',
+    'go-fdn':'optDn','go-fiv':'optIv','go-fun':'optUn',
+    'h-cut':'cutProgTitle','btn-alldone':'btnAlldone',
+    'prog-lbl':'progLbl','prog-sub':'progSub',
+    'd-del-ttl':'dDelTtl',
+    'lbl-deldl':'lblDelDl','lbl-delinv':'lblDelInv','lbl-delst':'lblDelSt',
+    'dst-or':'dstOr','dst-wip':'dstWip','dst-dn':'dstDn','dst-iv':'dstIv',
+    'cut-hint':'cutHint','cbox-lbl-txt':'cboxLbl',
+  };
+  Object.entries(map).forEach(([id,key])=>{
+    const el=document.getElementById(id);
+    if(el) el.textContent=t(key);
   });
-  const url = GAS_URL + '?' + new URLSearchParams(params);
-  const res = await fetch(url);
-  if(!res.ok) throw new Error('HTTP ' + res.status);
-  const data = await res.json();
-  if(data.error) throw new Error(data.error);
-  return data;
+  // cbox-hint はHTMLで
+  const ch=document.getElementById('cbox-hint');
+  if(ch) ch.innerHTML=t('cboxHint');
+  // search placeholder
+  const si=document.getElementById('cut-search-input');
+  if(si) si.placeholder=t('searchPH');
+  // sync label
+  sync('ok');
 }
 
-async function loadAll(){
-  setSyncing('syncing');
+// ============================================================
+// Firebase CRUD
+// ============================================================
+async function fbSet(path, data){
+  sync('ing');
   try{
-    const [allData,masterData]=await Promise.all([apiGet({action:'getAll'}),apiGet({action:'getMasters'})]);
-    orders=(allData.orders||[]).map(o=>normOrderDates(o));
-    cutsCache=allData.cuts||{};
-    masters=masterData;
-    // cutsをorderに統合、cutsRawをlocalStorageから復元
-    const rawCache=JSON.parse(localStorage.getItem('cutsRawCache')||'{}');
-    orders.forEach(o=>{
-      o.cuts=cutsCache[o.id]||[];
-      if(rawCache[o.id]) o.cutsRaw=rawCache[o.id];
-    });
-    renderList();updateBadges();setSyncing('ok');
-    showToast('データを読み込みました（'+orders.length+'件）');
-  }catch(e){setSyncing('error');showToast('読み込みエラー：'+e.message,true);}
+    await db.ref(path).set(data);
+    sync('ok');
+  }catch(e){ sync('err'); showToast(e.message,true); throw e; }
+}
+async function fbUpdate(path, data){
+  sync('ing');
+  try{
+    await db.ref(path).update(data);
+    sync('ok');
+  }catch(e){ sync('err'); showToast(e.message,true); throw e; }
+}
+async function fbRemove(path){
+  sync('ing');
+  try{
+    await db.ref(path).remove();
+    sync('ok');
+  }catch(e){ sync('err'); showToast(e.message,true); throw e; }
+}
+async function fbGet(path){
+  const snap = await db.ref(path).once('value');
+  return snap.exists() ? snap.val() : null;
 }
 
-/* ===== HELPERS ===== */
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
-
-// 日付を YYYY-MM-DD に正規化（ISO文字列・Date型・シリアル値すべて対応）
-function normDate(v){
-  if(!v && v !== 0) return '';
-  const s = String(v);
-  // すでに YYYY-MM-DD 形式
-  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  // ISO文字列 (2025-12-24T00:00:00.000Z など)
-  if(/^\d{4}-\d{2}-\d{2}T/.test(s)) return s.slice(0,10);
-  // Excelシリアル値（数値）
-  if(/^\d+(\.0)?$/.test(s)){
-    const n = parseInt(s);
-    if(n > 1000){
-      const d = new Date(Math.round((n - 25569) * 86400 * 1000));
-      return d.toISOString().slice(0,10);
+// ============================================================
+// データ読み込み
+// ============================================================
+async function loadAll(){
+  sync('ing');
+  showToast(t('loadMsg'));
+  try{
+    // Firebase から読み込み
+    const snap = await fbGet('/');
+    if(snap && snap.orders && Object.keys(snap.orders).length > 0){
+      // Firebaseにデータあり
+      orders  = Object.values(snap.orders).map(o=>normDates(o));
+      masters = snap.masters || {customers:[],titles:[]};
+      cutsRawCache = snap.cutsRaw || {};
+      orders.forEach(o=>{ if(cutsRawCache[o.id]) o.cutsRaw=cutsRawCache[o.id]; });
+    } else {
+      // 初回：初期データを投入
+      showToast(t('loadMsg'));
+      const initOrders  = INIT_ORDERS.map(o=>normDates(o));
+      const initMasters = INIT_MASTERS;
+      const initCuts    = INIT_CUTS;
+      // Firebaseに書き込み
+      const ordersObj = {};
+      initOrders.forEach(o=>{ ordersObj[o.id]=o; });
+      await fbSet('/orders',  ordersObj);
+      await fbSet('/masters', initMasters);
+      await fbSet('/cutsRaw', initCuts);
+      orders  = initOrders;
+      masters = initMasters;
+      cutsRawCache = initCuts;
+      orders.forEach(o=>{ if(cutsRawCache[o.id]) o.cutsRaw=cutsRawCache[o.id]; });
     }
+    sync('ok');
+    renderList(); updateBadges();
+    showToast(orders.length + t('loadDone'));
+  }catch(e){
+    sync('err'); showToast(e.message, true);
   }
+}
+
+// ============================================================
+// ユーティリティ
+// ============================================================
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function fmt(n){ return (n!=null&&n!=='')&&!isNaN(n)?Math.round(Number(n)).toLocaleString('ja-JP'):'-'; }
+function today(){ return new Date().toISOString().slice(0,10); }
+function normDate(v){
+  if(!v && v!==0) return '';
+  const s=String(v);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  if(/^\d{4}-\d{2}-\d{2}T/.test(s)) return s.slice(0,10);
   return '';
 }
-
-// 受注データの日付フィールドを一括正規化
-function normOrderDates(o){
-  ['orderDate','dueDate','deliveryDate','invoiceDate'].forEach(f => {
-    o[f] = normDate(o[f]);
-  });
-  // カットIDを必ず文字列として保持（スプレッドシートが数値化することがある）
-  if(o.cuts) o.cuts=o.cuts.map(c=>({...c, id:String(c.id)}));
+function normDates(o){
+  ['orderDate','dueDate','deliveryDate','invoiceDate'].forEach(f=>{ o[f]=normDate(o[f]); });
+  if(o.cuts) o.cuts=o.cuts.map(c=>({...c,id:String(c.id)}));
   return o;
 }
-function fmt(n){return(n!=null&&n!=='')&&!isNaN(n)?Math.round(Number(n)).toLocaleString('ja-JP'):'-'}
-function today(){return new Date().toISOString().slice(0,10)}
-function hashOf(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%7;return h}
-function colorFor(s){return COLORS[hashOf(s)]}
-function bannerFor(s){return BANNERS[hashOf(s)%BANNERS.length]}
-function bcFor(s){return BCOLS[hashOf(s)%BCOLS.length]}
 function daysUntil(d){
-  if(!d)return null;
-  const n=new Date();n.setHours(0,0,0,0);
-  const due=new Date(d);due.setHours(0,0,0,0);
+  if(!d) return null;
+  const n=new Date(); n.setHours(0,0,0,0);
+  const due=new Date(d); due.setHours(0,0,0,0);
   return Math.round((due-n)/86400000);
 }
-function dueBadge(dueStr,st){
-  if(['納品済','請求済'].includes(st))return'';
-  const d=daysUntil(dueStr);if(d===null)return'';
-  if(d<0)return`<span class="due-warn">⚠ 納期超過 ${Math.abs(d)}日</span>`;
-  if(d===0)return`<span class="due-warn due-soon">⚡ 本日納期</span>`;
-  if(d<=2)return`<span class="due-warn due-soon">⏰ 納期まで${d}日</span>`;
-  return'';
+function dueBadge(due,st){
+  if(['納品済','請求済'].includes(st)) return '';
+  const d=daysUntil(due); if(d===null) return '';
+  if(d<0)  return `<span class="due">${t('dueOver')} ${Math.abs(d)}${t('days')}</span>`;
+  if(d===0) return `<span class="due soon">${t('dueToday')}</span>`;
+  if(d<=2)  return `<span class="due soon">${t('dueSoon')}${d}${t('days')}</span>`;
+  return '';
 }
+function getStatus(o){
+  if(o.invoiceDate) return '請求済';
+  if(o.deliveryDate) return '納品済';
+  const done=(o.cuts||[]).filter(c=>c.done).length;
+  const total=(o.cuts||[]).length;
+  if(done>0&&done<total) return '進行中';
+  if(done>0&&done===total) return '納品済';
+  return o.status||'受注済';
+}
+function pillCls(s){ return {受注済:'p-or',進行中:'p-wip',納品済:'p-dn',請求済:'p-iv'}[s]||'p-or'; }
+function progOf(o){
+  const done=(o.cuts||[]).filter(c=>c.done).length;
+  const total=Number(o.qty)||0;
+  return {done,total,pct:total>0?Math.round(done/total*100):0};
+}
+function invMonth(o){
+  if(!o.invoiceDate) return t('optUn');
+  return o.invoiceDate.slice(0,7).replace('-','年')+'月';
+}
+function hashOf(s){ let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))%6; return h; }
+const BANNERS=[
+  {bg:'#E0ECFF',bd:'#80B0F0',tx:'#003A8C'},
+  {bg:'#FCEAF3',bd:'#E870AF',tx:'#7A0040'},
+  {bg:'#EAF4FF',bd:'#60A0E8',tx:'#003070'},
+  {bg:'#FDF0F8',bd:'#E090C8',tx:'#600038'},
+  {bg:'#E8F0FF',bd:'#7090D8',tx:'#182878'},
+  {bg:'#FFF0F8',bd:'#D878B0',tx:'#680048'},
+];
+const BCOLS=['#0060E0','#E02080','#4080D0','#C01870','#2050C0','#D04090'];
+function bannerOf(s){ return BANNERS[hashOf(s||'')]; }
+function bcOf(s){ return BCOLS[hashOf(s||'')%BCOLS.length]; }
+function colorOf(s){ return BCOLS[hashOf(s||'')%BCOLS.length]; }
+function showToast(msg,isErr){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast'+(isErr?' err':'')+' show';
+  setTimeout(()=>el.classList.remove('show'),2800);
+}
+function showView(v){
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('.nt').forEach(e=>e.classList.remove('on'));
+  document.getElementById('view-'+v).classList.add('on');
+  const t2=document.getElementById('tab-'+v); if(t2) t2.classList.add('on');
+  if(v==='list') renderList();
+  if(v==='progress') renderProg();
+  if(v==='group') renderGroup();
+  if(v==='new'&&!editingId) resetForm();
+  updateBadges();
+}
+function updateBadges(){
+  document.getElementById('b-all').textContent=orders.length;
+  document.getElementById('b-prog').textContent=
+    orders.filter(o=>!['請求済','納品済'].includes(getStatus(o))).length;
+}
+function makeBanner(o){
+  const b=bannerOf(o.customer||o.title||'');
+  const abbr=o.abbr?`（${o.abbr}）`:'';
+  const ep=o.episode?` 第${o.episode}話`:'';
+  return `<div class="banner" style="background:${b.bg};border:0.5px solid ${b.bd}">
+    <div class="bn-l" style="color:${b.tx}">
+      <span>${o.title||'-'}</span><span class="bn-abbr">${abbr}</span>
+      <span class="bn-ep">${ep}</span>
+    </div>
+    <span class="bn-r" style="color:${b.tx}">${o.orderDate||''}</span>
+  </div>`;
+}
+
+// ============================================================
+// カット番号パース
+// ============================================================
 function parseCuts(str){
-  // ルール：
-  //   チルダ(~／～) → 連番       例: 001~100, C001～C010
-  //   ハイフン(-) or アンダースコア(_) → 兼用カット（同じ扱い）
-  //                              例: 243-247=2件, 278-285-295=3件, 001_030=2件
-  //   カンマ(,) → カット間の区切り
   const ids=[];
   str.split(',').map(s=>s.trim()).filter(Boolean).forEach(p=>{
-
-    // 連番：チルダ区切り（半角~または全角～）
     if(p.indexOf('~')>=0||p.indexOf('〜')>=0||p.indexOf('～')>=0){
-      const tilde=p.indexOf('~')>=0?'~':(p.indexOf('〜')>=0?'〜':'～');
+      const tilde=p.indexOf('~')>=0?'~':p.indexOf('〜')>=0?'〜':'～';
       const pts=p.split(tilde);
       if(pts.length===2){
         const ml=pts[0].trim().match(/^([Cc]?)(\d+)$/);
@@ -739,37 +891,22 @@ function parseCuts(str){
           return;
         }
       }
-      ids.push(p.toUpperCase());
-      return;
+      ids.push(p.toUpperCase()); return;
     }
-
-    // 兼用カット：ハイフンまたはアンダースコア区切り（同じ扱い）
     if(p.indexOf('-')>=0||p.indexOf('_')>=0){
-      p.split(/[-_]/).forEach(part=>{
-        part=part.trim();
-        if(part) ids.push(part.toUpperCase());
-      });
+      p.split(/[-_]/).forEach(pt=>{ pt=pt.trim(); if(pt) ids.push(pt.toUpperCase()); });
       return;
     }
-
-    // 通常カット
     ids.push(p.toUpperCase());
   });
-
-  // 重複除去（順序保持）
   const seen=new Set();
   return ids.filter(x=>{ if(seen.has(x)) return false; seen.add(x); return true; });
 }
-
-// カード表示用：兼用カットは1枚のカードとしてグループ化して返す
-// 戻り値: [{label:'278-285-295', ids:['278','285','295']}, ...]
 function parseGroups(str){
   const groups=[];
   str.split(',').map(s=>s.trim()).filter(Boolean).forEach(p=>{
-
-    // 連番：チルダ → 各カットを個別カードに
     if(p.indexOf('~')>=0||p.indexOf('〜')>=0||p.indexOf('～')>=0){
-      const tilde=p.indexOf('~')>=0?'~':(p.indexOf('〜')>=0?'〜':'～');
+      const tilde=p.indexOf('~')>=0?'~':p.indexOf('〜')>=0?'〜':'～';
       const pts=p.split(tilde);
       if(pts.length===2){
         const ml=pts[0].trim().match(/^([Cc]?)(\d+)$/);
@@ -780,341 +917,71 @@ function parseGroups(str){
           const pad=Math.max(ml[2].length,mr[2].length);
           for(let i=s;i<=e;i++){
             const id=pre+String(i).padStart(pad,'0');
-            groups.push({label:id, ids:[id]});
+            groups.push({label:id,ids:[id]});
           }
           return;
         }
       }
-      groups.push({label:p.toUpperCase(), ids:[p.toUpperCase()]});
-      return;
+      groups.push({label:p.toUpperCase(),ids:[p.toUpperCase()]}); return;
     }
-
-    // 兼用カット：ハイフンまたはアンダースコア → 1枚のカードに
     if(p.indexOf('-')>=0||p.indexOf('_')>=0){
-      const parts=p.split(/[-_]/).map(x=>x.trim()).filter(Boolean).map(x=>x.toUpperCase());
-      if(parts.length>0){
-        groups.push({label:p.toUpperCase(), ids:parts});
-      }
+      const pts=p.split(/[-_]/).map(x=>x.trim()).filter(Boolean).map(x=>x.toUpperCase());
+      if(pts.length>0) groups.push({label:p.toUpperCase(),ids:pts});
       return;
     }
-
-    // 通常カット → 1枚のカード
-    groups.push({label:p.toUpperCase(), ids:[p.toUpperCase()]});
+    groups.push({label:p.toUpperCase(),ids:[p.toUpperCase()]});
   });
   return groups;
 }
-function getStatus(o){
-  if(o.invoiceDate)return'請求済';
-  if(o.deliveryDate)return'納品済';
-  const done=(o.cuts||[]).filter(c=>c.done).length,total=(o.cuts||[]).length;
-  if(done>0&&done<total)return'進行中';
-  if(done>0&&done===total)return'納品済';
-  return o.status||'受注済';
-}
-function pillCls(s){return{受注済:'p-ordered',進行中:'p-wip',納品済:'p-done',請求済:'p-invoiced'}[s]||'p-ordered'}
-function progOf(o){
-  const done=(o.cuts||[]).filter(c=>c.done).length,total=Number(o.qty)||0;
-  return{done,total,pct:total>0?Math.round(done/total*100):0};
-}
-function invoiceMonth(o){
-  if(!o.invoiceDate)return'未請求';
-  return o.invoiceDate.slice(0,7).replace('-','年')+'月';
-}
-function makeBanner(o){
-  const b=bannerFor(o.customer||o.title||'');
-  const ep=o.episode?`<span class="tb-tag" style="background:${b.tag};color:${b.tgt}">第${o.episode}話</span>`:'';
-  return`<div class="title-banner" style="background:${b.bg};border:0.5px solid ${b.bd}">
-    <div class="tb-name" style="color:${b.tx}"><span>${o.title||'-'}</span><span class="tb-abbr">${o.abbr?`（${o.abbr}）`:''}</span></div>
-    <div class="tb-tags">${ep}<span class="tb-tag" style="background:${b.tag};color:${b.tgt}">${o.process}</span></div>
-  </div>`;
-}
-function showToast(msg,isErr){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.className='toast'+(isErr?' err':'')+' show';
-  setTimeout(()=>t.classList.remove('show'),2800);
-}
-function showView(v){
-  document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(e=>e.classList.remove('active'));
-  document.getElementById('view-'+v).classList.add('active');
-  const t=document.getElementById('tab-'+v);if(t)t.classList.add('active');
-  if(v==='list')renderList();
-  if(v==='progress')renderProgress();
-  if(v==='group')renderGroup();
-  if(v==='new'&&!editingId)resetForm();
-  updateBadges();
-}
-function updateBadges(){
-  document.getElementById('b-all').textContent=orders.length;
-  document.getElementById('b-prog').textContent=orders.filter(o=>!['請求済'].includes(getStatus(o))).length;
-}
 
-/* ===== FORM ===== */
-function calcAmt(){
-  const qty=parseFloat(document.getElementById('f-qty').value)||0;
-  const up=parseFloat(document.getElementById('f-unit-price').value)||0;
-  const ap=parseFloat(document.getElementById('f-at-price').value)||0;
-  const tex=qty*up,tin=Math.round(tex*(1+TAX)),at=qty*ap,mg=tin-at;
-  const pct=tin>0?Math.round(mg/tin*1000)/10:null;
-  document.getElementById('f-tex').value=tex?fmt(tex):'';
-  document.getElementById('f-tin').value=tin?fmt(tin):'';
-  document.getElementById('f-at-total').value=at?fmt(at):'';
-  document.getElementById('f-margin').value=(tin||at)?fmt(mg):'';
-  document.getElementById('f-mpct').value=pct!=null?pct.toFixed(1)+'%':'';
-}
-function updLimit(){
-  const qty=parseInt(document.getElementById('f-qty').value)||0;
-  document.getElementById('cut-limit').textContent=qty?`上限 ${qty} カット`:'';
-  prevCutPreview();
-}
-function prevCutPreview(){
-  const qty=parseInt(document.getElementById('f-qty').value)||0;
-  const val=document.getElementById('f-cuts').value.trim();
-  const el=document.getElementById('cut-preview');
-  if(!val){el.textContent='';return;}
-  const ids=parseCuts(val);
-  if(qty&&ids.length>qty){el.style.color='var(--red)';el.textContent=`⚠ ${ids.length}件（上限超え）`;}
-  else{el.style.color='var(--green)';el.textContent=ids.length?`${ids.length}件認識：${ids.slice(0,8).join(', ')}${ids.length>8?` …他${ids.length-8}件`:''}`:'';}
-}
-function onTitleInput(){
-  filterCombo('title');
-  const val=document.getElementById('f-title').value.trim();
-  const found=masters.titles.find(t=>t.name===val);
-  const el=document.getElementById('f-abbr'),lbl=document.getElementById('abbr-lbl');
-  if(found&&found.abbr){el.value=found.abbr;el.classList.add('auto');lbl.style.display='inline';}
-  else{el.classList.remove('auto');lbl.style.display='none';}
-}
-function resetForm(){
-  editingId=null;
-  document.getElementById('form-ttl').textContent='新規受注入力';
-  ['f-order-date','f-due-date','f-delivery-date','f-invoice-date'].forEach(id=>document.getElementById(id).value='');
-  ['f-customer','f-contact','f-title','f-abbr','f-episode','f-qty','f-unit-price','f-at-price',
-   'f-tex','f-tin','f-at-total','f-margin','f-mpct','f-cuts','f-note'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-process').value='LO';
-  document.getElementById('f-abbr').classList.remove('auto');
-  document.getElementById('abbr-lbl').style.display='none';
-  document.getElementById('cut-preview').textContent='';
-  document.getElementById('cut-limit').textContent='';
-  document.getElementById('form-del-btn').style.display='none';
-}
-function cancelForm(){editingId=null;showView('list')}
-
-async function saveOrder(){
-  const title=document.getElementById('f-title').value.trim();
-  const customer=document.getElementById('f-customer').value.trim();
-  const abbr=document.getElementById('f-abbr').value.trim();
-  if(!title){alert('作品タイトルを入力してください');return;}
-  if(!customer){alert('顧客を入力してください');return;}
-  const qty=parseInt(document.getElementById('f-qty').value)||0;
-  const cutsRaw=document.getElementById('f-cuts').value.trim();
-  const cutIds=cutsRaw?parseCuts(cutsRaw):[];
-  if(qty&&cutIds.length>qty){alert(`カット番号が受注カット数（${qty}）を超えています（${cutIds.length}件）`);return;}
-
-  // マスター更新
-  if(!masters.customers.find(c=>c.name===customer)){masters.customers.push({name:customer,color:colorFor(customer)});}
-  const existT=masters.titles.find(t=>t.name===title);
-  if(!existT){masters.titles.push({name:title,color:colorFor(title),abbr});}
-  else if(abbr&&!existT.abbr){existT.abbr=abbr;}
-
-  const up=parseFloat(document.getElementById('f-unit-price').value)||0;
-  const ap=parseFloat(document.getElementById('f-at-price').value)||0;
-  const tex=qty*up,tin=Math.round(tex*(1+TAX)),at=qty*ap,mg=tin-at;
-  const mpct=tin>0?Math.round(mg/tin*1000)/10:null;
-  const prevCuts=editingId?(orders.find(x=>x.id===editingId)||{cuts:[]}).cuts:[];
-  const cuts=cutIds.length>0?cutIds.map(id=>{const ex=prevCuts.find(c=>c.id===id);return ex||{id,done:false,date:''};}):[...prevCuts];
-
-  const o={
-    id:editingId||uid(),
-    orderDate:document.getElementById('f-order-date').value,
-    dueDate:document.getElementById('f-due-date').value,
-    deliveryDate:document.getElementById('f-delivery-date').value,
-    invoiceDate:document.getElementById('f-invoice-date').value,
-    customer,contact:document.getElementById('f-contact').value.trim(),
-    title,abbr,episode:document.getElementById('f-episode').value.trim(),
-    process:document.getElementById('f-process').value,
-    qty,unitPrice:up,totalPriceEx:tex,totalPriceIn:tin,
-    atUnitPrice:ap,atTotalPrice:at,margin:mg,marginPct:mpct,
-    note:document.getElementById('f-note').value.trim(),status:'受注済',cuts,
-    cutsRaw:document.getElementById('f-cuts').value.trim()
-  };
-
-  document.getElementById('save-btn').disabled=true;
-  setSyncing('syncing');
-  try{
-    await apiPost({action:'saveOrder',order:{...o,cuts:undefined}});
-    await apiPost({action:'saveCuts',id:o.id,cuts:o.cuts});
-    await apiPost({action:'saveMasters',masters});
-    if(editingId){const i=orders.findIndex(x=>x.id===editingId);if(i!==-1)orders[i]=normOrderDates(o);}
-    else orders.unshift(normOrderDates(o));
-    // cutsRawをlocalStorageにキャッシュ（兼用カード表示復元用）
-    if(o.cutsRaw){
-      const rawCache=JSON.parse(localStorage.getItem('cutsRawCache')||'{}');
-      rawCache[o.id]=o.cutsRaw;
-      localStorage.setItem('cutsRawCache',JSON.stringify(rawCache));
-    }
-    editingId=null;setSyncing('ok');showToast('保存しました');
-    showDetail(o.id);
-  }catch(e){setSyncing('error');showToast('保存エラー：'+e.message,true);}
-  document.getElementById('save-btn').disabled=false;
-}
-
-/* ===== LIST ===== */
-// カット番号正規化（桁数不問・大文字小文字不問）
-function normCutId(s){
-  s = String(s).trim().toUpperCase();
-  // 先頭のC/cを取り除いた数値部分を取得
-  const m = s.match(/^([Cc]?)(\d+)$/);
-  if(!m) return s;
-  // 数値部分をそのまま保持（ゼロサプレスなし）
-  return {prefix: m[1], num: m[2], raw: s};
-}
-
-function cutIdMatch(inputStr, cutId){
-  // 入力とカットIDが「数値部分が一致」するか桁数不問で比較
-  const inp = normCutId(inputStr);
-  const cid = normCutId(String(cutId));
-  if(typeof inp === 'string' || typeof cid === 'string'){
-    // どちらかがパースできない場合は文字列完全一致
-    return String(inputStr).toUpperCase() === String(cutId).toUpperCase();
-  }
-  // 数値として比較（012と12と0012は別物として扱う → ゼロサプレスなしなのでraw比較）
-  // ただし桁数不問（先頭ゼロを無視）の仕様なので数値として一致を確認
-  return parseInt(inp.num, 10) === parseInt(cid.num, 10);
-}
-
-function searchCut(){
-  const q = document.getElementById('cut-search-input').value.trim();
-  const resultEl = document.getElementById('cut-search-result');
-  const hintEl   = document.getElementById('cut-search-hint');
-  const clearBtn = document.getElementById('cut-search-clear');
-
-  if(!q){
-    resultEl.style.display='none';
-    resultEl.innerHTML='';
-    hintEl.textContent='';
-    clearBtn.style.display='none';
-    return;
-  }
-  clearBtn.style.display='block';
-
-  // 全受注のカットを検索
-  const hits=[];
-  orders.forEach(o=>{
-    const cuts = o.cuts||[];
-    const matchedCuts = cuts.filter(c=> cutIdMatch(q, c.id));
-    if(matchedCuts.length>0){
-      hits.push({order:o, cuts:matchedCuts});
-    }
-  });
-
-  if(hits.length===0){
-    resultEl.style.display='block';
-    resultEl.innerHTML=`<div class="cut-search-empty">✂ カット番号「${q}」は見つかりませんでした</div>`;
-    hintEl.textContent='';
-    return;
-  }
-
-  hintEl.textContent=`${hits.length}件の受注データで見つかりました`;
-  resultEl.style.display='block';
-  resultEl.innerHTML=hits.map(h=>{
-    const o=h.order;
-    const st=getStatus(o);
-    const b=bannerFor(o.customer||o.title||'');
-    const pctStr=o.marginPct!=null?Number(o.marginPct).toFixed(1)+'%':'-';
-    const cutCards=h.cuts.map(c=>{
-      const doneLabel=c.done
-        ?`<span class="cs-done">✓ 完了 ${c.date?c.date.slice(5):''}</span>`
-        :`<span class="cs-todo">未完了</span>`;
-      return`<span class="cs-cut">✂ ${String(c.id)}</span>${doneLabel}`;
-    }).join(' ');
-    return`<div class="cut-search-card">
-      <div class="cs-title">
-        <span style="background:${b.bg};color:${b.tx};padding:3px 10px;border-radius:99px;font-size:13px;font-weight:500">
-          ${o.title||'-'}${o.abbr?`（${o.abbr}）`:''}${o.episode?` 第${o.episode}話`:''}
-        </span>
-        <span style="font-size:12px;color:var(--text2)">${o.process}</span>
-        <span class="pill ${pillCls(st)}">${st}</span>
-        <span style="margin-left:auto;font-size:12px;color:var(--text2)">${o.customer||'-'}</span>
-      </div>
-      <div style="margin-bottom:6px">${cutCards}</div>
-      <div class="cs-grid">
-        <span>数量 <b>${o.qty}カット</b></span>
-        <span>受注日 <b>${o.orderDate||'-'}</b></span>
-        <span>納期 <b>${o.dueDate||'-'}</b></span>
-        <span>受注・税込 <b>¥${fmt(o.totalPriceIn)}</b></span>
-        <span>発注 <b>¥${fmt(o.atTotalPrice)}</b></span>
-        <span>粗利 <b>¥${fmt(o.margin)}</b></span>
-        <span>粗利率 <b>${pctStr}</b></span>
-        <span>担当 <b>${o.contact||'-'}</b></span>
-      </div>
-      <div class="cs-btn">
-        <button class="btn primary sm" onclick="showDetail('${o.id}')">✂ カット管理・編集</button>
-        <button class="btn sm" onclick="editOrder('${o.id}')">✏ 受注編集</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function clearCutSearch(){
-  document.getElementById('cut-search-input').value='';
-  searchCut();
-}
-
+// ============================================================
+// 受注一覧
+// ============================================================
 function renderList(){
-  const flt=document.getElementById('flt-status').value;
-  const sortDir=document.getElementById('list-sort')?document.getElementById('list-sort').value:'desc';
-  let list=flt?orders.filter(o=>getStatus(o)===flt):[...orders];
+  const flt=document.getElementById('flt-st').value;
+  const sortDir=document.getElementById('list-sort').value;
+  let list=flt==='uninvoiced'
+    ? orders.filter(o=>!o.invoiceDate)
+    : flt ? orders.filter(o=>getStatus(o)===flt) : [...orders];
   list.sort((a,b)=>{
     const da=a.orderDate||'0000-00-00', db=b.orderDate||'0000-00-00';
     return sortDir==='desc'?db.localeCompare(da):da.localeCompare(db);
   });
   const el=document.getElementById('list-body');
-  if(!list.length){el.innerHTML='<div class="empty"><i>📭</i>受注データがありません</div>';return;}
-  // 月別ヘッダー付きで描画
+  if(!list.length){ el.innerHTML=`<div class="empty"><i>📭</i>${t('emptyList')}</div>`; return; }
   let lastMonth='';
   const cards=[];
   list.forEach(o=>{
-    const st=getStatus(o);const{done,total,pct}=progOf(o);
+    const st=getStatus(o);
+    const {done,total,pct}=progOf(o);
     const pctStr=o.marginPct!=null?Number(o.marginPct).toFixed(1)+'%':'-';
-    // 月ヘッダー
+    // 月別ヘッダー
     const month=o.orderDate?o.orderDate.slice(0,7):'';
-    const monthLabel=month?month.replace('-','年')+'月':'受注日未設定';
-    if(monthLabel!==lastMonth){
-      // タイトル（略語）話数 左寄せ ＋ 受注日 右寄せのヘッダー
-      const hTitle=o.title||(o.abbr||'');
-      const hAbbr=o.abbr&&o.abbr!==o.title?`（${o.abbr}）`:'';
-      const hEp=o.episode?` 第${o.episode}話`:'';
-      cards.push(`<div style="
-        display:flex;align-items:center;justify-content:space-between;
-        padding:8px 6px 5px;margin-top:${cards.length?'1.25rem':'0'};
-        border-bottom:2px solid var(--green);gap:8px;">
-        <span style="font-size:14px;font-weight:600;color:var(--green-dark)">
-          ${hTitle}${hAbbr}${hEp}
-        </span>
-        <span style="font-size:12px;color:var(--text2);white-space:nowrap">${o.orderDate||'受注日未設定'}</span>
-      </div>`);
-      lastMonth=monthLabel;
+    const mLabel=month?month.replace('-','年')+'月':t('orderNotSet');
+    if(mLabel!==lastMonth){
+      cards.push(`<div class="mhdr" style="margin-top:${cards.length?'1rem':'0'}">
+        <span>${mLabel}</span></div>`);
+      lastMonth=mLabel;
     }
-    cards.push(`<div class="order-card" onclick="showDetail('${o.id}')">
+    cards.push(`<div class="card" onclick="showDetail('${o.id}')">
       ${makeBanner(o)}
-      <div class="oc-row">
-        <span class="oc-sub">${o.customer||'-'}　担当：${o.contact||'-'}　受注日：${o.orderDate||'-'}</span>
-        ${dueBadge(o.dueDate,st)}<span class="pill ${pillCls(st)}">${st}</span>
-      </div>
-      <div class="oc-meta">
-        <span>作業 <b>${o.process||'-'}</b></span>
-        <span>数量 <b>${o.qty}カット</b></span>
+      <div class="sub">${o.customer||'-'}　${t('contact')}：${o.contact||'-'}　<b>${o.process||''}</b></div>
+      <div class="meta">
+        <span>${t('work')} <b>${o.process||'-'}</b></span>
+        <span>${t('qty')} <b>${o.qty}${currentLang==='vi'?' cảnh':'カット'}</b></span>
         <span>受注・税込 <b>¥${fmt(o.totalPriceIn)}</b></span>
         <span>発注 <b>¥${fmt(o.atTotalPrice)}</b></span>
         <span>粗利 <b>¥${fmt(o.margin)}</b></span>
         <span>粗利率 <b>${pctStr}</b></span>
-        <span>納期 <b>${o.dueDate||'-'}</b></span>
+        <span>${t('dueLabel')} <b>${o.dueDate||'-'}</b></span>
       </div>
-      <div class="prog-wrap"><div class="prog-label"><span>カット進捗 ${done}/${total}</span><span>${pct}%</span></div>
-        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div></div>
-      <div class="oc-actions" onclick="event.stopPropagation()">
-        <button class="btn sm" onclick="showDetail('${o.id}')">✂ カット管理</button>
-        <button class="btn sm" onclick="editOrder('${o.id}')">✏ 編集</button>
+      <div class="pbar">
+        <div class="pbar-lbl"><span>${done}/${total}</span><span>${pct}%</span></div>
+        <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="acts" onclick="event.stopPropagation()">
+        <button class="btn sm" onclick="showDetail('${o.id}')">✂ ${t('tabProg').replace('＋ ','')}</button>
+        <button class="btn sm" onclick="editOrder('${o.id}')">✏ ${t('btnEdit').replace('✏ ','')}</button>
       </div>
     </div>`);
   });
@@ -1122,433 +989,648 @@ function renderList(){
   updateBadges();
 }
 
-/* ===== DETAIL ===== */
+// ============================================================
+// カット番号検索
+// ============================================================
+function normCutId(s){
+  s=String(s).trim().toUpperCase();
+  const m=s.match(/^([Cc]?)(\d+)$/);
+  if(!m) return s;
+  return {prefix:m[1],num:m[2],raw:s};
+}
+function cutMatch(inp,cid){
+  const a=normCutId(inp), b=normCutId(String(cid));
+  if(typeof a==='string'||typeof b==='string')
+    return String(inp).toUpperCase()===String(cid).toUpperCase();
+  return parseInt(a.num,10)===parseInt(b.num,10);
+}
+function searchCut(){
+  const q=document.getElementById('cut-search-input').value.trim();
+  const res=document.getElementById('srch-result');
+  const hint=document.getElementById('srch-hint');
+  const clr=document.getElementById('srch-clr');
+  if(!q){ res.style.display='none'; hint.textContent=''; clr.style.display='none'; return; }
+  clr.style.display='block';
+  const hits=[];
+  orders.forEach(o=>{
+    const mc=(o.cuts||[]).filter(c=>cutMatch(q,c.id));
+    if(mc.length>0) hits.push({order:o,cuts:mc});
+  });
+  if(!hits.length){
+    res.style.display='block';
+    res.innerHTML=`<div style="text-align:center;padding:1.5rem;color:var(--txt3);font-size:13px;background:var(--sur2);border-radius:var(--r)">✂ ${q} ${t('searchMiss')}</div>`;
+    hint.textContent=''; return;
+  }
+  hint.textContent=`${hits.length}${t('searchHit')}`;
+  res.style.display='block';
+  res.innerHTML=hits.map(h=>{
+    const o=h.order; const st=getStatus(o);
+    const pctStr=o.marginPct!=null?Number(o.marginPct).toFixed(1)+'%':'-';
+    const b=bannerOf(o.customer||o.title||'');
+    const cutCards=h.cuts.map(c=>{
+      const dl=c.done?`<span class="cdone">✓ ${c.date?c.date.slice(5):''}</span>`:`<span class="ctodo">-</span>`;
+      return `<span class="srch-cut">✂ ${String(c.id)}</span>${dl}`;
+    }).join(' ');
+    return `<div class="srch-card">
+      <div class="sct">
+        <span style="background:${b.bg};color:${b.tx};padding:3px 10px;border-radius:99px;font-size:13px;font-weight:500">
+          ${o.title||'-'}${o.abbr?`（${o.abbr}）`:''}${o.episode?` 第${o.episode}話`:''}
+        </span>
+        <span style="font-size:12px;color:var(--txt2)">${o.process}</span>
+        <span class="pill ${pillCls(st)}">${tSt(st)}</span>
+        <span style="margin-left:auto;font-size:12px;color:var(--txt2)">${o.customer||'-'}</span>
+      </div>
+      <div style="margin-bottom:6px">${cutCards}</div>
+      <div class="srch-meta">
+        <span>${t('qty')} <b>${o.qty}</b></span>
+        <span>${t('lblOd')} <b>${o.orderDate||'-'}</b></span>
+        <span>${t('dueLabel')} <b>${o.dueDate||'-'}</b></span>
+        <span>¥${fmt(o.totalPriceIn)}</span>
+        <span>¥${fmt(o.atTotalPrice)}</span>
+        <span>¥${fmt(o.margin)}</span>
+        <span>${pctStr}</span>
+        <span>${t('contact')} <b>${o.contact||'-'}</b></span>
+      </div>
+      <div class="srch-acts">
+        <button class="btn pri sm" onclick="showDetail('${o.id}')">✂ ${t('cutSearchEdit')}</button>
+        <button class="btn sm" onclick="editOrder('${o.id}')">✏ ${t('rcvEdit')}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function clearSearch(){
+  document.getElementById('cut-search-input').value='';
+  searchCut();
+}
+
+// ============================================================
+// 詳細
+// ============================================================
 function showDetail(id){
-  currentId=id;const o=orders.find(x=>x.id===id);if(!o)return;
+  currentId=id;
+  const o=orders.find(x=>x.id===id); if(!o) return;
   const st=getStatus(o);
-  document.getElementById('d-pill').innerHTML=`<span class="pill ${pillCls(st)}">${st}</span>`;
-  document.getElementById('d-due-warn').innerHTML=dueBadge(o.dueDate,st);
+  document.getElementById('d-pill').innerHTML=`<span class="pill ${pillCls(st)}">${tSt(st)}</span>`;
+  document.getElementById('d-due').innerHTML=dueBadge(o.dueDate,st);
   document.getElementById('d-banner').innerHTML=makeBanner(o);
-  const{done,total,pct}=progOf(o);
+  const {done,total,pct}=progOf(o);
   const pctStr=o.marginPct!=null?Number(o.marginPct).toFixed(1)+'%':'-';
   document.getElementById('d-sum').innerHTML=`
-    <div class="sum-card sc-blue"><div class="sl">受注・税抜</div><div class="sv">¥${fmt(o.totalPriceEx)}</div><div class="ssv">税込 ¥${fmt(o.totalPriceIn)}</div></div>
-    <div class="sum-card sc-amber"><div class="sl">発注（AT・非課税）</div><div class="sv">¥${fmt(o.atTotalPrice)}</div><div class="ssv">${o.qty}カット × ¥${fmt(o.atUnitPrice)}</div></div>
-    <div class="sum-card sc-teal"><div class="sl">粗利（税込受注－発注）</div><div class="sv">¥${fmt(o.margin)}</div><div class="ssv">粗利率 ${pctStr}</div></div>
-    <div class="sum-card sc-gray"><div class="sl">カット進捗</div><div class="sv">${done}/${total}</div><div class="ssv">${pct}%</div></div>`;
+    <div class="sc sc-bl"><div class="sl">${t('sumRcv')}</div><div class="sv">¥${fmt(o.totalPriceEx)}</div><div class="ss">${t('taxIn')} ¥${fmt(o.totalPriceIn)}</div></div>
+    <div class="sc sc-pk"><div class="sl">${t('sumAt')}</div><div class="sv">¥${fmt(o.atTotalPrice)}</div><div class="ss">${o.qty}${currentLang==='vi'?' cảnh':'カット'} × ¥${fmt(o.atUnitPrice)}</div></div>
+    <div class="sc sc-gn"><div class="sl">${t('sumMg')}</div><div class="sv">¥${fmt(o.margin)}</div><div class="ss">${pctStr}</div></div>
+    <div class="sc sc-gy"><div class="sl">${t('sumCut')}</div><div class="sv">${done}/${total}</div><div class="ss">${pct}%</div></div>`;
   document.getElementById('d-info').innerHTML=`
-    <div class="ir"><div class="ik">顧客・担当</div><div class="iv">${o.customer||'-'} / ${o.contact||'-'}</div></div>
-    <div class="ir"><div class="ik">受注日 / 納期</div><div class="iv">${o.orderDate||'-'} / ${o.dueDate||'-'}</div></div>
-    <div class="ir"><div class="ik">数量・受注単価</div><div class="iv">${o.qty}カット × ¥${fmt(o.unitPrice)}（税抜）</div></div>
-    <div class="ir"><div class="ik">発注単価（AT）</div><div class="iv">¥${fmt(o.atUnitPrice)}（非課税）</div></div>
-    ${o.note?`<div class="ir" style="grid-column:span 2"><div class="ik">備考</div><div class="iv">${o.note}</div></div>`:''}`;
+    <div class="ir"><div class="ik">${t('infoCustomer')}</div><div class="iv">${o.customer||'-'} / ${o.contact||'-'}</div></div>
+    <div class="ir"><div class="ik">${t('infoDate')}</div><div class="iv">${o.orderDate||'-'} / ${o.dueDate||'-'}</div></div>
+    <div class="ir"><div class="ik">${t('infoQtyUp')}</div><div class="iv">${o.qty}${currentLang==='vi'?' cảnh':'カット'} × ¥${fmt(o.unitPrice)}</div></div>
+    <div class="ir"><div class="ik">${t('infoAp')}</div><div class="iv">¥${fmt(o.atUnitPrice)}</div></div>
+    ${o.note?`<div class="ir" style="grid-column:span 2"><div class="ik">${t('slNote')}</div><div class="iv">${o.note}</div></div>`:''}`;
   document.getElementById('d-del').value=o.deliveryDate||'';
   document.getElementById('d-inv').value=o.invoiceDate||'';
-  document.getElementById('d-status').value=st;
+  document.getElementById('d-st').value=st;
   renderCuts(o);
-  document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(e=>e.classList.remove('active'));
-  document.getElementById('view-detail').classList.add('active');
+  // テキスト更新
+  (document.getElementById('h-cut')||{}).textContent=t('cutProgTitle');
+  (document.getElementById('btn-alldone')||{}).textContent=t('btnAllDone');
+  (document.getElementById('prog-lbl')||{}).textContent=t('progLbl');
+  (document.getElementById('d-del-ttl')||{}).textContent=t('dDelTtl');
+  (document.getElementById('lbl-deldl')||{}).textContent=t('lblDelDl');
+  (document.getElementById('lbl-delinv')||{}).textContent=t('lblDelInv');
+  (document.getElementById('lbl-delst')||{}).textContent=t('lblDelSt');
+  (document.getElementById('btn-del-det')||{}).textContent=t('btnDel');
+  (document.getElementById('btn-edit-det')||{}).textContent=t('btnEdit');
+  (document.getElementById('btn-back')||{}).textContent=t('btnBack');
+  const dss=document.getElementById('d-st');
+  if(dss){['or','wip','dn','iv'].forEach((k,i)=>{
+    if(dss.options[i]) dss.options[i].textContent=t('dst'+k.charAt(0).toUpperCase()+k.slice(1)||'dst'+k);
+  });}
+  showView('detail');
 }
 
 function renderCuts(o){
-  if(!o)o=orders.find(x=>x.id===currentId);if(!o)return;
-  const{done,total,pct}=progOf(o);
-  document.getElementById('cut-prog-txt').textContent=`${done}/${total} 完了`;
+  if(!o) o=orders.find(x=>x.id===currentId); if(!o) return;
+  const cuts=o.cuts||[];
+  const {done,total,pct}=progOf(o);
+  document.getElementById('cut-prog-txt').textContent=`${done}/${total}`;
   document.getElementById('d-prog-pct').textContent=pct+'%';
   document.getElementById('d-prog-fill').style.width=pct+'%';
-  const cuts=o.cuts||[];
+  document.getElementById('cut-hint').textContent=t('cutHint');
   const grid=document.getElementById('cut-grid');
-  if(!cuts.length){grid.innerHTML='<div style="font-size:13px;color:var(--text3);padding:10px 0">カット番号未登録。「編集」から入力してください。</div>';return;}
-  // 兼用カットをグループ化して表示
-  // cutsRawがあればグループ情報を使用、なければ個別表示
-  let cardHTML='';
+  if(!cuts.length){
+    grid.innerHTML=`<div style="font-size:13px;color:var(--txt3);padding:10px 0">${t('cutEmpty')}</div>`;
+    return;
+  }
   if(o.cutsRaw){
     const groups=parseGroups(o.cutsRaw);
-    // グループ順でソート（最初のIDのソート順）
-    cardHTML=groups.map(g=>{
-      // グループ内の全カットの完了状態を確認
-      const groupCuts=g.ids.map(id=>cuts.find(c=>String(c.id)===String(id))).filter(Boolean);
-      const doneCuts=groupCuts.filter(c=>c.done);
-      const allDone=groupCuts.length>0&&doneCuts.length===groupCuts.length;
-      const date=doneCuts.length>0?doneCuts[doneCuts.length-1].date:'';
-      // 代表IDでトグル（兼用の場合は全IDをトグル）
-      const idsJson=JSON.stringify(g.ids).replace(/"/g,"'");
-      return`<div class="cut-card${allDone?' done':''}" onclick="toggleCutGroup(${idsJson})">
+    grid.innerHTML=groups.map(g=>{
+      const gc=g.ids.map(id=>cuts.find(c=>String(c.id)===String(id))).filter(Boolean);
+      const allDone=gc.length>0&&gc.every(c=>c.done);
+      const date=gc.filter(c=>c.done).slice(-1)[0]?.date||'';
+      const idsStr=JSON.stringify(g.ids);
+      return `<div class="cc${allDone?' dn':''}" onclick="toggleGroup(${idsStr})">
         <div class="ck"><svg width="8" height="7" viewBox="0 0 8 7" fill="none" stroke="#fff" stroke-width="1.5"><path d="M1 3.5l2 2 4-4"/></svg></div>
-        <span class="cn" style="font-size:${g.label.length>6?'10px':'12px'}">${g.label}</span>
+        <span class="cn" style="font-size:${g.label.length>6?'10px':'11px'}">${g.label}</span>
         ${date?`<span class="cd">${date.slice(5)}</span>`:''}
       </div>`;
     }).join('');
   } else {
-    const sorted=[...cuts].sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
-    cardHTML=sorted.map(c=>`<div class="cut-card${c.done?' done':''}" onclick="toggleCut('${String(c.id)}')">
+    const sorted=[...cuts].sort((a,b)=>String(a.id).localeCompare(String(b.id),undefined,{numeric:true}));
+    grid.innerHTML=sorted.map(c=>`<div class="cc${c.done?' dn':''}" onclick="toggleCut('${c.id}')">
       <div class="ck"><svg width="8" height="7" viewBox="0 0 8 7" fill="none" stroke="#fff" stroke-width="1.5"><path d="M1 3.5l2 2 4-4"/></svg></div>
-      <span class="cn">${String(c.id)}</span>${c.date?`<span class="cd">${c.date.slice(5)}</span>`:''}
+      <span class="cn">${String(c.id)}</span>${c.done&&c.date?`<span class="cd">${c.date.slice(5)}</span>`:''}
     </div>`).join('');
   }
-  grid.innerHTML=cardHTML;
 }
 
-async function toggleCutGroup(ids){
-  // 兼用カット：グループ内の全IDを一括トグル
-  const o=orders.find(x=>x.id===currentId);if(!o)return;
-  // グループ内の現在の完了状態（全完了かどうか）
-  const groupCuts=ids.map(id=>(o.cuts||[]).find(c=>String(c.id)===String(id))).filter(Boolean);
-  const allDone=groupCuts.length>0&&groupCuts.every(c=>c.done);
-  groupCuts.forEach(c=>{c.done=!allDone;c.date=!allDone?today():'';});
-  renderCuts(o);autoStatus(o);
-  document.getElementById('d-status').value=getStatus(o);
-  document.getElementById('d-pill').innerHTML=`<span class="pill ${pillCls(getStatus(o))}">${getStatus(o)}</span>`;
-  const{done,total,pct}=progOf(o);
-  document.getElementById('d-sum').querySelector('.sc-gray .sv').textContent=`${done}/${total}`;
-  document.getElementById('d-sum').querySelector('.sc-gray .ssv').textContent=pct+'%';
-  setSyncing('syncing');
-  try{await apiPost({action:'saveCuts',id:o.id,cuts:o.cuts});setSyncing('ok');}
-  catch(e){setSyncing('error');showToast('同期エラー：'+e.message,true);}
+async function toggleGroup(ids){
+  const o=orders.find(x=>x.id===currentId); if(!o) return;
+  const gc=ids.map(id=>(o.cuts||[]).find(c=>String(c.id)===String(id))).filter(Boolean);
+  const allDone=gc.length>0&&gc.every(c=>c.done);
+  gc.forEach(c=>{ c.done=!allDone; c.date=!allDone?today():''; });
+  renderCuts(o); autoStatus(o);
+  document.getElementById('d-st').value=getStatus(o);
+  document.getElementById('d-pill').innerHTML=`<span class="pill ${pillCls(getStatus(o))}">${tSt(getStatus(o))}</span>`;
+  updateSumCard(o);
+  await saveCutsToFb(o);
 }
-
 async function toggleCut(cid){
-  const o=orders.find(x=>x.id===currentId);if(!o)return;
-  const c=(o.cuts||[]).find(x=>String(x.id)===String(cid));if(!c)return;
-  c.done=!c.done;c.date=c.done?today():'';
-  renderCuts(o);autoStatus(o);
-  document.getElementById('d-status').value=getStatus(o);
-  document.getElementById('d-pill').innerHTML=`<span class="pill ${pillCls(getStatus(o))}">${getStatus(o)}</span>`;
-  const{done,total,pct}=progOf(o);
-  document.getElementById('d-sum').querySelector('.sc-gray .sv').textContent=`${done}/${total}`;
-  document.getElementById('d-sum').querySelector('.sc-gray .ssv').textContent=pct+'%';
-  setSyncing('syncing');
-  try{await apiPost({action:'saveCuts',id:o.id,cuts:o.cuts});setSyncing('ok');}
-  catch(e){setSyncing('error');showToast('同期エラー：'+e.message,true);}
+  const o=orders.find(x=>x.id===currentId); if(!o) return;
+  const c=(o.cuts||[]).find(x=>String(x.id)===String(cid)); if(!c) return;
+  c.done=!c.done; c.date=c.done?today():'';
+  renderCuts(o); autoStatus(o);
+  document.getElementById('d-st').value=getStatus(o);
+  document.getElementById('d-pill').innerHTML=`<span class="pill ${pillCls(getStatus(o))}">${tSt(getStatus(o))}</span>`;
+  updateSumCard(o);
+  await saveCutsToFb(o);
 }
 async function markAll(){
-  const o=orders.find(x=>x.id===currentId);if(!o||!(o.cuts||[]).length)return;
+  const o=orders.find(x=>x.id===currentId); if(!o||(o.cuts||[]).length===0) return;
   const allDone=(o.cuts||[]).every(c=>c.done);
-  (o.cuts||[]).forEach(c=>{c.done=!allDone;c.date=!allDone?today():'';});
-  renderCuts(o);autoStatus(o);
-  setSyncing('syncing');
-  try{await apiPost({action:'saveCuts',id:o.id,cuts:o.cuts});setSyncing('ok');showToast(allDone?'リセットしました':'全カット完了にしました');}
-  catch(e){setSyncing('error');showToast('同期エラー：'+e.message,true);}
+  (o.cuts||[]).forEach(c=>{ c.done=!allDone; c.date=!allDone?today():''; });
+  renderCuts(o); autoStatus(o); updateSumCard(o);
+  await saveCutsToFb(o);
+  showToast(t('saved'));
+}
+async function saveCutsToFb(o){
+  const cutsObj={};
+  (o.cuts||[]).forEach((c,i)=>{ cutsObj[i]={id:String(c.id),done:c.done,date:c.date||''}; });
+  await fbUpdate(`/orders/${o.id}`,{cuts:cutsObj,status:o.status});
 }
 function autoStatus(o){
-  const done=(o.cuts||[]).filter(c=>c.done).length,total=(o.cuts||[]).length;
-  if(done>0&&done<total)o.status='進行中';
-  else if(done>0&&done===total)o.status='納品済';
+  const done=(o.cuts||[]).filter(c=>c.done).length;
+  const total=(o.cuts||[]).length;
+  if(done>0&&done<total) o.status='進行中';
+  else if(done>0&&done===total) o.status='納品済';
+}
+function updateSumCard(o){
+  const {done,total,pct}=progOf(o);
+  const sv=document.querySelector('.sc-gy .sv');
+  const ss=document.querySelector('.sc-gy .ss');
+  if(sv) sv.textContent=`${done}/${total}`;
+  if(ss) ss.textContent=pct+'%';
+  document.getElementById('d-prog-pct').textContent=pct+'%';
+  document.getElementById('d-prog-fill').style.width=pct+'%';
 }
 async function saveDates(){
-  const o=orders.find(x=>x.id===currentId);if(!o)return;
+  const o=orders.find(x=>x.id===currentId); if(!o) return;
   o.deliveryDate=document.getElementById('d-del').value;
   o.invoiceDate=document.getElementById('d-inv').value;
-  o.status=document.getElementById('d-status').value;
+  o.status=document.getElementById('d-st').value;
   const st=getStatus(o);
-  document.getElementById('d-pill').innerHTML=`<span class="pill ${pillCls(st)}">${st}</span>`;
-  document.getElementById('d-due-warn').innerHTML=dueBadge(o.dueDate,st);
-  setSyncing('syncing');
-  try{await apiPost({action:'saveOrder',order:{...o,cuts:undefined}});setSyncing('ok');}
-  catch(e){setSyncing('error');showToast('同期エラー：'+e.message,true);}
-}
-function editOrder(id){
-  const oid=id||currentId;const o=orders.find(x=>x.id===oid);if(!o)return;
-  editingId=oid;
-  document.getElementById('form-ttl').textContent='受注編集';
-  document.getElementById('f-order-date').value=o.orderDate||'';
-  document.getElementById('f-due-date').value=o.dueDate||'';
-  document.getElementById('f-delivery-date').value=o.deliveryDate||'';
-  document.getElementById('f-invoice-date').value=o.invoiceDate||'';
-  document.getElementById('f-customer').value=o.customer||'';
-  document.getElementById('f-contact').value=o.contact||'';
-  document.getElementById('f-title').value=o.title||'';
-  document.getElementById('f-abbr').value=o.abbr||'';
-  document.getElementById('f-episode').value=o.episode||'';
-  document.getElementById('f-process').value=o.process||'LO';
-  document.getElementById('f-qty').value=o.qty||'';
-  document.getElementById('f-unit-price').value=o.unitPrice||'';
-  document.getElementById('f-at-price').value=o.atUnitPrice||'';
-  document.getElementById('f-cuts').value=(o.cuts||[]).map(c=>c.id).join(', ');
-  document.getElementById('f-note').value=o.note||'';
-  document.getElementById('f-abbr').classList.remove('auto');
-  document.getElementById('abbr-lbl').style.display='none';
-  calcAmt();updLimit();prevCutPreview();
-  document.getElementById('form-del-btn').style.display='inline-flex';
-  document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(e=>e.classList.remove('active'));
-  document.getElementById('view-new').classList.add('active');
-  document.getElementById('tab-new').classList.add('active');
-}
-async function deleteFromForm(){
-  if(!editingId){return;}
-  const o=orders.find(x=>x.id===editingId);if(!o)return;
-  if(!confirm(`「${o.title}」を削除しますか？\nこの操作は取り消せません。`))return;
-  const delId=editingId;
-  editingId=null;
-  setSyncing('syncing');
-  try{
-    await apiPost({action:'deleteOrder',id:delId});
-    orders=orders.filter(x=>x.id!==delId);
-    setSyncing('ok');showToast('削除しました');showView('list');
-  }catch(e){setSyncing('error');showToast('削除エラー：'+e.message,true);}
-}
-async function deleteOrder(){
-  const o=orders.find(x=>x.id===currentId);if(!o)return;
-  if(!confirm(`「${o.title}」を削除しますか？`))return;
-  setSyncing('syncing');
-  try{
-    await apiPost({action:'deleteOrder',id:currentId});
-    orders=orders.filter(x=>x.id!==currentId);
-    setSyncing('ok');showToast('削除しました');showView('list');
-  }catch(e){setSyncing('error');showToast('削除エラー：'+e.message,true);}
+  document.getElementById('d-pill').innerHTML=`<span class="pill ${pillCls(st)}">${tSt(st)}</span>`;
+  document.getElementById('d-due').innerHTML=dueBadge(o.dueDate,st);
+  await fbUpdate(`/orders/${o.id}`,{deliveryDate:o.deliveryDate,invoiceDate:o.invoiceDate,status:o.status});
 }
 
-/* ===== PROGRESS ===== */
-function renderProgress(){
+// ============================================================
+// フォーム
+// ============================================================
+function calcAmt(){
+  const qty=parseFloat(document.getElementById('f-qty').value)||0;
+  const up=parseFloat(document.getElementById('f-up').value)||0;
+  const ap=parseFloat(document.getElementById('f-ap').value)||0;
+  const tex=qty*up, tin=Math.round(tex*(1+TAX)), at=qty*ap, mg=tin-at;
+  const pct=tin>0?Math.round(mg/tin*1000)/10:null;
+  document.getElementById('f-tex').value=tex?fmt(tex):'';
+  document.getElementById('f-tin').value=tin?fmt(tin):'';
+  document.getElementById('f-at').value=at?fmt(at):'';
+  document.getElementById('f-mg').value=(tin||at)?fmt(mg):'';
+  document.getElementById('f-mp').value=pct!=null?pct.toFixed(1)+'%':'';
+}
+function updLimit(){
+  const qty=parseInt(document.getElementById('f-qty').value)||0;
+  document.getElementById('cut-limit').textContent=qty?`上限 ${qty}`:' ';
+  prevPreview();
+}
+function prevPreview(){
+  const qty=parseInt(document.getElementById('f-qty').value)||0;
+  const val=document.getElementById('f-cuts').value.trim();
+  const el=document.getElementById('cut-preview');
+  if(!val){el.textContent='';return;}
+  const ids=parseCuts(val);
+  if(qty&&ids.length>qty){el.style.color='var(--rd)';el.textContent=`⚠ ${ids.length}件（上限超え）`;}
+  else{el.style.color='var(--bl)';el.textContent=ids.length?`${ids.length}件：${ids.slice(0,8).join(', ')}${ids.length>8?` …他${ids.length-8}件`:''}`:'';}
+}
+function resetForm(){
+  editingId=null;
+  document.getElementById('form-ttl').textContent=t('formNew');
+  document.getElementById('btn-del-form').style.display='none';
+  ['f-od','f-due','f-dl','f-inv'].forEach(id=>{document.getElementById(id).value='';});
+  ['f-cust','f-ct','f-ttl','f-abbr','f-ep','f-qty','f-up','f-ap',
+   'f-tex','f-tin','f-at','f-mg','f-mp','f-cuts','f-note'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('f-proc').value='LO';
+  document.getElementById('abbr-auto').style.display='none';
+  document.getElementById('cut-preview').textContent='';
+  document.getElementById('cut-limit').textContent='';
+}
+function cancelForm(){ editingId=null; showView('list'); }
+
+function onTitleInput(){
+  filterCbo('ttl');
+  const val=document.getElementById('f-ttl').value.trim();
+  const found=masters.titles.find(t2=>t2.name===val);
+  const el=document.getElementById('f-abbr');
+  const lbl=document.getElementById('abbr-auto');
+  if(found&&found.abbr){el.value=found.abbr;lbl.style.display='inline';}
+  else{lbl.style.display='none';}
+}
+
+async function saveOrder(){
+  const title=document.getElementById('f-ttl').value.trim();
+  const cust=document.getElementById('f-cust').value.trim();
+  const abbr=document.getElementById('f-abbr').value.trim();
+  if(!title){alert(t('lblTtl')+'を入力してください');return;}
+  if(!cust){alert(t('lblCust')+'を入力してください');return;}
+  const qty=parseInt(document.getElementById('f-qty').value)||0;
+  const cutsRaw=document.getElementById('f-cuts').value.trim();
+  const cutIds=cutsRaw?parseCuts(cutsRaw):[];
+  if(qty&&cutIds.length>qty){alert(`カット番号が${qty}件を超えています`);return;}
+  // マスター更新
+  if(!masters.customers.find(c=>c.name===cust))
+    masters.customers.push({name:cust,color:colorOf(cust)});
+  const existT=masters.titles.find(t2=>t2.name===title);
+  if(!existT) masters.titles.push({name:title,color:colorOf(title),abbr});
+  else if(abbr&&!existT.abbr) existT.abbr=abbr;
+  const up=parseFloat(document.getElementById('f-up').value)||0;
+  const ap=parseFloat(document.getElementById('f-ap').value)||0;
+  const tex=qty*up, tin=Math.round(tex*(1+TAX)), at=qty*ap, mg=tin-at;
+  const mpct=tin>0?Math.round(mg/tin*1000)/10:null;
+  const prevCuts=editingId?(orders.find(x=>x.id===editingId)||{cuts:[]}).cuts:[];
+  const cuts=cutIds.length>0
+    ?cutIds.map(id=>{const ex=prevCuts.find(c=>String(c.id)===String(id));return ex||{id,done:false,date:''};})
+    :[...prevCuts];
+  const cutsObj={};
+  cuts.forEach((c,i)=>{ cutsObj[i]={id:String(c.id),done:c.done,date:c.date||''}; });
+  const o={
+    id:editingId||uid(),
+    orderDate:document.getElementById('f-od').value,
+    dueDate:document.getElementById('f-due').value,
+    deliveryDate:document.getElementById('f-dl').value,
+    invoiceDate:document.getElementById('f-inv').value,
+    customer:cust, contact:document.getElementById('f-ct').value.trim(),
+    title, abbr, episode:document.getElementById('f-ep').value.trim(),
+    process:document.getElementById('f-proc').value,
+    qty, unitPrice:up, totalPriceEx:tex, totalPriceIn:tin,
+    atUnitPrice:ap, atTotalPrice:at, margin:mg, marginPct:mpct,
+    note:document.getElementById('f-note').value.trim(),
+    status:'受注済', cuts:cutsObj
+  };
+  // cutsRawをキャッシュ
+  if(cutsRaw){
+    cutsRawCache[o.id]=cutsRaw;
+    await fbSet(`/cutsRaw/${o.id}`,cutsRaw);
+  }
+  // Firebaseに保存
+  await fbSet(`/orders/${o.id}`, o);
+  await fbSet('/masters', masters);
+  // ローカル更新
+  const oCopy={...o, cuts:cuts};
+  oCopy.cutsRaw=cutsRaw||undefined;
+  if(editingId){
+    const i=orders.findIndex(x=>x.id===editingId);
+    if(i!==-1) orders[i]=oCopy;
+  } else { orders.unshift(oCopy); }
+  editingId=null;
+  showToast(t('saved'));
+  showDetail(o.id);
+}
+
+function editOrder(id){
+  const oid=id||currentId;
+  const o=orders.find(x=>x.id===oid); if(!o) return;
+  editingId=oid;
+  document.getElementById('form-ttl').textContent=t('formEdit');
+  document.getElementById('btn-del-form').style.display='inline-flex';
+  document.getElementById('f-od').value=o.orderDate||'';
+  document.getElementById('f-due').value=o.dueDate||'';
+  document.getElementById('f-dl').value=o.deliveryDate||'';
+  document.getElementById('f-inv').value=o.invoiceDate||'';
+  document.getElementById('f-cust').value=o.customer||'';
+  document.getElementById('f-ct').value=o.contact||'';
+  document.getElementById('f-ttl').value=o.title||'';
+  document.getElementById('f-abbr').value=o.abbr||'';
+  document.getElementById('f-ep').value=o.episode||'';
+  document.getElementById('f-proc').value=o.process||'LO';
+  document.getElementById('f-qty').value=o.qty||'';
+  document.getElementById('f-up').value=o.unitPrice||'';
+  document.getElementById('f-ap').value=o.atUnitPrice||'';
+  document.getElementById('f-cuts').value=(o.cuts||[]).map(c=>c.id).join(', ');
+  document.getElementById('f-note').value=o.note||'';
+  document.getElementById('abbr-auto').style.display='none';
+  calcAmt(); updLimit(); prevPreview();
+  showView('new');
+}
+
+async function deleteFromForm(){
+  if(!editingId) return;
+  const o=orders.find(x=>x.id===editingId); if(!o) return;
+  if(!confirm(`「${o.title}」${t('confirmDelFull')}`)) return;
+  const delId=editingId; editingId=null;
+  await fbRemove(`/orders/${delId}`);
+  await fbRemove(`/cutsRaw/${delId}`);
+  orders=orders.filter(x=>x.id!==delId);
+  showToast(t('deleted')); showView('list');
+}
+async function deleteOrder(){
+  const o=orders.find(x=>x.id===currentId); if(!o) return;
+  if(!confirm(`「${o.title}」${t('confirmDel')}`)) return;
+  await fbRemove(`/orders/${currentId}`);
+  await fbRemove(`/cutsRaw/${currentId}`);
+  orders=orders.filter(x=>x.id!==currentId);
+  showToast(t('deleted')); showView('list');
+}
+
+// ============================================================
+// カット進捗タブ
+// ============================================================
+function renderProg(){
   const active=orders.filter(o=>{
     const st=getStatus(o);
-    if(['請求済','納品済'].includes(st)) return false;  // 納品済・請求済は非表示
-    const{pct}=progOf(o);
-    if(pct>=100) return false;  // 進捗100%も非表示
-    return true;
+    if(['請求済','納品済'].includes(st)) return false;
+    return progOf(o).pct < 100;
   });
-  const el=document.getElementById('progress-body');
-  if(!active.length){el.innerHTML='<div class="empty"><i>✅</i>進行中の案件はありません</div>';return;}
+  const el=document.getElementById('prog-body');
+  if(!active.length){ el.innerHTML=`<div class="empty"><i>✅</i>${t('emptyProg')}</div>`; return; }
   const sorted=[...active].sort((a,b)=>(a.dueDate||'9999').localeCompare(b.dueDate||'9999'));
   el.innerHTML=sorted.map(o=>{
-    const{done,total,pct}=progOf(o);const st=getStatus(o);
+    const st=getStatus(o); const {done,total,pct}=progOf(o);
     const d=daysUntil(o.dueDate);
-    const isWarn=d!==null&&d<=2&&!['納品済'].includes(st);
-    return`<div class="${isWarn?'prog-card warn':'prog-card'}" onclick="showDetail('${o.id}')">
+    const warn=d!==null&&d<=2&&!['納品済'].includes(st);
+    return `<div class="card${warn?' card-warn':''}" onclick="showDetail('${o.id}')"
+      style="${warn?'border-color:#EE9090;border-width:1px':''}">
       ${makeBanner(o)}
+      <div class="sub">${t('customer')}：${o.customer||'-'}　${t('lblOd')}：${o.orderDate||'-'}　${t('dueLabel')}：${o.dueDate||'-'}</div>
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
-        <span style="font-size:12px;color:var(--text2);flex:1">顧客：${o.customer||'-'}　受注日：${o.orderDate||'-'}　納期：${o.dueDate||'-'}</span>
-        ${dueBadge(o.dueDate,st)}<span class="pill ${pillCls(st)}">${st}</span>
+        ${dueBadge(o.dueDate,st)}<span class="pill ${pillCls(st)}">${tSt(st)}</span>
       </div>
-      <div class="prog-wrap">
-        <div class="prog-label"><span>カット進捗 <b>${done}/${total}</b>（登録 ${(o.cuts||[]).length}件）</span><span>${pct}%</span></div>
-        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+      <div class="pbar">
+        <div class="pbar-lbl"><span>${done}/${total}</span><span>${pct}%</span></div>
+        <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
       </div>
     </div>`;
   }).join('');
 }
 
-/* ===== GROUP ===== */
+// ============================================================
+// グループ表示
+// ============================================================
 function renderGroup(){
   const by=document.getElementById('grp-by').value;
-  const flt=document.getElementById('grp-status').value;
-  const src=flt==='uninvoiced'
-    ? orders.filter(o=>!o.invoiceDate)
-    : flt ? orders.filter(o=>getStatus(o)===flt) : orders;
+  const sdir=document.getElementById('grp-sort').value;
+  const flt=document.getElementById('grp-flt').value;
+  const src=flt==='uninvoiced'?orders.filter(o=>!o.invoiceDate)
+    :flt?orders.filter(o=>getStatus(o)===flt):orders;
   const keyOf=o=>{
-    if(by==='all') return 'すべての受注';
-    if(by==='orderMonth') return o.orderDate?o.orderDate.slice(0,7).replace('-','年')+'月':'受注日未設定';
-    if(by==='title') return o.title||'未設定';
-    if(by==='customer') return o.customer||'未設定';
-    return 'その他';
+    if(by==='all') return t('optAll');
+    if(by==='orderMonth') return o.orderDate?o.orderDate.slice(0,7).replace('-','年')+'月':t('orderNotSet');
+    if(by==='title') return o.title||'-';
+    return o.customer||'-';
   };
   const groups={};
-  src.forEach(o=>{const k=keyOf(o);if(!groups[k])groups[k]=[];groups[k].push(o);});
-  const el=document.getElementById('group-body');
-  if(!Object.keys(groups).length){el.innerHTML='<div class="empty"><i>📂</i>データがありません</div>';return;}
-  const sortDir = document.getElementById('grp-sort') ? document.getElementById('grp-sort').value : 'asc';
-  const sortedKeys = Object.keys(groups).sort((a,b)=> sortDir==='desc' ? b.localeCompare(a,'ja') : a.localeCompare(b,'ja'));
-  el.innerHTML=sortedKeys.map((k,ki)=>{
+  src.forEach(o=>{ const k=keyOf(o); if(!groups[k]) groups[k]=[]; groups[k].push(o); });
+  const el=document.getElementById('grp-body');
+  if(!Object.keys(groups).length){ el.innerHTML=`<div class="empty"><i>📂</i>${t('emptyGrp')}</div>`; return; }
+  const keys=Object.keys(groups).sort((a,b)=>sdir==='desc'?b.localeCompare(a,'ja'):a.localeCompare(b,'ja'));
+  el.innerHTML=keys.map((k,ki)=>{
     const items=groups[k];
     const tIn=items.reduce((s,o)=>s+(Number(o.totalPriceIn)||0),0);
     const tAt=items.reduce((s,o)=>s+(Number(o.atTotalPrice)||0),0);
     const tMg=tIn-tAt;
-    const bc=bcFor(k);
+    const bc=bcOf(k);
     const rows=items.map(o=>{
-      const st=getStatus(o);const{done,total}=progOf(o);
+      const st=getStatus(o); const {done,total}=progOf(o);
       const pctStr=o.marginPct!=null?Number(o.marginPct).toFixed(1)+'%':'-';
-      return`<div class="order-card" onclick="showDetail('${o.id}')" style="margin-bottom:6px">
+      return `<div class="card" onclick="showDetail('${o.id}')" style="margin-bottom:6px">
         ${makeBanner(o)}
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px">
-          <span style="font-size:12px;color:var(--text2);flex:1">${by!=='customer'?o.customer+'　':''}担当：${o.contact||'-'}　納期：${o.dueDate||'-'}</span>
-          ${dueBadge(o.dueDate,st)}<span class="pill ${pillCls(st)}">${st}</span>
+        <div class="sub">${by!=='customer'?o.customer+'　':''}${t('contact')}：${o.contact||'-'}　${t('dueLabel')}：${o.dueDate||'-'}</div>
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px">
+          ${dueBadge(o.dueDate,st)}<span class="pill ${pillCls(st)}">${tSt(st)}</span>
         </div>
-        <div class="oc-meta">
-          <span>受注日 <b>${o.orderDate||'-'}</b></span>
-          <span>受注・税込 <b>¥${fmt(o.totalPriceIn)}</b></span>
-          <span>発注 <b>¥${fmt(o.atTotalPrice)}</b></span>
-          <span>粗利 <b>¥${fmt(o.margin)}</b></span>
-          <span>粗利率 <b>${pctStr}</b></span>
-          <span>進捗 <b>${done}/${Number(o.qty)||0}</b></span>
+        <div class="meta">
+          <span>¥${fmt(o.totalPriceIn)}</span>
+          <span>${t('sumAt')} ¥${fmt(o.atTotalPrice)}</span>
+          <span>${t('sumMg')} ¥${fmt(o.margin)}</span>
+          <span>${pctStr}</span>
+          <span>${done}/${Number(o.qty)||0}</span>
         </div>
       </div>`;
     }).join('');
-    return`<div class="grp-section">
-      <div class="grp-hd" onclick="toggleGrp('g${ki}')">
+    return `<div class="gsec">
+      <div class="ghd" onclick="toggleGrp('g${ki}')">
         <h3>${k}</h3>
-        <div class="grp-summary">
-          <span>${items.length}件</span>
-          <span>受注計 <b>¥${fmt(tIn)}</b></span>
-          <span>発注計 <b>¥${fmt(tAt)}</b></span>
-          <span>粗利計 <b>¥${fmt(tMg)}</b></span>
+        <div class="gsub"><span>${items.length}件</span>
+          <span>受注 <b>¥${fmt(tIn)}</b></span>
+          <span>発注 <b>¥${fmt(tAt)}</b></span>
+          <span>粗利 <b>¥${fmt(tMg)}</b></span>
         </div>
-        <span id="tog-g${ki}" style="font-size:12px;color:var(--text3)">▲</span>
+        <span id="tog-g${ki}" style="font-size:12px;color:var(--txt3)">▲</span>
       </div>
-      <div class="grp-body" id="g${ki}" style="border-color:${bc}">${rows}</div>
+      <div class="gbody" id="g${ki}" style="border-color:${bc}">${rows}</div>
     </div>`;
   }).join('');
 }
 function toggleGrp(id){
-  const el=document.getElementById(id),tog=document.getElementById('tog-'+id);
+  const el=document.getElementById(id); const tog=document.getElementById('tog-'+id);
   const hidden=el.style.display==='none';
   el.style.display=hidden?'block':'none';
   tog.textContent=hidden?'▲':'▼';
 }
 
-/* ===== PRINT ===== */
 function printGroup(){
   const by=document.getElementById('grp-by').value;
-  const flt=document.getElementById('grp-status').value;
-  const src=flt==='uninvoiced'
-    ? orders.filter(o=>!o.invoiceDate)
-    : flt ? orders.filter(o=>getStatus(o)===flt) : orders;
-  const lbl={all:'全件',orderMonth:'受注月',title:'タイトル',customer:'顧客'}[by]||by;
+  const flt=document.getElementById('grp-flt').value;
+  const sdir=document.getElementById('grp-sort').value;
+  const src=flt==='uninvoiced'?orders.filter(o=>!o.invoiceDate)
+    :flt?orders.filter(o=>getStatus(o)===flt):orders;
   const keyOf=o=>{
-    if(by==='all') return 'すべての受注';
-    if(by==='orderMonth') return o.orderDate?o.orderDate.slice(0,7).replace('-','年')+'月':'受注日未設定';
-    if(by==='title') return o.title||'未設定';
-    if(by==='customer') return o.customer||'未設定';
-    return 'その他';
+    if(by==='all') return t('optAll');
+    if(by==='orderMonth') return o.orderDate?o.orderDate.slice(0,7).replace('-','年')+'月':t('orderNotSet');
+    if(by==='title') return o.title||'-';
+    return o.customer||'-';
   };
-  const groups={};src.forEach(o=>{const k=keyOf(o);if(!groups[k])groups[k]=[];groups[k].push(o);});
-  const sortDir2 = document.getElementById('grp-sort') ? document.getElementById('grp-sort').value : 'asc';
-  const keys=Object.keys(groups).sort((a,b)=> sortDir2==='desc' ? b.localeCompare(a,'ja') : a.localeCompare(b,'ja'));
+  const groups={};
+  src.forEach(o=>{ const k=keyOf(o); if(!groups[k]) groups[k]=[]; groups[k].push(o); });
+  const keys=Object.keys(groups).sort((a,b)=>sdir==='desc'?b.localeCompare(a,'ja'):a.localeCompare(b,'ja'));
   let gIn=0,gAt=0;
   let html=`<div style="font-family:sans-serif;padding:1rem">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
-      <h1 style="font-size:16px;font-weight:600">アニメ制作受注一覧　${lbl}別</h1>
+      <h1 style="font-size:16px;font-weight:600">アニメ制作受注一覧</h1>
       <span style="font-size:12px;color:#666">印刷日：${today()}</span>
     </div>`;
   keys.forEach(k=>{
     const items=groups[k];
     const tIn=items.reduce((s,o)=>s+(Number(o.totalPriceIn)||0),0);
     const tAt=items.reduce((s,o)=>s+(Number(o.atTotalPrice)||0),0);
-    const tMg=tIn-tAt;gIn+=tIn;gAt+=tAt;
+    const tMg=tIn-tAt; gIn+=tIn; gAt+=tAt;
     html+=`<div style="margin-bottom:1.2rem">
-      <div style="font-size:13px;font-weight:600;padding:5px 8px;background:#f0f0f0;border-left:4px solid #1A9B70;margin-bottom:4px">
-        ${k}　（${items.length}件　受注計 ¥${fmt(tIn)}　発注計 ¥${fmt(tAt)}　粗利計 ¥${fmt(tMg)}）</div>
-      <table class="print-tbl"><thead><tr>
-        <th>タイトル</th><th>話数</th><th>工程</th><th>顧客</th><th>担当</th>
-        <th>受注日</th><th>納期</th><th>受注数</th>
-        <th>受注額(税込)</th><th>発注額</th><th>粗利</th><th>粗利率</th><th>状態</th>
-      </tr></thead><tbody>
-        ${items.map(o=>`<tr>
-          <td>${o.title}${o.abbr?`(${o.abbr})`:''}</td>
-          <td>${o.episode?`第${o.episode}話`:'-'}</td>
-          <td>${o.process}</td><td>${o.customer||'-'}</td><td>${o.contact||'-'}</td>
-          <td>${o.orderDate||'-'}</td><td>${o.dueDate||'-'}</td>
-          <td style="text-align:right">${o.qty}</td>
-          <td style="text-align:right">¥${fmt(o.totalPriceIn)}</td>
-          <td style="text-align:right">¥${fmt(o.atTotalPrice)}</td>
-          <td style="text-align:right">¥${fmt(o.margin)}</td>
-          <td style="text-align:right">${o.marginPct!=null?Number(o.marginPct).toFixed(1)+'%':'-'}</td>
-          <td>${getStatus(o)}</td>
+      <div style="font-size:13px;font-weight:600;padding:5px 8px;background:#f0f0f0;border-left:4px solid #0060E0;margin-bottom:4px">
+        ${k}（${items.length}件　¥${fmt(tIn)}　発注¥${fmt(tAt)}　粗利¥${fmt(tMg)}）</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:#c8dcf4">
+          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">タイトル</th>
+          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">話数</th>
+          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">工程</th>
+          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">顧客</th>
+          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">担当</th>
+          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">受注日</th>
+          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">納期</th>
+          <th style="padding:4px 6px;text-align:right;border:0.5px solid #90B0D8">数量</th>
+          <th style="padding:4px 6px;text-align:right;border:0.5px solid #90B0D8">受注(税込)</th>
+          <th style="padding:4px 6px;text-align:right;border:0.5px solid #90B0D8">発注</th>
+          <th style="padding:4px 6px;text-align:right;border:0.5px solid #90B0D8">粗利</th>
+          <th style="padding:4px 6px;text-align:right;border:0.5px solid #90B0D8">粗利率</th>
+          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">状態</th>
+        </tr></thead><tbody>
+        ${items.map((o,i)=>`<tr style="${i%2===1?'background:#f8f8f8':''}">
+          <td style="padding:4px 6px;border:0.5px solid #ccc">${o.title}${o.abbr?`(${o.abbr})`:''}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc">${o.episode?`第${o.episode}話`:'-'}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc">${o.process}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc">${o.customer||'-'}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc">${o.contact||'-'}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc">${o.orderDate||'-'}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc">${o.dueDate||'-'}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc;text-align:right">${o.qty}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc;text-align:right">¥${fmt(o.totalPriceIn)}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc;text-align:right">¥${fmt(o.atTotalPrice)}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc;text-align:right">¥${fmt(o.margin)}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc;text-align:right">${o.marginPct!=null?Number(o.marginPct).toFixed(1)+'%':'-'}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc">${getStatus(o)}</td>
         </tr>`).join('')}
-        <tr class="sub-row"><td colspan="8" style="text-align:right">小計</td>
-          <td style="text-align:right">¥${fmt(tIn)}</td>
-          <td style="text-align:right">¥${fmt(tAt)}</td>
-          <td style="text-align:right">¥${fmt(tMg)}</td>
-          <td colspan="2"></td></tr>
-      </tbody></table></div>`;
+        <tr style="background:#c8dcf4;font-weight:600">
+          <td colspan="8" style="padding:4px 6px;border:0.5px solid #90B0D8;text-align:right">小計</td>
+          <td style="padding:4px 6px;border:0.5px solid #90B0D8;text-align:right">¥${fmt(tIn)}</td>
+          <td style="padding:4px 6px;border:0.5px solid #90B0D8;text-align:right">¥${fmt(tAt)}</td>
+          <td style="padding:4px 6px;border:0.5px solid #90B0D8;text-align:right">¥${fmt(tMg)}</td>
+          <td colspan="2"></td>
+        </tr>
+        </tbody></table></div>`;
   });
   const gMg=gIn-gAt;
-  html+=`<table class="print-tbl"><tr class="total-row">
-    <td colspan="8" style="text-align:right;font-weight:600">合計</td>
-    <td style="text-align:right">¥${fmt(gIn)}</td>
-    <td style="text-align:right">¥${fmt(gAt)}</td>
-    <td style="text-align:right">¥${fmt(gMg)}</td>
-    <td colspan="2"></td></tr></table></div>`;
+  html+=`<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <tr style="background:#c8f4d8;font-weight:700">
+      <td colspan="8" style="padding:5px 8px;border:0.5px solid #5DC8A0;text-align:right">合計</td>
+      <td style="padding:5px 8px;border:0.5px solid #5DC8A0;text-align:right">¥${fmt(gIn)}</td>
+      <td style="padding:5px 8px;border:0.5px solid #5DC8A0;text-align:right">¥${fmt(gAt)}</td>
+      <td style="padding:5px 8px;border:0.5px solid #5DC8A0;text-align:right">¥${fmt(gMg)}</td>
+      <td colspan="2"></td>
+    </tr></table></div>`;
   const w=window.open('','_blank','width=1100,height=750');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>受注一覧印刷</title>
-    <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:sans-serif;font-size:12px;padding:1rem}
-    .print-tbl{width:100%;border-collapse:collapse}.print-tbl th{background:#c8e6d4;padding:5px 6px;text-align:left;font-weight:600;border:0.5px solid #5DC8A0;white-space:nowrap}
-    .print-tbl td{padding:4px 6px;border:0.5px solid #ccc;vertical-align:middle}
-    .print-tbl tr:nth-child(even) td{background:#f8f8f8}
-    .print-tbl .total-row td{font-weight:600;background:#c8e6d4}
-    .print-tbl .sub-row td{font-weight:500;background:#cce0f5}
-    /* ===== TOP BUTTON ===== */
-.top-btn{
-  position:fixed;bottom:24px;right:24px;
-  width:44px;height:44px;border-radius:50%;
-  background:var(--pink);color:#fff;border:none;
-  font-size:20px;cursor:pointer;
-  display:none;align-items:center;justify-content:center;
-  box-shadow:0 2px 8px rgba(0,0,0,.2);
-  transition:opacity .2s,transform .2s;z-index:90;
-  line-height:1;
-}
-.top-btn:hover{opacity:.88;transform:translateY(-2px)}
-.top-btn.visible{display:flex}
-@media print{.top-btn{display:none!important}}
-
-@media print{@page{size:A4 landscape;margin:8mm}}</style>
-  </head><body>${html}<script>window.onload=()=>window.print();<\/script></body></html>`);
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>受注一覧</title>
+    <style>@media print{@page{size:A4 landscape;margin:8mm}}</style>
+  </head><body>${html}<scr'+'ipt>window.onload=()=>window.print();<\/script></body></html>`);
   w.document.close();
 }
 
-/* ===== COMBOBOX ===== */
-function openCombo(type){renderDd(type,'');document.getElementById('dd-'+type).classList.add('open')}
-function delayClose(type){setTimeout(()=>document.getElementById('dd-'+type).classList.remove('open'),180)}
-function filterCombo(type){renderDd(type,document.getElementById('f-'+type).value)}
+// ============================================================
+// コンボボックス
+// ============================================================
+function openCbo(type){ renderDd(type,''); document.getElementById('dd-'+type).classList.add('open'); }
+function closeCbo(type){ setTimeout(()=>document.getElementById('dd-'+type).classList.remove('open'),180); }
+function filterCbo(type){ renderDd(type, document.getElementById('f-'+type).value); }
 function renderDd(type,q){
   const dd=document.getElementById('dd-'+type);
-  // contactは担当者マスター（ordersから動的生成）
   let rawList;
-  if(type==='contact'){
-    const contactSet={};
-    orders.forEach(o=>{if(o.contact)contactSet[o.contact]=true;});
-    rawList=Object.keys(contactSet).map(n=>({name:n,color:colorFor(n)}));
+  if(type==='ct'){
+    const s={};orders.forEach(o=>{if(o.contact)s[o.contact]=true;});
+    rawList=Object.keys(s).map(n=>({name:n,color:colorOf(n)}));
+  } else if(type==='cust'){
+    rawList=masters.customers;
   } else {
-    rawList=type==='customer'?masters.customers:masters.titles;
+    rawList=masters.titles;
   }
-  // 出現頻度カウント
   const freq={};
   orders.forEach(o=>{
-    const key=type==='customer'?o.customer:type==='title'?o.title:o.contact;
+    const key=type==='cust'?o.customer:type==='ttl'?o.title:o.contact;
     if(key) freq[key]=(freq[key]||0)+1;
   });
-  // 頻度順→同頻度はあいうえお順でソート
   const list=[...rawList].sort((a,b)=>{
-    const fa=freq[a.name]||0, fb=freq[b.name]||0;
+    const fa=freq[a.name]||0,fb=freq[b.name]||0;
     if(fb!==fa) return fb-fa;
     return a.name.localeCompare(b.name,'ja');
   });
   const filtered=q?list.filter(x=>x.name.toLowerCase().includes(q.toLowerCase())):list;
-  let html=filtered.map(x=>`<div class="combo-item" onmousedown="pickCombo('${type}','${x.name.replace(/\\/g,'\\\\').replace(/'/g,'\\\'')}')">
-    <span class="combo-dot" style="background:${x.color||'#999'}"></span>${x.name}
-    ${type==='title'&&x.abbr?`<span style="font-size:11px;color:var(--text3)">(${x.abbr})</span>`:''}</div>`).join('');
-  const isNew=q&&!list.find(x=>x.name===q);
-  if(isNew)html+=`<div class="combo-new" onmousedown="pickCombo('${type}','${q.replace(/\\/g,'\\\\').replace(/'/g,'\\\'')}')">＋「${q}」を新規追加</div>`;
-  dd.innerHTML=html||'<div style="padding:8px 10px;font-size:12px;color:var(--text3)">入力して新規追加できます</div>';
+  // データをwindowに一時保存してシンプルなidで参照
+  window._cboData=window._cboData||{};
+  let out=filtered.map((x,i)=>{
+    const key='k'+Date.now()+i;
+    window._cboData[key]={type,name:x.name};
+    const abbr=type==='ttl'&&x.abbr?'<span style="font-size:11px;color:#8A9ABB"> ('+x.abbr+')</span>':'';
+    return '<div class="cbo-item" onmousedown="pickCboKey(\''+key+'\')"><span class="cbo-dot" style="background:'+(x.color||'#999')+'"></span>'+x.name+abbr+'</div>';
+  }).join('');
+  if(q&&!list.find(x=>x.name===q)){
+    const key='k'+Date.now()+'new';
+    window._cboData[key]={type,name:q};
+    out+='<div class="cbo-new" onmousedown="pickCboKey(\''+key+'\')">＋「'+q+'」を追加</div>';
+  }
+  dd.innerHTML=out||'<div style="padding:8px 10px;font-size:12px;color:#8A9ABB">入力して追加できます</div>';
 }
-function pickCombo(type,val){
+
+function pickCboKey(key){
+  const d=(window._cboData||{})[key];
+  if(d) pickCbo(d.type,d.name);
+}
+function pickCbo(type,val){
   document.getElementById('f-'+type).value=val;
   document.getElementById('dd-'+type).classList.remove('open');
-  if(type==='customer'&&!masters.customers.find(c=>c.name===val)){masters.customers.push({name:val,color:colorFor(val)});}
-  if(type==='contact'){
-    document.getElementById('f-contact').value=val;
-    document.getElementById('dd-contact').classList.remove('open');
-    return;
-  }
-  if(type==='title'){
-    const found=masters.titles.find(t=>t.name===val);
-    if(!found)masters.titles.push({name:val,color:colorFor(val)});
-    const el=document.getElementById('f-abbr'),lbl=document.getElementById('abbr-lbl');
-    if(found&&found.abbr){el.value=found.abbr;el.classList.add('auto');lbl.style.display='inline';}
-    else{el.classList.remove('auto');lbl.style.display='none';}
+  if(type==='cust'&&!masters.customers.find(c=>c.name===val))
+    masters.customers.push({name:val,color:colorOf(val)});
+  if(type==='ct') return;
+  if(type==='ttl'){
+    const found=masters.titles.find(t2=>t2.name===val);
+    if(!found) masters.titles.push({name:val,color:colorOf(val)});
+    const el=document.getElementById('f-abbr'),lbl=document.getElementById('abbr-auto');
+    if(found&&found.abbr){el.value=found.abbr;lbl.style.display='inline';}
+    else{lbl.style.display='none';}
   }
 }
 
-document.getElementById('f-cuts').addEventListener('input',prevCutPreview);
-// トップへ戻るボタン：200px以上スクロールで表示
+// ============================================================
+// 起動
+// ============================================================
+document.getElementById('f-cuts').addEventListener('input',prevPreview);
 window.addEventListener('scroll',()=>{
-  const btn=document.getElementById('top-btn');
-  if(btn) btn.classList.toggle('visible', window.scrollY > 200);
+  const b=document.getElementById('top-btn');
+  if(b) b.classList.toggle('show',window.scrollY>200);
 },{passive:true});
 
-init();
+// グローバル公開（onclick属性から呼び出すため）
+window.showView=showView; window.showDetail=showDetail;
+window.editOrder=editOrder; window.deleteOrder=deleteOrder;
+window.deleteFromForm=deleteFromForm; window.cancelForm=cancelForm;
+window.saveOrder=saveOrder; window.saveDates=saveDates;
+window.markAll=markAll; window.toggleCut=toggleCut; window.toggleGroup=toggleGroup;
+window.renderGroup=renderGroup; window.toggleGrp=toggleGrp; window.printGroup=printGroup;
+window.renderList=renderList; window.loadAll=loadAll;
+window.selectLang=selectLang;
+window.openCbo=openCbo; window.closeCbo=closeCbo;
+window.filterCbo=filterCbo; window.pickCbo=pickCbo; window.onTitleInput=onTitleInput;
+window.searchCut=searchCut; window.clearSearch=clearSearch;
+window.calcAmt=calcAmt; window.updLimit=updLimit;
+
+applyLang();
+loadAll();
+}); // end window.onload
 </script>
 </body>
 </html>
