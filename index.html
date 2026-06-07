@@ -505,7 +505,6 @@ button,input,select,textarea{font-family:inherit}
 <script src="https://unpkg.com/firebase@8.10.1/firebase-app.js"></script>
 <script src="https://unpkg.com/firebase@8.10.1/firebase-database.js"></script>
 <script>
-window.addEventListener('load', function() {
 // Firebase compat SDK loaded above
 
 // ============================================================
@@ -1744,16 +1743,16 @@ window.filterCbo=filterCbo; window.pickCbo=pickCbo; window.onTitleInput=onTitleI
 window.searchCut=searchCut; window.clearSearch=clearSearch; window.clearPrintRange=clearPrintRange;
 window.calcAmt=calcAmt; window.updLimit=updLimit;
 
-applyLang();
-// 初回認証チェック（VN言語設定で起動した場合）
-if(!checkAuth()){
-  // 認証失敗 → 日本語に戻す
-  currentLang='ja';
-  localStorage.setItem('animeLang','ja');
+// DOMContentLoaded後に実行
+document.addEventListener('DOMContentLoaded', function(){
   applyLang();
-}
-loadAll();
-}); // end window.onload
+  if(!checkAuth()){
+    currentLang='ja';
+    localStorage.setItem('animeLang','ja');
+    applyLang();
+  }
+  loadAll();
+});
 </script>
 </body>
 </html>
