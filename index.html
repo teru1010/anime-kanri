@@ -424,6 +424,8 @@ button,input,select,textarea{font-family:inherit}
       <select id="grp-by" onchange="onGrpByChange()">
         <option value="all" id="go-all">すべて</option>
         <option value="orderMonth" id="go-month">受注月</option>
+        <option value="invoiceMonth" id="go-inv">請求月</option>
+        <option value="deliveryMonth" id="go-del">納入月</option>
         <option value="title" id="go-title">タイトル</option>
         <option value="customer" id="go-cust">顧客</option>
       </select>
@@ -434,6 +436,8 @@ button,input,select,textarea{font-family:inherit}
       <select id="grp-sort" onchange="renderGroup()">
         <option value="asc" id="go-asc">古い順</option>
         <option value="desc" id="go-desc">新しい順</option>
+        <option value="az" id="go-az">五十音順</option>
+        <option value="za" id="go-za">五十音逆順</option>
       </select>
       <select id="grp-flt" onchange="renderGroup()">
         <option value="" id="go-fall">すべてのステータス</option>
@@ -445,26 +449,7 @@ button,input,select,textarea{font-family:inherit}
       </select>
     </div>
     <div style="background:var(--sur);border:0.5px solid var(--bdr);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <span style="font-size:13px;font-weight:500;color:var(--txt2)" id="print-range-lbl">請求年月：</span>
-      <select id="print-inv-year"
-        style="font-size:13px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
-        <option value="">年（全て）</option>
-        <option value="2024">2024年</option>
-        <option value="2025">2025年</option>
-        <option value="2026">2026年</option>
-        <option value="2027">2027年</option>
-      </select>
-      <select id="print-inv-month"
-        style="font-size:13px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
-        <option value="">月（全て）</option>
-        <option value="01">1月</option><option value="02">2月</option>
-        <option value="03">3月</option><option value="04">4月</option>
-        <option value="05">5月</option><option value="06">6月</option>
-        <option value="07">7月</option><option value="08">8月</option>
-        <option value="09">9月</option><option value="10">10月</option>
-        <option value="11">11月</option><option value="12">12月</option>
-      </select>
-      <button class="btn sm" onclick="clearPrintRange()" style="color:var(--txt3)">✕ クリア</button>
+      <span style="font-size:13px;color:var(--txt2)" id="print-range-lbl">表示中の内容を印刷します</span>
       <button class="btn pri sm" onclick="printGroup()" id="btn-print">🖨 印刷</button>
     </div>
     <div id="grp-body"></div>
@@ -999,8 +984,8 @@ function makeCard(o){
       <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
     </div>
     <div class="acts" onclick="event.stopPropagation()">
-      <button class="btn sm" onclick="showDetail('${o.id}')">✂ ${t('tabProg')}</button>
-      <button class="btn sm" onclick="editOrder('${o.id}')">✏ ${t('btnEdit')}</button>
+      <button class="btn sm" onclick="showDetail('${o.id}')">✂ ${t('cutProgTitle').replace('✂ ','')}</button>
+      <button class="btn sm" onclick="editOrder('${o.id}')">${t('btnEdit')}</button>
     </div>
   </div>`;
 }
@@ -1189,12 +1174,7 @@ function searchCut(){
     </div>`;
   }).join('');
 }
-function clearPrintRange(){
-  const y=document.getElementById('print-inv-year');
-  const m=document.getElementById('print-inv-month');
-  if(y) y.value='';
-  if(m) m.value='';
-}
+function clearPrintRange(){}
 function clearSearch(){
   document.getElementById('cut-search-input').value='';
   searchCut();
@@ -1591,7 +1571,10 @@ function renderGroup(){
   src.forEach(o=>{ const k=keyOf(o); if(!groups[k]) groups[k]=[]; groups[k].push(o); });
   const el=document.getElementById('grp-body');
   if(!Object.keys(groups).length){ el.innerHTML=`<div class="empty"><i>📂</i>${t('emptyGrp')}</div>`; return; }
-  const keys=Object.keys(groups).sort((a,b)=>sdir==='desc'?b.localeCompare(a,'ja'):a.localeCompare(b,'ja'));
+  const keys=Object.keys(groups).sort((a,b)=>{
+    if(sdir==='desc'||sdir==='za') return b.localeCompare(a,'ja');
+    return a.localeCompare(b,'ja');
+  });
   el.innerHTML=keys.map((k,ki)=>{
     const items=groups[k];
     const tIn=items.reduce((s,o)=>s+(Number(o.totalPriceIn)||0),0);
@@ -1638,26 +1621,26 @@ function printGroup(){
   const by=document.getElementById('grp-by').value;
   const flt=document.getElementById('grp-flt').value;
   const sdir=document.getElementById('grp-sort').value;
-  // 請求年月フィルター
-  const yrEl=document.getElementById('print-inv-year');
-  const moEl=document.getElementById('print-inv-month');
-  const filterYr=yrEl?yrEl.value:'';
-  const filterMo=moEl?moEl.value:'';
+  // 現在のグループ表示と同じデータを印刷
+  const tf2=document.getElementById('grp-title-filter');
+  const st2=tf2?tf2.value:'';
   let src=flt==='uninvoiced'?orders.filter(o=>!o.invoiceDate)
     :flt?orders.filter(o=>getStatus(o)===flt):[...orders];
-  if(filterYr||filterMo){
-    src=src.filter(o=>{
-      if(!o.invoiceDate) return false;
-      const yr=o.invoiceDate.slice(0,4);
-      const mo=o.invoiceDate.slice(5,7);
-      if(filterYr&&yr!==filterYr) return false;
-      if(filterMo&&mo!==filterMo) return false;
-      return true;
-    });
-  }
+  if(st2) src=src.filter(o=>o.title===st2);
   const keyOf=o=>{
-    if(by==='all') return t('optAll');
-    if(by==='orderMonth') return o.orderDate?o.orderDate.slice(0,7).replace('-','年')+'月':t('orderNotSet');
+    if(by==='all') return t('goAll');
+    if(by==='orderMonth'){
+      const m=o.orderDate?o.orderDate.slice(0,7):'';
+      return m?m.replace('-','年')+'月':t('orderNotSet');
+    }
+    if(by==='invoiceMonth'){
+      const m=o.invoiceDate?o.invoiceDate.slice(0,7):'';
+      return m?m.replace('-','年')+'月':t('orderNotSet');
+    }
+    if(by==='deliveryMonth'){
+      const m=o.deliveryDate?o.deliveryDate.slice(0,7):'';
+      return m?m.replace('-','年')+'月':t('orderNotSet');
+    }
     if(by==='title') return o.title||'-';
     return o.customer||'-';
   };
@@ -1665,10 +1648,7 @@ function printGroup(){
   src.forEach(o=>{ const k=keyOf(o); if(!groups[k]) groups[k]=[]; groups[k].push(o); });
   const keys=Object.keys(groups).sort((a,b)=>sdir==='desc'?b.localeCompare(a,'ja'):a.localeCompare(b,'ja'));
   let gIn=0,gAt=0;
-  const invLabel=filterYr&&filterMo?`${filterYr}年${parseInt(filterMo)}月`
-    :filterYr?`${filterYr}年`
-    :filterMo?`${parseInt(filterMo)}月`:'';
-  const rangeStr=invLabel?`（請求：${invLabel}）`:'';
+  const rangeStr='';
   let html=`<div style="font-family:sans-serif;padding:1rem">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
       <h1 style="font-size:16px;font-weight:600">アニメ制作受注一覧${rangeStr}</h1>
