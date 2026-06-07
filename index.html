@@ -197,12 +197,13 @@ button,input,select,textarea{font-family:inherit}
   background:var(--bl);border-radius:50%;display:flex;align-items:center;
   justify-content:center;opacity:0}
 .cc.dn .ck{opacity:1}
-.cc-acts{display:flex;gap:2px;margin-top:4px;flex-wrap:wrap;justify-content:center}
-.cc-act{font-size:9px;padding:1px 4px;border-radius:3px;border:0.5px solid var(--bdr2);
-  background:var(--sur2);color:var(--txt2);cursor:pointer;white-space:nowrap}
-.cc-act:hover{background:var(--sur3)}
-.cc-act.done-btn{background:#E0ECFF;color:var(--bl-dk);border-color:var(--bl-md)}
-.cc-act.del-btn{background:var(--rd-bg);color:var(--rd);border-color:#EE9090}
+.cc-acts{display:flex;gap:2px;margin-top:3px;justify-content:center}
+.cc-act{font-size:9px;padding:1px 5px;border-radius:99px;border:none;
+  cursor:pointer;white-space:nowrap;font-weight:500}
+.cc-act.done-btn{background:#0060E0;color:#fff}
+.cc-act.un-btn{background:#E0ECFF;color:var(--bl-dk)}
+.cc-act.del-btn{background:transparent;color:#aaa;font-size:10px;padding:0 3px}
+.cc-act.del-btn:hover{color:var(--rd)}
 .cut-add-area{margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .cut-add-area input{font-size:13px;padding:6px 10px;border:0.5px solid var(--bdr2);
   border-radius:var(--r);background:var(--sur);color:var(--txt);flex:1;min-width:150px}
@@ -493,8 +494,8 @@ button,input,select,textarea{font-family:inherit}
       <div class="cgrid" id="cut-grid"></div>
       <div style="font-size:12px;color:var(--txt3);margin-top:8px" id="cut-hint">ボタンで完了／未完・削除が可能です</div>
       <div class="cut-add-area">
-        <input type="text" id="cut-add-input" placeholder="カット番号を追加（例：C021, 100-105）">
-        <button class="btn pri sm" onclick="addCuts()">＋ 追加</button>
+        <input type="text" id="cut-add-input" placeholder="${t('cutAddPH')}">
+        <button class="btn pri sm" onclick="addCuts()" id="btn-cut-add">${t('cutAdd')}</button>
       </div>
     </div>
     <div class="fcard">
@@ -657,6 +658,8 @@ ja:{
   taxIn:'税込', taxEx:'税抜',
   work:'作業', qty:'数量', dueLabel:'納期', customer:'顧客', contact:'担当',
   saved:'保存しました', deleted:'削除しました',
+  cutDone:'完了', cutUndone:'未完', cutDel:'×', cutAdd:'＋ 追加',
+  cutAddPH:'カット番号を追加（例：C021, 100-105）',
   dueOver:'⚠ 納期超過', dueToday:'⚡ 本日納期', dueSoon:'⏰ 納期まで', days:'日',
   emptyList:'受注データがありません', emptyProg:'進行中の案件はありません',
   emptyGrp:'データがありません', orderNotSet:'受注日未設定',
@@ -705,6 +708,8 @@ vi:{
   work:'Công đoạn', qty:'Số lượng', dueLabel:'Hạn giao',
   customer:'Khách hàng', contact:'Phụ trách',
   saved:'Đã lưu', deleted:'Đã xóa',
+  cutDone:'Xong', cutUndone:'Chưa', cutDel:'×', cutAdd:'＋ Thêm',
+  cutAddPH:'Thêm số cảnh（VD：C021, 100-105）',
   dueOver:'⚠ Quá hạn', dueToday:'⚡ Hạn hôm nay', dueSoon:'⏰ Còn', days:' ngày',
   emptyList:'Không có dữ liệu', emptyProg:'Không có đơn đang thực hiện',
   emptyGrp:'Không có dữ liệu', orderNotSet:'Chưa có ngày đặt',
@@ -1111,25 +1116,7 @@ function renderList(){
         <span>${mLabel}</span></div>`);
       lastMonth=mLabel;
     }
-    cards.push(`<div class="card" onclick="showDetail('${o.id}')">
-      ${makeBanner(o)}
-      <div class="sub">${o.customer||'-'}　${t('contact')}：${o.contact||'-'}　<b>${tProc(o.process||'')}</b></div>
-      <div class="meta">
-        <span>${t('work')} <b>${tProc(o.process)||'-'}</b></span>
-        <span>${t('qty')} <b>${o.qty}${currentLang==='vi'?' cảnh':'カット'}</b></span>
-        <span>受注・税込 <b>¥${fmt(o.totalPriceIn)}</b></span>
-        <span>発注 <b>¥${fmt(o.atTotalPrice)}</b></span>
-        <span>${t('dueLabel')} <b>${o.dueDate||'-'}</b></span>
-      </div>
-      <div class="pbar">
-        <div class="pbar-lbl"><span>${done}/${total}</span><span>${pct}%</span></div>
-        <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
-      </div>
-      <div class="acts" onclick="event.stopPropagation()">
-        <button class="btn sm" onclick="showDetail('${o.id}')">✂ ${t('tabProg').replace('＋ ','')}</button>
-        <button class="btn sm" onclick="editOrder('${o.id}')">✏ ${t('btnEdit').replace('✏ ','')}</button>
-      </div>
-    </div>`);
+        cards.push(makeCard(o));
   });
   el.innerHTML=cards.join('');
   updateBadges();
@@ -1282,8 +1269,8 @@ function renderCuts(o){
         <span class="cn" style="font-size:${g.label.length>6?'10px':'11px'}">${g.label}</span>
         ${date?`<span class="cd">${date.slice(5)}</span>`:''}
         <div class="cc-acts" onclick="event.stopPropagation()">
-          <span class="cc-act done-btn" onclick="toggleGroup(${idsStr})">${allDone?'未完':'完了'}</span>
-          <span class="cc-act del-btn" onclick="deleteCutGroup(${idsStr})">削除</span>
+          <span class="cc-act ${allDone?'un-btn':'done-btn'}" onclick="toggleGroup(${idsStr})">${allDone?t('cutUndone'):t('cutDone')}</span>
+          <span class="cc-act del-btn" onclick="deleteCutGroup(${idsStr})" title="削除">${t('cutDel')}</span>
         </div>
       </div>`;
     }).join('');
@@ -1611,22 +1598,7 @@ function renderGroup(){
     const tAt=items.reduce((s,o)=>s+(Number(o.atTotalPrice)||0),0);
     const tMg=tIn-tAt;
     const bc=bcOf(k);
-    const rows=items.map(o=>{
-      const st=getStatus(o); const {done,total}=progOf(o);
-      const pctStr=o.marginPct!=null?Number(o.marginPct).toFixed(1)+'%':'-';
-      return `<div class="card" onclick="showDetail('${o.id}')" style="margin-bottom:6px">
-        ${makeBanner(o)}
-        <div class="sub">${by!=='customer'?o.customer+'　':''}${t('contact')}：${o.contact||'-'}　${t('dueLabel')}：${o.dueDate||'-'}</div>
-        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px">
-          ${dueBadge(o.dueDate,st)}<span class="pill ${pillCls(st)}">${tSt(st)}</span>
-        </div>
-        <div class="meta">
-          <span>¥${fmt(o.totalPriceIn)}</span>
-          <span>${t('sumAt')} ¥${fmt(o.atTotalPrice)}</span>
-          <span>${done}/${Number(o.qty)||0}</span>
-        </div>
-      </div>`;
-    }).join('');
+    const rows=items.map(o=>makeCard(o)).join('');
     return `<div class="gsec">
       <div class="ghd" onclick="toggleGrp('g${ki}')">
         <h3>${k}</h3>
