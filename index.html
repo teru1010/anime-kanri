@@ -1579,7 +1579,14 @@ async function addCuts(){
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   const existIds=o.cuts.map(c=>String(c.id));
   const addIds=newIds.filter(id=>!existIds.includes(id));
-  if(addIds.length===0){ showToast('既に登録済みです',true); return; }
+  const dupIds=newIds.filter(id=>existIds.includes(id));
+  if(addIds.length===0){
+    showToast('全て既に登録済みです（'+dupIds.join(', ')+'）',true);
+    return;
+  }
+  if(dupIds.length>0){
+    showToast('重複を除く'+addIds.length+'件を追加します（重複：'+dupIds.join(', ')+'）');
+  }
   // 受注数量チェック
   const qty=Number(o.qty)||0;
   if(qty && o.cuts.length+addIds.length > qty){
@@ -1595,9 +1602,12 @@ async function addCuts(){
   cutsRawCache[o.id]=o.cutsRaw;
   await fbSet(`/cutsRaw/${o.id}`, o.cutsRaw);
   input.value='';
+  // プレビューをクリア
+  const addPrev=document.getElementById('cut-add-preview');
+  if(addPrev){ addPrev.textContent=''; addPrev.style.color='var(--bl)'; }
   renderCuts(o); updateSumCard(o);
   await saveCutsToFb(o);
-  showToast(`${addIds.length}件追加しました`);
+  showToast(addIds.length+'件追加しました');
 }
 // 詳細画面インライン編集
 window._detailEditMode = false;
