@@ -1329,6 +1329,10 @@ function showDetail(id){
   const form=document.getElementById('detail-edit-form');
   if(form) form.style.display='none';
   const o=orders.find(x=>x.id===id); if(!o) return;
+  // cutsRawCacheから最新のcutsRawを復元
+  if(cutsRawCache[id]) o.cutsRaw=cutsRawCache[id];
+  // cutsをArray正規化
+  if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   const st=getStatus(o);
   document.getElementById('d-pill').innerHTML=`<span class="pill ${pillCls(st)}">${tSt(st)}</span>`;
   document.getElementById('d-due').innerHTML=dueBadge(o.dueDate,st);
@@ -1372,6 +1376,8 @@ function showDetail(id){
 
 function renderCuts(o){
   if(!o) o=orders.find(x=>x.id===currentId); if(!o) return;
+  // cutsRawCacheから最新を取得
+  if(cutsRawCache[o.id]) o.cutsRaw=cutsRawCache[o.id];
   // cutsをArrayに正規化
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   const cuts=o.cuts;
@@ -1646,48 +1652,7 @@ async function saveDetailEdit(){
   window._detailEditMode = false;
   showDetail(currentId);
 }
-// 簡易編集：計算プレビュー（旧コード互換）
-function qeCalc(){
-  const qty=parseFloat(document.getElementById('qe-qty').value)||0;
-  const up=parseFloat(document.getElementById('qe-up').value)||0;
-  const ap=parseFloat(document.getElementById('qe-ap').value)||0;
-  if(!qty&&!up&&!ap) return;
-  const tex=qty*up;
-  const tin=Math.round(tex*(1+TAX));
-  const at=qty*ap;
-  const prev=document.getElementById('qe-preview');
-  prev.style.display='block';
-  prev.innerHTML=
-    '受注税抜 ¥'+fmt(tex)+'　税込 ¥'+fmt(tin)+
-    '　発注 ¥'+fmt(at)+
-    (tin>0?'　数量 '+qty+'カット':'');
-}
-// 簡易編集：保存
-async function saveQuickEdit(){
-  const o=orders.find(x=>x.id===currentId); if(!o) return;
-  const qty=parseInt(document.getElementById('qe-qty').value)||0;
-  const up=parseFloat(document.getElementById('qe-up').value)||0;
-  const ap=parseFloat(document.getElementById('qe-ap').value)||0;
-  if(!qty){showToast(t('lblQty')+'を入力してください',true);return;}
-  const tex=qty*up;
-  const tin=Math.round(tex*(1+TAX));
-  const at=qty*ap;
-  const mg=tin-at;
-  const mpct=tin>0?Math.round(mg/tin*1000)/10:null;
-  // ローカル更新
-  o.qty=qty; o.unitPrice=up; o.atUnitPrice=ap;
-  o.totalPriceEx=tex; o.totalPriceIn=tin;
-  o.atTotalPrice=at; o.margin=mg; o.marginPct=mpct;
-  // Firebase更新
-  await fbUpdate('/orders/'+o.id,{
-    qty:qty, unitPrice:up, atUnitPrice:ap,
-    totalPriceEx:tex, totalPriceIn:tin,
-    atTotalPrice:at, margin:mg, marginPct:mpct
-  });
-  showToast(t('saved'));
-  // 詳細画面を再描画
-  showDetail(currentId);
-}
+
 
 async function saveCutsToFb(o){
   const cutsObj={};
