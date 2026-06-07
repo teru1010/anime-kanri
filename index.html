@@ -1577,9 +1577,10 @@ async function addCuts(){
   const newIds=parseCuts(val);
   // cutsがArrayでない場合はArrayに変換
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
-  const existIds=o.cuts.map(c=>String(c.id));
-  const addIds=newIds.filter(id=>!existIds.includes(id));
-  const dupIds=newIds.filter(id=>existIds.includes(id));
+  const existIdsArr=o.cuts.map(c=>String(c.id));
+  const existIds=new Set(existIdsArr);
+  const addIds=newIds.filter(id=>!existIds.has(id));
+  const dupIds=newIds.filter(id=>existIds.has(id));
   if(addIds.length===0){
     showToast('全て既に登録済みです（'+dupIds.join(', ')+'）',true);
     return;
