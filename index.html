@@ -429,19 +429,23 @@ button,input,select,textarea{font-family:inherit}
         <option value="uninvoiced" id="go-fun">未請求</option>
       </select>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap;
-      background:var(--sur);border:0.5px solid var(--bdr);border-radius:var(--r);padding:10px 14px">
-      <span style="font-size:13px;font-weight:500;color:var(--txt2)" id="print-range-lbl">印刷範囲（受注日）：</span>
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+    <div style="background:var(--sur);border:0.5px solid var(--bdr);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:500;color:var(--txt2)" id="print-range-lbl">印刷範囲：</span>
+        <select id="print-date-type"
+          style="font-size:13px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
+          <option value="orderDate" id="pdt-od">受注日</option>
+          <option value="deliveryDate" id="pdt-dl">納品日</option>
+          <option value="invoiceDate" id="pdt-iv">請求日</option>
+        </select>
         <input type="date" id="print-from"
           style="font-size:13px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
         <span style="color:var(--txt2)">〜</span>
         <input type="date" id="print-to"
           style="font-size:13px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
-        <button class="btn sm" onclick="clearPrintRange()" id="btn-clr-range"
-          style="color:var(--txt3)">✕ クリア</button>
+        <button class="btn sm" onclick="clearPrintRange()" style="color:var(--txt3)">✕ クリア</button>
+        <button class="btn pri sm" onclick="printGroup()" id="btn-print">🖨 印刷</button>
       </div>
-      <button class="btn pri sm" onclick="printGroup()" id="btn-print">🖨 印刷</button>
     </div>
     <div id="grp-body"></div>
   </div>
@@ -1506,8 +1510,6 @@ function renderGroup(){
         <div class="meta">
           <span>¥${fmt(o.totalPriceIn)}</span>
           <span>${t('sumAt')} ¥${fmt(o.atTotalPrice)}</span>
-          <span>${t('sumMg')} ¥${fmt(o.margin)}</span>
-          <span>${pctStr}</span>
           <span>${done}/${Number(o.qty)||0}</span>
         </div>
       </div>`;
@@ -1518,7 +1520,6 @@ function renderGroup(){
         <div class="gsub"><span>${items.length}件</span>
           <span>受注 <b>¥${fmt(tIn)}</b></span>
           <span>発注 <b>¥${fmt(tAt)}</b></span>
-          <span>粗利 <b>¥${fmt(tMg)}</b></span>
         </div>
         <span id="tog-g${ki}" style="font-size:12px;color:var(--txt3)">▲</span>
       </div>
@@ -1537,15 +1538,17 @@ function printGroup(){
   const by=document.getElementById('grp-by').value;
   const flt=document.getElementById('grp-flt').value;
   const sdir=document.getElementById('grp-sort').value;
-  // 日付範囲フィルター
+  // 日付範囲フィルター（受注日・納品日・請求日を選択可能）
+  const dtypeEl=document.getElementById('print-date-type');
   const fromEl=document.getElementById('print-from');
   const toEl=document.getElementById('print-to');
+  const dtype=dtypeEl?dtypeEl.value:'orderDate';
   const fromDate=fromEl?fromEl.value:'';
   const toDate=toEl?toEl.value:'';
   let src=flt==='uninvoiced'?orders.filter(o=>!o.invoiceDate)
     :flt?orders.filter(o=>getStatus(o)===flt):[...orders];
-  if(fromDate) src=src.filter(o=>(o.orderDate||'')>=fromDate);
-  if(toDate)   src=src.filter(o=>(o.orderDate||'')<=toDate);
+  if(fromDate) src=src.filter(o=>(o[dtype]||'')>=fromDate);
+  if(toDate)   src=src.filter(o=>(o[dtype]||'')<=toDate);
   const keyOf=o=>{
     if(by==='all') return t('optAll');
     if(by==='orderMonth') return o.orderDate?o.orderDate.slice(0,7).replace('-','年')+'月':t('orderNotSet');
@@ -1556,7 +1559,8 @@ function printGroup(){
   src.forEach(o=>{ const k=keyOf(o); if(!groups[k]) groups[k]=[]; groups[k].push(o); });
   const keys=Object.keys(groups).sort((a,b)=>sdir==='desc'?b.localeCompare(a,'ja'):a.localeCompare(b,'ja'));
   let gIn=0,gAt=0;
-  const rangeStr=fromDate||toDate?`（${fromDate||'〜'}〜${toDate||'〜'}）`:'';
+  const dtypeLabel={'orderDate':'受注日','deliveryDate':'納品日','invoiceDate':'請求日'};
+  const rangeStr=fromDate||toDate?`（${dtypeLabel[dtype]||'受注日'}: ${fromDate||'〜'}〜${toDate||'〜'}）`:'';
   let html=`<div style="font-family:sans-serif;padding:1rem">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
       <h1 style="font-size:16px;font-weight:600">アニメ制作受注一覧${rangeStr}</h1>
@@ -1569,7 +1573,7 @@ function printGroup(){
     const tMg=tIn-tAt; gIn+=tIn; gAt+=tAt;
     html+=`<div style="margin-bottom:1.2rem">
       <div style="font-size:13px;font-weight:600;padding:5px 8px;background:#f0f0f0;border-left:4px solid #0060E0;margin-bottom:4px">
-        ${k}（${items.length}件　¥${fmt(tIn)}　発注¥${fmt(tAt)}　粗利¥${fmt(tMg)}）</div>
+        ${k}（${items.length}件　受注¥${fmt(tIn)}　発注¥${fmt(tAt)}）</div>
       <table style="width:100%;border-collapse:collapse;font-size:11px">
         <thead><tr style="background:#c8dcf4">
           <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">タイトル</th>
