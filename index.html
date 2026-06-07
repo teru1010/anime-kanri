@@ -1078,7 +1078,7 @@ function makeCard(o){
     </div>
     <div class="acts" onclick="event.stopPropagation()" style="flex-wrap:wrap">
       <button class="btn sm" onclick="showDetail('${o.id}')">✂ ${t('cutProgTitle').replace('✂ ','')}</button>
-      <button class="btn sm" onclick="editOrder('${o.id}')">${t('btnEdit')}</button>
+      <button class="btn sm" onclick="currentId='${o.id}';editOrder('${o.id}')">${t('btnEdit')}</button>
       ${debugMode?`<button class="verified-btn ${isVerified(o.id)?'on':''}" onclick="toggleVerified('${o.id}')">${isVerified(o.id)?'✔ 確認済み':'○ 未確認'}</button>`:''}
     </div>
   </div>`;
@@ -1712,7 +1712,13 @@ function editOrder(id){
   document.getElementById('f-qty').value=o.qty||'';
   document.getElementById('f-up').value=o.unitPrice||'';
   document.getElementById('f-ap').value=o.atUnitPrice||'';
-  document.getElementById('f-cuts').value=(o.cuts||[]).map(c=>c.id).join(', ');
+  // cutsをArray正規化してから表示（cutsRawがあればそちらを優先）
+  if(o.cutsRaw){
+    document.getElementById('f-cuts').value=o.cutsRaw;
+  } else {
+    const cutsArr=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
+    document.getElementById('f-cuts').value=cutsArr.map(c=>c.id).join(', ');
+  }
   document.getElementById('f-note').value=o.note||'';
   document.getElementById('abbr-auto').style.display='none';
   calcAmt(); updLimit(); prevPreview();
@@ -1774,9 +1780,30 @@ function renderGroup(){
   if(selectedTitle) src=src.filter(o=>o.title===selectedTitle);
   if(selectedEp) src=src.filter(o=>String(o.episode)===String(selectedEp));
   const keyOf=o=>{
-    if(by==='all') return t('optAll');
-    if(by==='orderMonth') return o.orderDate?o.orderDate.slice(0,7).replace('-','年')+'月':t('orderNotSet');
-    if(by==='title') return o.title||'-';
+    if(by==='all') return t('goAll');
+    if(by==='orderMonth'){
+      const m=o.orderDate?o.orderDate.slice(0,7):'';
+      if(currentLang==='vi'&&m){const[yr,mo]=m.split('-');return 'Tháng '+parseInt(mo)+' năm '+yr;}
+      return m?m.replace('-','年')+'月':t('orderNotSet');
+    }
+    if(by==='invoiceMonth'){
+      const m=o.invoiceDate?o.invoiceDate.slice(0,7):'';
+      if(currentLang==='vi'&&m){const[yr,mo]=m.split('-');return 'Tháng '+parseInt(mo)+' năm '+yr;}
+      return m?m.replace('-','年')+'月':t('orderNotSet');
+    }
+    if(by==='deliveryMonth'){
+      const m=o.deliveryDate?o.deliveryDate.slice(0,7):'';
+      if(currentLang==='vi'&&m){const[yr,mo]=m.split('-');return 'Tháng '+parseInt(mo)+' năm '+yr;}
+      return m?m.replace('-','年')+'月':t('orderNotSet');
+    }
+    if(by==='title'){
+      // 話数フィルターが選択されている場合は話数+作業でグループ分け
+      if(selectedEp){
+        const ep=o.episode?'第'+o.episode+'話':'話数なし';
+        return ep+(o.process?' '+o.process:'');
+      }
+      return o.title||'-';
+    }
     return o.customer||'-';
   };
   const groups={};
@@ -1784,6 +1811,13 @@ function renderGroup(){
   const el=document.getElementById('grp-body');
   if(!Object.keys(groups).length){ el.innerHTML=`<div class="empty"><i>📂</i>${t('emptyGrp')}</div>`; return; }
   const keys=Object.keys(groups).sort((a,b)=>{
+    // 「第N話」形式の場合は数値でソート
+    const epA=a.match(/第(\d+)話/), epB=b.match(/第(\d+)話/);
+    if(epA&&epB){
+      const diff=parseInt(epA[1])-parseInt(epB[1]);
+      if(diff!==0) return (sdir==='desc'||sdir==='za')?-diff:diff;
+      return a.localeCompare(b,'ja');
+    }
     if(sdir==='desc'||sdir==='za') return b.localeCompare(a,'ja');
     return a.localeCompare(b,'ja');
   });
