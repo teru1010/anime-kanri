@@ -1230,41 +1230,109 @@ function showDetail(id){
 
 function renderCuts(o){
   if(!o) o=orders.find(x=>x.id===currentId); if(!o) return;
-  const cuts=o.cuts||[];
+  // cutsをArrayに正規化
+  if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
+  const cuts=o.cuts;
   const {done,total,pct}=progOf(o);
-  (document.getElementById('cut-prog-txt')||{textContent:''}).textContent=`${done}/${total}`;
+  (document.getElementById('cut-prog-txt')||{textContent:''}).textContent=done+'/'+total;
   (document.getElementById('d-prog-pct')||{textContent:''}).textContent=pct+'%';
   document.getElementById('d-prog-fill').style.width=pct+'%';
   (document.getElementById('cut-hint')||{textContent:''}).textContent=t('cutHint');
   const grid=document.getElementById('cut-grid');
   if(!cuts.length){
-    grid.innerHTML=`<div style="font-size:13px;color:var(--txt3);padding:10px 0">${t('cutEmpty')}</div>`;
+    grid.innerHTML='<div style="font-size:13px;color:var(--txt3);padding:10px 0">'+t('cutEmpty')+'</div>';
     return;
   }
+  // グループキャッシュをリセット
+  window._cutGroups=window._cutGroups||{};
+  window._cutGroups[currentId]={};
+  let cards;
   if(o.cutsRaw){
+    // cutsRawがある場合：グループ表示・昇順ソート
     const groups=parseGroups(o.cutsRaw);
-    grid.innerHTML=groups.map(g=>{
+    // 昇順ソート（数値順）
+    groups.sort((a,b)=>{
+      const na=parseInt(a.ids[0])||0, nb=parseInt(b.ids[0])||0;
+      return na-nb;
+    });
+    cards=groups.map((g,gi)=>{
+      const gkey='g'+gi;
+      window._cutGroups[currentId][gkey]=g.ids;
       const gc=g.ids.map(id=>cuts.find(c=>String(c.id)===String(id))).filter(Boolean);
       const allDone=gc.length>0&&gc.every(c=>c.done);
       const date=gc.filter(c=>c.done).slice(-1)[0]?.date||'';
-      const idsStr=JSON.stringify(g.ids);
-      return `<div class="cc${allDone?' dn':''}">
-        <div class="ck"><svg width="8" height="7" viewBox="0 0 8 7" fill="none" stroke="#fff" stroke-width="1.5"><path d="M1 3.5l2 2 4-4"/></svg></div>
-        <span class="cn" style="font-size:${g.label.length>6?'10px':'11px'}">${g.label}</span>
-        ${date?`<span class="cd">${date.slice(5)}</span>`:''}
-        <div class="cc-acts" onclick="event.stopPropagation()">
-          <span class="cc-act ${allDone?'un-btn':'done-btn'}" onclick="toggleGroup(${idsStr})">${allDone?t('cutUndone'):t('cutDone')}</span>
-          <span class="cc-act del-btn" onclick="deleteCutGroup(${idsStr})" title="削除">${t('cutDel')}</span>
-        </div>
-      </div>`;
-    }).join('');
+      const svg='<svg width="8" height="7" viewBox="0 0 8 7" fill="none" stroke="#fff" stroke-width="1.5"><path d="M1 3.5l2 2 4-4"/></svg>';
+      const dnCls=allDone?' dn':'';
+      const btnCls=allDone?'un-btn':'done-btn';
+      const btnTxt=allDone?t('cutUndone'):t('cutDone');
+      const delTxt=t('cutDel');
+      const oid=currentId;
+      return '<div class="cc'+dnCls+'">'+
+        '<div class="ck">'+svg+'</div>'+
+        '<span class="cn" style="font-size:'+(g.label.length>6?'10':'11')+'px">'+g.label+'</span>'+
+        (date?'<span class="cd">'+date.slice(5)+'</span>':'')+
+        '<div class="cc-acts" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation()">'+
+          '<span class="cc-act '+btnCls+'" data-action="toggle" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="ccAct(this)">'+btnTxt+'</span>'+
+          '<span class="cc-act del-btn" data-action="del" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="ccAct(this)" title="削除">'+delTxt+'</span>'+
+        '</div>'+
+      '</div>';
+    });
   } else {
+    // cutsRawがない場合：個別表示・昇順ソート
     const sorted=[...cuts].sort((a,b)=>String(a.id).localeCompare(String(b.id),undefined,{numeric:true}));
-    grid.innerHTML=sorted.map(c=>`<div class="cc${c.done?' dn':''}" onclick="toggleCut('${c.id}')">
-      <div class="ck"><svg width="8" height="7" viewBox="0 0 8 7" fill="none" stroke="#fff" stroke-width="1.5"><path d="M1 3.5l2 2 4-4"/></svg></div>
-      <span class="cn">${String(c.id)}</span>${c.done&&c.date?`<span class="cd">${c.date.slice(5)}</span>`:''}
-    </div>`).join('');
+    const svg='<svg width="8" height="7" viewBox="0 0 8 7" fill="none" stroke="#fff" stroke-width="1.5"><path d="M1 3.5l2 2 4-4"/></svg>';
+    cards=sorted.map(c=>{
+      const dnCls=c.done?' dn':'';
+      const btnCls=c.done?'un-btn':'done-btn';
+      const btnTxt=c.done?t('cutUndone'):t('cutDone');
+      const delTxt=t('cutDel');
+      return '<div class="cc'+dnCls+'">'+
+        '<div class="ck"><svg width="8" height="7" viewBox="0 0 8 7" fill="none" stroke="#fff" stroke-width="1.5"><path d="M1 3.5l2 2 4-4"/></svg></div>'+
+        '<span class="cn">'+String(c.id)+'</span>'+
+        (c.done&&c.date?'<span class="cd">'+c.date.slice(5)+'</span>':'')+
+        '<div class="cc-acts" onclick="event.stopPropagation()">'+
+          '<span class="cc-act '+btnCls+'" data-action="togglesingle" data-cid="'+c.id+'" onclick="ccAct(this)">'+btnTxt+'</span>'+
+          '<span class="cc-act del-btn" data-action="delsingle" data-cid="'+c.id+'" onclick="ccAct(this)" title="削除">'+delTxt+'</span>'+
+        '</div>'+
+      '</div>';
+    });
   }
+  grid.innerHTML=cards.join('');
+}
+
+// data属性経由のアクション処理（エスケープ問題を回避）
+async function ccAct(el){
+  const action=el.dataset.action;
+  if(action==='toggle'){
+    const oid=el.dataset.oid, gkey=el.dataset.gkey;
+    const ids=(window._cutGroups[oid]||{})[gkey];
+    if(!ids) return;
+    currentId=oid;
+    await toggleGroup(ids);
+  } else if(action==='del'){
+    const oid=el.dataset.oid, gkey=el.dataset.gkey;
+    const ids=(window._cutGroups[oid]||{})[gkey];
+    if(!ids) return;
+    currentId=oid;
+    await deleteCutGroup(ids);
+  } else if(action==='togglesingle'){
+    await toggleCut(el.dataset.cid);
+  } else if(action==='delsingle'){
+    await deleteCut(el.dataset.cid);
+  }
+}
+// グループキー経由でtoggle・delete（エスケープ問題を回避）
+async function toggleGroupKey(orderId,gkey){
+  const ids=(window._cutGroups[orderId]||{})[gkey];
+  if(!ids) return;
+  currentId=orderId;
+  await toggleGroup(ids);
+}
+async function deleteCutGroupKey(orderId,gkey){
+  const ids=(window._cutGroups[orderId]||{})[gkey];
+  if(!ids) return;
+  currentId=orderId;
+  await deleteCutGroup(ids);
 }
 
 async function toggleGroup(ids){
@@ -1302,16 +1370,18 @@ async function markAll(){
 }
 async function deleteCut(cid){
   const o=orders.find(x=>x.id===currentId); if(!o) return;
-  if(!confirm(`カット「${cid}」を削除しますか？`)) return;
-  o.cuts=(o.cuts||[]).filter(c=>String(c.id)!==String(cid));
+  if(!confirm('カット「'+cid+'」を削除しますか？')) return;
+  if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
+  o.cuts=o.cuts.filter(c=>String(c.id)!==String(cid));
   renderCuts(o); autoStatus(o); updateSumCard(o);
   await saveCutsToFb(o);
   showToast('削除しました');
 }
 async function deleteCutGroup(ids){
   const o=orders.find(x=>x.id===currentId); if(!o) return;
-  if(!confirm(`カット「${ids.join('-')}」を削除しますか？`)) return;
-  o.cuts=(o.cuts||[]).filter(c=>!ids.map(String).includes(String(c.id)));
+  if(!confirm('カット「'+ids.join('-')+'」を削除しますか？')) return;
+  if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
+  o.cuts=o.cuts.filter(c=>!ids.map(String).includes(String(c.id)));
   // cutsRawからも削除
   if(o.cutsRaw){
     const newRaw=o.cutsRaw.split(',').map(s=>s.trim())
@@ -1841,7 +1911,7 @@ window.showView=showView; window.showDetail=showDetail;
 window.editOrder=editOrder; window.deleteOrder=deleteOrder;
 window.deleteFromForm=deleteFromForm; window.cancelForm=cancelForm;
 window.saveOrder=saveOrder; window.saveDates=saveDates;
-window.markAll=markAll; window.previewAddCuts=previewAddCuts; window.toggleCut=toggleCut; window.toggleGroup=toggleGroup; window.deleteCut=deleteCut; window.deleteCutGroup=deleteCutGroup; window.addCuts=addCuts;
+window.markAll=markAll; window.previewAddCuts=previewAddCuts; window.toggleCut=toggleCut; window.toggleGroup=toggleGroup; window.deleteCut=deleteCut; window.deleteCutGroup=deleteCutGroup; window.addCuts=addCuts; window.toggleGroupKey=toggleGroupKey; window.deleteCutGroupKey=deleteCutGroupKey; window.ccAct=ccAct;
 window.renderGroup=renderGroup; window.onTitleFilterChange=onTitleFilterChange; window.toggleGrp=toggleGrp; window.printGroup=printGroup;
 window.renderList=renderList; window.loadAll=loadAll;
 window.selectLang=selectLang;
