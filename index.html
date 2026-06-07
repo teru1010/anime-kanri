@@ -552,12 +552,20 @@ const db  = firebase.database();
 // ============================================================
 // 状態
 // ============================================================
-let orders  = [];
-let masters = { customers: [], titles: [] };
-let cutsRawCache = {};
-let currentId  = null;
-let editingId  = null;
-let currentLang = localStorage.getItem('animeLang') || 'ja';
+// グローバル変数（window経由でコンソールからもアクセス可能）
+window.orders  = [];
+window.masters = { customers: [], titles: [] };
+window.cutsRawCache = {};
+window.currentId  = null;
+window.editingId  = null;
+window.currentLang = localStorage.getItem('animeLang') || 'ja';
+// ローカル変数のエイリアス
+let orders = window.orders;
+let masters = window.masters;
+let cutsRawCache = window.cutsRawCache;
+let currentId = window.currentId;
+let editingId = window.editingId;
+let currentLang = window.currentLang;
 const TAX = 0.10;
 
 // ============================================================
@@ -832,7 +840,7 @@ async function loadAll(){
     const snap = await fbGet('/');
     if(snap && snap.orders && Object.keys(snap.orders).length > 0){
       // Firebaseにデータあり
-      orders  = Object.values(snap.orders).map(o=>normDates(o));
+      orders = window.orders = Object.values(snap.orders).map(o=>normDates(o));
       masters = snap.masters || {customers:[],titles:[]};
       cutsRawCache = snap.cutsRaw || {};
       orders.forEach(o=>{ if(cutsRawCache[o.id]) o.cutsRaw=cutsRawCache[o.id]; });
@@ -848,7 +856,7 @@ async function loadAll(){
       await fbSet('/orders',  ordersObj);
       await fbSet('/masters', initMasters);
       await fbSet('/cutsRaw', initCuts);
-      orders  = initOrders;
+      orders = window.orders = initOrders;
       masters = initMasters;
       cutsRawCache = initCuts;
       orders.forEach(o=>{ if(cutsRawCache[o.id]) o.cutsRaw=cutsRawCache[o.id]; });
@@ -1445,7 +1453,7 @@ async function deleteFromForm(){
   const delId=editingId; editingId=null;
   await fbRemove(`/orders/${delId}`);
   await fbRemove(`/cutsRaw/${delId}`);
-  orders=orders.filter(x=>x.id!==delId);
+  orders=window.orders=orders.filter(x=>x.id!==delId);
   showToast(t('deleted')); showView('list');
 }
 async function deleteOrder(){
@@ -1453,7 +1461,7 @@ async function deleteOrder(){
   if(!confirm(`「${o.title}」${t('confirmDel')}`)) return;
   await fbRemove(`/orders/${currentId}`);
   await fbRemove(`/cutsRaw/${currentId}`);
-  orders=orders.filter(x=>x.id!==currentId);
+  orders=window.orders=orders.filter(x=>x.id!==currentId);
   showToast(t('deleted')); showView('list');
 }
 
