@@ -429,7 +429,7 @@ button,input,select,textarea{font-family:inherit}
         <option value="title" id="go-title">タイトル</option>
         <option value="customer" id="go-cust">顧客</option>
       </select>
-      <select id="grp-title-filter" onchange="renderGroup()"
+      <select id="grp-title-filter" onchange="onTitleFilterChange()"
         style="display:none;font-size:13px;padding:6px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
         <option value="">すべてのタイトル</option>
       </select>
@@ -447,11 +447,9 @@ button,input,select,textarea{font-family:inherit}
         <option id="go-fiv">請求済</option>
         <option value="uninvoiced" id="go-fun">未請求</option>
       </select>
+      <button class="btn" onclick="printGroup()" id="btn-print">🖨 印刷</button>
     </div>
-    <div style="background:var(--sur);border:0.5px solid var(--bdr);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <span style="font-size:13px;color:var(--txt2)" id="print-range-lbl">表示中の内容を印刷します</span>
-      <button class="btn pri sm" onclick="printGroup()" id="btn-print">🖨 印刷</button>
-    </div>
+
     <div id="grp-body"></div>
   </div>
 
@@ -479,8 +477,8 @@ button,input,select,textarea{font-family:inherit}
       <div class="cgrid" id="cut-grid"></div>
       <div style="font-size:12px;color:var(--txt3);margin-top:8px" id="cut-hint">ボタンで完了／未完・削除が可能です</div>
       <div class="cut-add-area">
-        <input type="text" id="cut-add-input" placeholder="${t('cutAddPH')}">
-        <button class="btn pri sm" onclick="addCuts()" id="btn-cut-add">${t('cutAdd')}</button>
+        <input type="text" id="cut-add-input" placeholder="カット番号を追加（例：C021, 100-105）">
+        <button class="btn pri sm" onclick="addCuts()" id="btn-cut-add">＋ 追加</button>
       </div>
     </div>
     <div class="fcard">
@@ -497,7 +495,7 @@ button,input,select,textarea{font-family:inherit}
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn dng" onclick="deleteOrder()" id="btn-del-det">🗑 削除</button>
-      <button class="btn" onclick="editOrder()" id="btn-edit-det">✏ 編集</button>
+      <button class="btn" id="btn-edit-det" onclick="editOrder(currentId)">✏ 編集</button>
     </div>
   </div>
 </main>
@@ -1558,9 +1556,12 @@ function renderGroup(){
   const flt=document.getElementById('grp-flt').value;
   const titleFilter=document.getElementById('grp-title-filter');
   const selectedTitle=titleFilter?titleFilter.value:'';
+  const epFilter=document.getElementById('grp-ep-filter');
+  const selectedEp=epFilter?epFilter.value:'';
   let src=flt==='uninvoiced'?orders.filter(o=>!o.invoiceDate)
     :flt?orders.filter(o=>getStatus(o)===flt):[...orders];
   if(selectedTitle) src=src.filter(o=>o.title===selectedTitle);
+  if(selectedEp) src=src.filter(o=>String(o.episode)===String(selectedEp));
   const keyOf=o=>{
     if(by==='all') return t('optAll');
     if(by==='orderMonth') return o.orderDate?o.orderDate.slice(0,7).replace('-','年')+'月':t('orderNotSet');
@@ -1594,6 +1595,20 @@ function renderGroup(){
       <div class="gbody" id="g${ki}" style="border-color:${bc}">${rows}</div>
     </div>`;
   }).join('');
+}
+function onTitleFilterChange(){
+  const tv=document.getElementById('grp-title-filter').value;
+  const epEl=document.getElementById('grp-ep-filter');
+  if(tv){
+    const eps=[...new Set(orders.filter(o=>o.title===tv&&o.episode)
+      .map(o=>o.episode))].sort((a,b)=>Number(a)-Number(b));
+    epEl.innerHTML='<option value="">すべての話数</option>'+
+      eps.map(e=>'<option value="'+e+'">第'+e+'話</option>').join('');
+    epEl.style.display=eps.length>0?'block':'none';
+  } else {
+    epEl.style.display='none'; epEl.value='';
+  }
+  renderGroup();
 }
 function onGrpByChange(){
   const by=document.getElementById('grp-by').value;
@@ -1792,7 +1807,7 @@ window.editOrder=editOrder; window.deleteOrder=deleteOrder;
 window.deleteFromForm=deleteFromForm; window.cancelForm=cancelForm;
 window.saveOrder=saveOrder; window.saveDates=saveDates;
 window.markAll=markAll; window.toggleCut=toggleCut; window.toggleGroup=toggleGroup; window.deleteCut=deleteCut; window.deleteCutGroup=deleteCutGroup; window.addCuts=addCuts;
-window.renderGroup=renderGroup; window.toggleGrp=toggleGrp; window.printGroup=printGroup;
+window.renderGroup=renderGroup; window.onTitleFilterChange=onTitleFilterChange; window.toggleGrp=toggleGrp; window.printGroup=printGroup;
 window.renderList=renderList; window.loadAll=loadAll;
 window.selectLang=selectLang;
 window.openCbo=openCbo; window.closeCbo=closeCbo;
