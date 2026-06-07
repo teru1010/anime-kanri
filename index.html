@@ -371,8 +371,8 @@ button,input,select,textarea{font-family:inherit}
         <div class="fg"><label id="lbl-tin">受注合計・税込</label><input type="text" id="f-tin" readonly style="background:var(--bl-bg);color:#0A2D6A;font-weight:500"></div>
         <div class="fg"><label id="lbl-ap">発注単価・非課税（円）</label><input type="number" id="f-ap" oninput="calcAmt()"></div>
         <div class="fg"><label id="lbl-at">発注合計・非課税</label><input type="text" id="f-at" readonly></div>
-        <div class="fg"><label id="lbl-mg">粗利（税込受注－発注）</label><input type="text" id="f-mg" readonly style="background:var(--bl-bg);color:#0A2D6A;font-weight:500"></div>
-        <div class="fg"><label id="lbl-mp">粗利率</label><input type="text" id="f-mp" readonly style="background:var(--bl-bg);color:#0A2D6A;font-weight:500"></div>
+        <div class="fg" style="display:none"><label id="lbl-mg">粗利</label><input type="text" id="f-mg" readonly></div>
+        <div class="fg" style="display:none"><label id="lbl-mp">粗利率</label><input type="text" id="f-mp" readonly></div>
         <hr class="sep"><div class="slbl" id="slbl-cuts">カット番号（受注時に一括入力）</div>
         <div class="s4">
           <div class="cbox">
@@ -428,7 +428,20 @@ button,input,select,textarea{font-family:inherit}
         <option id="go-fiv">請求済</option>
         <option value="uninvoiced" id="go-fun">未請求</option>
       </select>
-      <button class="btn" onclick="printGroup()" id="btn-print">🖨 印刷</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap;
+      background:var(--sur);border:0.5px solid var(--bdr);border-radius:var(--r);padding:10px 14px">
+      <span style="font-size:13px;font-weight:500;color:var(--txt2)" id="print-range-lbl">印刷範囲（受注日）：</span>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <input type="date" id="print-from"
+          style="font-size:13px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
+        <span style="color:var(--txt2)">〜</span>
+        <input type="date" id="print-to"
+          style="font-size:13px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
+        <button class="btn sm" onclick="clearPrintRange()" id="btn-clr-range"
+          style="color:var(--txt3)">✕ クリア</button>
+      </div>
+      <button class="btn pri sm" onclick="printGroup()" id="btn-print">🖨 印刷</button>
     </div>
     <div id="grp-body"></div>
   </div>
@@ -485,6 +498,28 @@ button,input,select,textarea{font-family:inherit}
 <script>
 window.addEventListener('load', function() {
 // Firebase compat SDK loaded above
+
+// ============================================================
+// パスワード認証
+// ============================================================
+const ADMIN_PASS = null;      // セン管理者：パスワードなし（日本語側）
+const MEMBER_PASS = 'at2024'; // ATメンバー：要パスワード
+const SESS_KEY = 'animeAuth';
+
+function checkAuth(){
+  // すでに認証済み（セッション内）
+  if(sessionStorage.getItem(SESS_KEY)==='ok') return true;
+  // 言語がviの場合はパスワード必須
+  const lang=localStorage.getItem('animeLang')||'ja';
+  if(lang!=='vi') return true; // 日本語側は認証不要
+  const pw=prompt('パスワードを入力してください / Nhập mật khẩu:');
+  if(pw===MEMBER_PASS){
+    sessionStorage.setItem(SESS_KEY,'ok');
+    return true;
+  }
+  alert('パスワードが違います / Mật khẩu không đúng');
+  return false;
+}
 
 // ============================================================
 // Firebase 設定
@@ -636,11 +671,27 @@ function tSt(s){
   const m={受注済:'optOr',進行中:'optWip',納品済:'optDn',請求済:'optIv'};
   return m[s]?t(m[s]):s;
 }
+// 作業工程の翻訳（JA→VN）
+const PROC_VN={
+  'LO':'LO','2G':'Genga','LO作監':'LO Sakkan','動画':'Douga',
+  '仕上':'Paint','動仕':'Douga/Paint','BG':'BG',
+  '動画検査':'Douga Kensa','仕上検査':'Paint Kensa','その他':'Others'
+};
+function tProc(p){ return currentLang==='vi'?(PROC_VN[p]||p):p; }
 
 // ============================================================
 // 言語切替
 // ============================================================
 function selectLang(lang){
+  // VN選択時はパスワードチェック
+  if(lang==='vi' && sessionStorage.getItem(SESS_KEY)!=='ok'){
+    const pw=prompt('パスワードを入力してください / Nhập mật khẩu:');
+    if(pw!==MEMBER_PASS){
+      alert('パスワードが違います / Mật khẩu không đúng');
+      return;
+    }
+    sessionStorage.setItem(SESS_KEY,'ok');
+  }
   currentLang=lang;
   localStorage.setItem('animeLang',lang);
   applyLang();
@@ -697,6 +748,23 @@ function applyLang(){
   // cbox-hint はHTMLで
   const ch=document.getElementById('cbox-hint');
   if(ch) ch.innerHTML=t('cboxHint');
+  // 作業工程プルダウンの翻訳
+  const fproc=document.getElementById('f-proc');
+  if(fproc){
+    const procJa=['LO','2G','LO作監','動画','仕上','動仕','BG','動画検査','仕上検査','その他'];
+    Array.from(fproc.options).forEach((opt,i)=>{
+      opt.textContent=tProc(procJa[i]||opt.value);
+    });
+  }
+  // 詳細ステータスselectの翻訳
+  const dst=document.getElementById('d-st');
+  if(dst){
+    const stJa=['受注済','進行中','納品済','請求済'];
+    const stKeys=['dstOr','dstWip','dstDn','dstIv'];
+    Array.from(dst.options).forEach((opt,i)=>{
+      opt.textContent=t(stKeys[i]);
+    });
+  }
   // search placeholder
   const si=document.getElementById('cut-search-input');
   if(si) si.placeholder=t('searchPH');
@@ -957,7 +1025,14 @@ function renderList(){
     const pctStr=o.marginPct!=null?Number(o.marginPct).toFixed(1)+'%':'-';
     // 月別ヘッダー
     const month=o.orderDate?o.orderDate.slice(0,7):'';
-    const mLabel=month?month.replace('-','年')+'月':t('orderNotSet');
+    let mLabel;
+    if(!month){ mLabel=t('orderNotSet'); }
+    else if(currentLang==='vi'){
+      const [yr,mo]=month.split('-');
+      mLabel='Tháng '+parseInt(mo)+' năm '+yr;
+    } else {
+      mLabel=month.replace('-','年')+'月';
+    }
     if(mLabel!==lastMonth){
       cards.push(`<div class="mhdr" style="margin-top:${cards.length?'1rem':'0'}">
         <span>${mLabel}</span></div>`);
@@ -965,14 +1040,12 @@ function renderList(){
     }
     cards.push(`<div class="card" onclick="showDetail('${o.id}')">
       ${makeBanner(o)}
-      <div class="sub">${o.customer||'-'}　${t('contact')}：${o.contact||'-'}　<b>${o.process||''}</b></div>
+      <div class="sub">${o.customer||'-'}　${t('contact')}：${o.contact||'-'}　<b>${tProc(o.process||'')}</b></div>
       <div class="meta">
-        <span>${t('work')} <b>${o.process||'-'}</b></span>
+        <span>${t('work')} <b>${tProc(o.process)||'-'}</b></span>
         <span>${t('qty')} <b>${o.qty}${currentLang==='vi'?' cảnh':'カット'}</b></span>
         <span>受注・税込 <b>¥${fmt(o.totalPriceIn)}</b></span>
         <span>発注 <b>¥${fmt(o.atTotalPrice)}</b></span>
-        <span>粗利 <b>¥${fmt(o.margin)}</b></span>
-        <span>粗利率 <b>${pctStr}</b></span>
         <span>${t('dueLabel')} <b>${o.dueDate||'-'}</b></span>
       </div>
       <div class="pbar">
@@ -1036,7 +1109,7 @@ function searchCut(){
         <span style="background:${b.bg};color:${b.tx};padding:3px 10px;border-radius:99px;font-size:13px;font-weight:500">
           ${o.title||'-'}${o.abbr?`（${o.abbr}）`:''}${o.episode?` 第${o.episode}話`:''}
         </span>
-        <span style="font-size:12px;color:var(--txt2)">${o.process}</span>
+        <span style="font-size:12px;color:var(--txt2)">${tProc(o.process)}</span>
         <span class="pill ${pillCls(st)}">${tSt(st)}</span>
         <span style="margin-left:auto;font-size:12px;color:var(--txt2)">${o.customer||'-'}</span>
       </div>
@@ -1047,8 +1120,6 @@ function searchCut(){
         <span>${t('dueLabel')} <b>${o.dueDate||'-'}</b></span>
         <span>¥${fmt(o.totalPriceIn)}</span>
         <span>¥${fmt(o.atTotalPrice)}</span>
-        <span>¥${fmt(o.margin)}</span>
-        <span>${pctStr}</span>
         <span>${t('contact')} <b>${o.contact||'-'}</b></span>
       </div>
       <div class="srch-acts">
@@ -1057,6 +1128,12 @@ function searchCut(){
       </div>
     </div>`;
   }).join('');
+}
+function clearPrintRange(){
+  const f=document.getElementById('print-from');
+  const t2=document.getElementById('print-to');
+  if(f) f.value='';
+  if(t2) t2.value='';
 }
 function clearSearch(){
   document.getElementById('cut-search-input').value='';
@@ -1078,7 +1155,6 @@ function showDetail(id){
   document.getElementById('d-sum').innerHTML=`
     <div class="sc sc-bl"><div class="sl">${t('sumRcv')}</div><div class="sv">¥${fmt(o.totalPriceEx)}</div><div class="ss">${t('taxIn')} ¥${fmt(o.totalPriceIn)}</div></div>
     <div class="sc sc-pk"><div class="sl">${t('sumAt')}</div><div class="sv">¥${fmt(o.atTotalPrice)}</div><div class="ss">${o.qty}${currentLang==='vi'?' cảnh':'カット'} × ¥${fmt(o.atUnitPrice)}</div></div>
-    <div class="sc sc-gn"><div class="sl">${t('sumMg')}</div><div class="sv">¥${fmt(o.margin)}</div><div class="ss">${pctStr}</div></div>
     <div class="sc sc-gy"><div class="sl">${t('sumCut')}</div><div class="sv">${done}/${total}</div><div class="ss">${pct}%</div></div>`;
   document.getElementById('d-info').innerHTML=`
     <div class="ir"><div class="ik">${t('infoCustomer')}</div><div class="iv">${o.customer||'-'} / ${o.contact||'-'}</div></div>
@@ -1461,8 +1537,15 @@ function printGroup(){
   const by=document.getElementById('grp-by').value;
   const flt=document.getElementById('grp-flt').value;
   const sdir=document.getElementById('grp-sort').value;
-  const src=flt==='uninvoiced'?orders.filter(o=>!o.invoiceDate)
-    :flt?orders.filter(o=>getStatus(o)===flt):orders;
+  // 日付範囲フィルター
+  const fromEl=document.getElementById('print-from');
+  const toEl=document.getElementById('print-to');
+  const fromDate=fromEl?fromEl.value:'';
+  const toDate=toEl?toEl.value:'';
+  let src=flt==='uninvoiced'?orders.filter(o=>!o.invoiceDate)
+    :flt?orders.filter(o=>getStatus(o)===flt):[...orders];
+  if(fromDate) src=src.filter(o=>(o.orderDate||'')>=fromDate);
+  if(toDate)   src=src.filter(o=>(o.orderDate||'')<=toDate);
   const keyOf=o=>{
     if(by==='all') return t('optAll');
     if(by==='orderMonth') return o.orderDate?o.orderDate.slice(0,7).replace('-','年')+'月':t('orderNotSet');
@@ -1473,9 +1556,10 @@ function printGroup(){
   src.forEach(o=>{ const k=keyOf(o); if(!groups[k]) groups[k]=[]; groups[k].push(o); });
   const keys=Object.keys(groups).sort((a,b)=>sdir==='desc'?b.localeCompare(a,'ja'):a.localeCompare(b,'ja'));
   let gIn=0,gAt=0;
+  const rangeStr=fromDate||toDate?`（${fromDate||'〜'}〜${toDate||'〜'}）`:'';
   let html=`<div style="font-family:sans-serif;padding:1rem">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
-      <h1 style="font-size:16px;font-weight:600">アニメ制作受注一覧</h1>
+      <h1 style="font-size:16px;font-weight:600">アニメ制作受注一覧${rangeStr}</h1>
       <span style="font-size:12px;color:#666">印刷日：${today()}</span>
     </div>`;
   keys.forEach(k=>{
@@ -1498,8 +1582,6 @@ function printGroup(){
           <th style="padding:4px 6px;text-align:right;border:0.5px solid #90B0D8">数量</th>
           <th style="padding:4px 6px;text-align:right;border:0.5px solid #90B0D8">受注(税込)</th>
           <th style="padding:4px 6px;text-align:right;border:0.5px solid #90B0D8">発注</th>
-          <th style="padding:4px 6px;text-align:right;border:0.5px solid #90B0D8">粗利</th>
-          <th style="padding:4px 6px;text-align:right;border:0.5px solid #90B0D8">粗利率</th>
           <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">状態</th>
         </tr></thead><tbody>
         ${items.map((o,i)=>`<tr style="${i%2===1?'background:#f8f8f8':''}">
@@ -1513,16 +1595,13 @@ function printGroup(){
           <td style="padding:4px 6px;border:0.5px solid #ccc;text-align:right">${o.qty}</td>
           <td style="padding:4px 6px;border:0.5px solid #ccc;text-align:right">¥${fmt(o.totalPriceIn)}</td>
           <td style="padding:4px 6px;border:0.5px solid #ccc;text-align:right">¥${fmt(o.atTotalPrice)}</td>
-          <td style="padding:4px 6px;border:0.5px solid #ccc;text-align:right">¥${fmt(o.margin)}</td>
-          <td style="padding:4px 6px;border:0.5px solid #ccc;text-align:right">${o.marginPct!=null?Number(o.marginPct).toFixed(1)+'%':'-'}</td>
           <td style="padding:4px 6px;border:0.5px solid #ccc">${getStatus(o)}</td>
         </tr>`).join('')}
         <tr style="background:#c8dcf4;font-weight:600">
           <td colspan="8" style="padding:4px 6px;border:0.5px solid #90B0D8;text-align:right">小計</td>
           <td style="padding:4px 6px;border:0.5px solid #90B0D8;text-align:right">¥${fmt(tIn)}</td>
           <td style="padding:4px 6px;border:0.5px solid #90B0D8;text-align:right">¥${fmt(tAt)}</td>
-          <td style="padding:4px 6px;border:0.5px solid #90B0D8;text-align:right">¥${fmt(tMg)}</td>
-          <td colspan="2"></td>
+          <td></td>
         </tr>
         </tbody></table></div>`;
   });
@@ -1532,8 +1611,7 @@ function printGroup(){
       <td colspan="8" style="padding:5px 8px;border:0.5px solid #5DC8A0;text-align:right">合計</td>
       <td style="padding:5px 8px;border:0.5px solid #5DC8A0;text-align:right">¥${fmt(gIn)}</td>
       <td style="padding:5px 8px;border:0.5px solid #5DC8A0;text-align:right">¥${fmt(gAt)}</td>
-      <td style="padding:5px 8px;border:0.5px solid #5DC8A0;text-align:right">¥${fmt(gMg)}</td>
-      <td colspan="2"></td>
+      <td></td>
     </tr></table></div>`;
   const w=window.open('','_blank','width=1100,height=750');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>受注一覧</title>
@@ -1625,10 +1703,17 @@ window.renderList=renderList; window.loadAll=loadAll;
 window.selectLang=selectLang;
 window.openCbo=openCbo; window.closeCbo=closeCbo;
 window.filterCbo=filterCbo; window.pickCbo=pickCbo; window.onTitleInput=onTitleInput;
-window.searchCut=searchCut; window.clearSearch=clearSearch;
+window.searchCut=searchCut; window.clearSearch=clearSearch; window.clearPrintRange=clearPrintRange;
 window.calcAmt=calcAmt; window.updLimit=updLimit;
 
 applyLang();
+// 初回認証チェック（VN言語設定で起動した場合）
+if(!checkAuth()){
+  // 認証失敗 → 日本語に戻す
+  currentLang='ja';
+  localStorage.setItem('animeLang','ja');
+  applyLang();
+}
 loadAll();
 }); // end window.onload
 </script>
