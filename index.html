@@ -829,7 +829,7 @@ function applyLang(){
     'btn-new':'btnNew','btn-refresh':'btnRefresh',
     'btn-cancel':'btnCancel','btn-save':'btnSave',
     'btn-del-form':'btnDelForm','btn-back':'btnBack',
-    'btn-del-det':'btnDel','btn-edit-det':'btnEdit',
+    'btn-del-det':'btnDel',
     'btn-alldone':'btnAllDone','btn-print':'btnPrint',
     'form-ttl': editingId?'formEdit':'formNew',
     'slbl-work':'slWork','slbl-amt':'slAmt','slbl-cuts':'slCuts','slbl-note':'slNote',
@@ -1324,6 +1324,10 @@ function clearSearch(){
 // ============================================================
 function showDetail(id){
   currentId=id;
+  // 編集モードをリセット
+  window._detailEditMode=false;
+  const form=document.getElementById('detail-edit-form');
+  if(form) form.style.display='none';
   const o=orders.find(x=>x.id===id); if(!o) return;
   const st=getStatus(o);
   document.getElementById('d-pill').innerHTML=`<span class="pill ${pillCls(st)}">${tSt(st)}</span>`;
@@ -1357,7 +1361,7 @@ function showDetail(id){
   (document.getElementById('lbl-delinv')||{textContent:''}).textContent=t('lblDelInv');
   (document.getElementById('lbl-delst')||{textContent:''}).textContent=t('lblDelSt');
   (document.getElementById('btn-del-det')||{textContent:''}).textContent=t('btnDel');
-  (document.getElementById('btn-edit-det')||{textContent:''}).textContent=t('btnEdit');
+  (document.getElementById('btn-edit-det')||{textContent:''}).textContent='✏ '+t('btnEdit').replace('✏ ','').replace('Sửa','Sửa');
   (document.getElementById('btn-back')||{textContent:''}).textContent=t('btnBack');
   const dss=document.getElementById('d-st');
   if(dss){['or','wip','dn','iv'].forEach((k,i)=>{
