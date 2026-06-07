@@ -1250,10 +1250,11 @@ function renderCuts(o){
   if(o.cutsRaw){
     // cutsRawがある場合：グループ表示・昇順ソート
     const groups=parseGroups(o.cutsRaw);
-    // 昇順ソート（数値順）
+    // 昇順ソート：兼用カットは先頭カット番号の数値を基準に
     groups.sort((a,b)=>{
-      const na=parseInt(a.ids[0])||0, nb=parseInt(b.ids[0])||0;
-      return na-nb;
+      // 先頭IDから数値部分を抽出
+      const numOf=id=>{const m=String(id).match(/\d+/);return m?parseInt(m[0]):0;};
+      return numOf(a.ids[0])-numOf(b.ids[0]);
     });
     cards=groups.map((g,gi)=>{
       const gkey='g'+gi;
@@ -1300,21 +1301,28 @@ function renderCuts(o){
   grid.innerHTML=cards.join('');
 }
 
-// data属性経由のアクション処理（エスケープ問題を回避）
+// data属性経由のアクション処理
 async function ccAct(el){
   const action=el.dataset.action;
-  if(action==='toggle'){
-    const oid=el.dataset.oid, gkey=el.dataset.gkey;
-    const ids=(window._cutGroups[oid]||{})[gkey];
-    if(!ids) return;
+  if(action==='toggle'||action==='del'){
+    const oid=el.dataset.oid;
+    const gkey=el.dataset.gkey;
+    // _cutGroupsから取得、なければcutsRawから再構築
+    let ids=(window._cutGroups[oid]||{})[gkey];
+    if(!ids){
+      const o2=orders.find(x=>x.id===oid);
+      if(o2&&o2.cutsRaw){
+        const grps=parseGroups(o2.cutsRaw);
+        // 昇順ソート
+        grps.sort((a,b)=>(parseInt(a.ids[0])||0)-(parseInt(b.ids[0])||0));
+        const gi=parseInt(gkey.replace('g',''));
+        if(grps[gi]) ids=grps[gi].ids;
+      }
+    }
+    if(!ids||!ids.length) return;
     currentId=oid;
-    await toggleGroup(ids);
-  } else if(action==='del'){
-    const oid=el.dataset.oid, gkey=el.dataset.gkey;
-    const ids=(window._cutGroups[oid]||{})[gkey];
-    if(!ids) return;
-    currentId=oid;
-    await deleteCutGroup(ids);
+    if(action==='toggle') await toggleGroup(ids);
+    else await deleteCutGroup(ids);
   } else if(action==='togglesingle'){
     await toggleCut(el.dataset.cid);
   } else if(action==='delsingle'){
