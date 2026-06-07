@@ -291,7 +291,7 @@ button,input,select,textarea{font-family:inherit}
     <div class="nt" onclick="showView('group')" id="tab-group">グループ表示</div>
   </nav>
   <div class="hdr-r">
-    <div class="sync"><div class="sdot" id="sdot"></div><span id="slbl">--</span></div>
+    <div class="sync"><div class="sdot" id="sdot" style="display:none"></div><span id="slbl"></span></div>
     <button class="lbtn on" id="btn-ja" onclick="selectLang('ja')">🇯🇵 JP</button>
     <button class="lbtn" id="btn-vi" onclick="selectLang('vi')">🇻🇳 VN</button>
   </div>
@@ -429,23 +429,28 @@ button,input,select,textarea{font-family:inherit}
         <option value="uninvoiced" id="go-fun">未請求</option>
       </select>
     </div>
-    <div style="background:var(--sur);border:0.5px solid var(--bdr);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        <span style="font-size:13px;font-weight:500;color:var(--txt2)" id="print-range-lbl">印刷範囲：</span>
-        <select id="print-date-type"
-          style="font-size:13px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
-          <option value="orderDate" id="pdt-od">受注日</option>
-          <option value="deliveryDate" id="pdt-dl">納品日</option>
-          <option value="invoiceDate" id="pdt-iv">請求日</option>
-        </select>
-        <input type="date" id="print-from"
-          style="font-size:13px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
-        <span style="color:var(--txt2)">〜</span>
-        <input type="date" id="print-to"
-          style="font-size:13px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
-        <button class="btn sm" onclick="clearPrintRange()" style="color:var(--txt3)">✕ クリア</button>
-        <button class="btn pri sm" onclick="printGroup()" id="btn-print">🖨 印刷</button>
-      </div>
+    <div style="background:var(--sur);border:0.5px solid var(--bdr);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:13px;font-weight:500;color:var(--txt2)" id="print-range-lbl">請求年月：</span>
+      <select id="print-inv-year"
+        style="font-size:13px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
+        <option value="">年（全て）</option>
+        <option value="2024">2024年</option>
+        <option value="2025">2025年</option>
+        <option value="2026">2026年</option>
+        <option value="2027">2027年</option>
+      </select>
+      <select id="print-inv-month"
+        style="font-size:13px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
+        <option value="">月（全て）</option>
+        <option value="01">1月</option><option value="02">2月</option>
+        <option value="03">3月</option><option value="04">4月</option>
+        <option value="05">5月</option><option value="06">6月</option>
+        <option value="07">7月</option><option value="08">8月</option>
+        <option value="09">9月</option><option value="10">10月</option>
+        <option value="11">11月</option><option value="12">12月</option>
+      </select>
+      <button class="btn sm" onclick="clearPrintRange()" style="color:var(--txt3)">✕ クリア</button>
+      <button class="btn pri sm" onclick="printGroup()" id="btn-print">🖨 印刷</button>
     </div>
     <div id="grp-body"></div>
   </div>
@@ -497,8 +502,8 @@ button,input,select,textarea{font-family:inherit}
 <div class="toast" id="toast"></div>
 
 <!-- Firebase compat SDK -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://unpkg.com/firebase@8.10.1/firebase-app.js"></script>
+<script src="https://unpkg.com/firebase@8.10.1/firebase-database.js"></script>
 <script>
 window.addEventListener('load', function() {
 // Firebase compat SDK loaded above
@@ -528,6 +533,10 @@ function checkAuth(){
 // ============================================================
 // Firebase 設定
 // ============================================================
+if(typeof firebase === 'undefined'){
+  alert('Firebaseの読み込みに失敗しました。ページを再読み込みしてください。');
+  throw new Error('firebase is not defined');
+}
 const firebaseConfig = {
   apiKey: "AIzaSyAZeqQadzeU6YaArxk40t_2GnMMMk20qp8",
   authDomain: "anime-kanri.firebaseapp.com",
@@ -565,9 +574,16 @@ function sync(s){
   const d=document.getElementById('sdot');
   const l=document.getElementById('slbl');
   if(!d||!l) return;
-  if(s==='ing'){d.className='sdot ing';l.textContent=t('syncing');}
-  else if(s==='err'){d.className='sdot err';l.textContent=t('syncErr');}
-  else{d.className='sdot';l.textContent=t('synced');}
+  if(s==='ing'){
+    d.style.display='block';d.className='sdot ing';
+    l.textContent=t('syncing');
+  } else if(s==='err'){
+    d.style.display='block';d.className='sdot err';
+    l.textContent=t('syncErr');
+  } else {
+    d.style.display='none';d.className='sdot';
+    l.textContent='';
+  }
 }
 
 // ============================================================
@@ -926,8 +942,8 @@ function showView(v){
   updateBadges();
 }
 function updateBadges(){
-  document.getElementById('b-all').textContent=orders.length;
-  document.getElementById('b-prog').textContent=
+  (document.getElementById('b-all')||{textContent:''}).textContent=orders.length;
+  (document.getElementById('b-prog')||{textContent:''}).textContent=
     orders.filter(o=>!['請求済','納品済'].includes(getStatus(o))).length;
 }
 function makeBanner(o){
@@ -1134,10 +1150,10 @@ function searchCut(){
   }).join('');
 }
 function clearPrintRange(){
-  const f=document.getElementById('print-from');
-  const t2=document.getElementById('print-to');
-  if(f) f.value='';
-  if(t2) t2.value='';
+  const y=document.getElementById('print-inv-year');
+  const m=document.getElementById('print-inv-month');
+  if(y) y.value='';
+  if(m) m.value='';
 }
 function clearSearch(){
   document.getElementById('cut-search-input').value='';
@@ -1171,16 +1187,16 @@ function showDetail(id){
   document.getElementById('d-st').value=st;
   renderCuts(o);
   // テキスト更新
-  (document.getElementById('h-cut')||{}).textContent=t('cutProgTitle');
-  (document.getElementById('btn-alldone')||{}).textContent=t('btnAllDone');
-  (document.getElementById('prog-lbl')||{}).textContent=t('progLbl');
-  (document.getElementById('d-del-ttl')||{}).textContent=t('dDelTtl');
-  (document.getElementById('lbl-deldl')||{}).textContent=t('lblDelDl');
-  (document.getElementById('lbl-delinv')||{}).textContent=t('lblDelInv');
-  (document.getElementById('lbl-delst')||{}).textContent=t('lblDelSt');
-  (document.getElementById('btn-del-det')||{}).textContent=t('btnDel');
-  (document.getElementById('btn-edit-det')||{}).textContent=t('btnEdit');
-  (document.getElementById('btn-back')||{}).textContent=t('btnBack');
+  (document.getElementById('h-cut')||{textContent:''}).textContent=t('cutProgTitle');
+  (document.getElementById('btn-alldone')||{textContent:''}).textContent=t('btnAllDone');
+  (document.getElementById('prog-lbl')||{textContent:''}).textContent=t('progLbl');
+  (document.getElementById('d-del-ttl')||{textContent:''}).textContent=t('dDelTtl');
+  (document.getElementById('lbl-deldl')||{textContent:''}).textContent=t('lblDelDl');
+  (document.getElementById('lbl-delinv')||{textContent:''}).textContent=t('lblDelInv');
+  (document.getElementById('lbl-delst')||{textContent:''}).textContent=t('lblDelSt');
+  (document.getElementById('btn-del-det')||{textContent:''}).textContent=t('btnDel');
+  (document.getElementById('btn-edit-det')||{textContent:''}).textContent=t('btnEdit');
+  (document.getElementById('btn-back')||{textContent:''}).textContent=t('btnBack');
   const dss=document.getElementById('d-st');
   if(dss){['or','wip','dn','iv'].forEach((k,i)=>{
     if(dss.options[i]) dss.options[i].textContent=t('dst'+k.charAt(0).toUpperCase()+k.slice(1)||'dst'+k);
@@ -1192,10 +1208,10 @@ function renderCuts(o){
   if(!o) o=orders.find(x=>x.id===currentId); if(!o) return;
   const cuts=o.cuts||[];
   const {done,total,pct}=progOf(o);
-  document.getElementById('cut-prog-txt').textContent=`${done}/${total}`;
-  document.getElementById('d-prog-pct').textContent=pct+'%';
+  (document.getElementById('cut-prog-txt')||{textContent:''}).textContent=`${done}/${total}`;
+  (document.getElementById('d-prog-pct')||{textContent:''}).textContent=pct+'%';
   document.getElementById('d-prog-fill').style.width=pct+'%';
-  document.getElementById('cut-hint').textContent=t('cutHint');
+  (document.getElementById('cut-hint')||{textContent:''}).textContent=t('cutHint');
   const grid=document.getElementById('cut-grid');
   if(!cuts.length){
     grid.innerHTML=`<div style="font-size:13px;color:var(--txt3);padding:10px 0">${t('cutEmpty')}</div>`;
@@ -1269,7 +1285,7 @@ function updateSumCard(o){
   const ss=document.querySelector('.sc-gy .ss');
   if(sv) sv.textContent=`${done}/${total}`;
   if(ss) ss.textContent=pct+'%';
-  document.getElementById('d-prog-pct').textContent=pct+'%';
+  (document.getElementById('d-prog-pct')||{textContent:''}).textContent=pct+'%';
   document.getElementById('d-prog-fill').style.width=pct+'%';
 }
 async function saveDates(){
@@ -1300,7 +1316,7 @@ function calcAmt(){
 }
 function updLimit(){
   const qty=parseInt(document.getElementById('f-qty').value)||0;
-  document.getElementById('cut-limit').textContent=qty?`上限 ${qty}`:' ';
+  (document.getElementById('cut-limit')||{textContent:''}).textContent=qty?`上限 ${qty}`:' ';
   prevPreview();
 }
 function prevPreview(){
@@ -1314,15 +1330,15 @@ function prevPreview(){
 }
 function resetForm(){
   editingId=null;
-  document.getElementById('form-ttl').textContent=t('formNew');
+  (document.getElementById('form-ttl')||{textContent:''}).textContent=t('formNew');
   document.getElementById('btn-del-form').style.display='none';
   ['f-od','f-due','f-dl','f-inv'].forEach(id=>{document.getElementById(id).value='';});
   ['f-cust','f-ct','f-ttl','f-abbr','f-ep','f-qty','f-up','f-ap',
    'f-tex','f-tin','f-at','f-mg','f-mp','f-cuts','f-note'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('f-proc').value='LO';
   document.getElementById('abbr-auto').style.display='none';
-  document.getElementById('cut-preview').textContent='';
-  document.getElementById('cut-limit').textContent='';
+  (document.getElementById('cut-preview')||{textContent:''}).textContent='';
+  (document.getElementById('cut-limit')||{textContent:''}).textContent='';
 }
 function cancelForm(){ editingId=null; showView('list'); }
 
@@ -1400,7 +1416,7 @@ function editOrder(id){
   const oid=id||currentId;
   const o=orders.find(x=>x.id===oid); if(!o) return;
   editingId=oid;
-  document.getElementById('form-ttl').textContent=t('formEdit');
+  (document.getElementById('form-ttl')||{textContent:''}).textContent=t('formEdit');
   document.getElementById('btn-del-form').style.display='inline-flex';
   document.getElementById('f-od').value=o.orderDate||'';
   document.getElementById('f-due').value=o.dueDate||'';
@@ -1538,17 +1554,23 @@ function printGroup(){
   const by=document.getElementById('grp-by').value;
   const flt=document.getElementById('grp-flt').value;
   const sdir=document.getElementById('grp-sort').value;
-  // 日付範囲フィルター（受注日・納品日・請求日を選択可能）
-  const dtypeEl=document.getElementById('print-date-type');
-  const fromEl=document.getElementById('print-from');
-  const toEl=document.getElementById('print-to');
-  const dtype=dtypeEl?dtypeEl.value:'orderDate';
-  const fromDate=fromEl?fromEl.value:'';
-  const toDate=toEl?toEl.value:'';
+  // 請求年月フィルター
+  const yrEl=document.getElementById('print-inv-year');
+  const moEl=document.getElementById('print-inv-month');
+  const filterYr=yrEl?yrEl.value:'';
+  const filterMo=moEl?moEl.value:'';
   let src=flt==='uninvoiced'?orders.filter(o=>!o.invoiceDate)
     :flt?orders.filter(o=>getStatus(o)===flt):[...orders];
-  if(fromDate) src=src.filter(o=>(o[dtype]||'')>=fromDate);
-  if(toDate)   src=src.filter(o=>(o[dtype]||'')<=toDate);
+  if(filterYr||filterMo){
+    src=src.filter(o=>{
+      if(!o.invoiceDate) return false;
+      const yr=o.invoiceDate.slice(0,4);
+      const mo=o.invoiceDate.slice(5,7);
+      if(filterYr&&yr!==filterYr) return false;
+      if(filterMo&&mo!==filterMo) return false;
+      return true;
+    });
+  }
   const keyOf=o=>{
     if(by==='all') return t('optAll');
     if(by==='orderMonth') return o.orderDate?o.orderDate.slice(0,7).replace('-','年')+'月':t('orderNotSet');
@@ -1559,8 +1581,10 @@ function printGroup(){
   src.forEach(o=>{ const k=keyOf(o); if(!groups[k]) groups[k]=[]; groups[k].push(o); });
   const keys=Object.keys(groups).sort((a,b)=>sdir==='desc'?b.localeCompare(a,'ja'):a.localeCompare(b,'ja'));
   let gIn=0,gAt=0;
-  const dtypeLabel={'orderDate':'受注日','deliveryDate':'納品日','invoiceDate':'請求日'};
-  const rangeStr=fromDate||toDate?`（${dtypeLabel[dtype]||'受注日'}: ${fromDate||'〜'}〜${toDate||'〜'}）`:'';
+  const invLabel=filterYr&&filterMo?`${filterYr}年${parseInt(filterMo)}月`
+    :filterYr?`${filterYr}年`
+    :filterMo?`${parseInt(filterMo)}月`:'';
+  const rangeStr=invLabel?`（請求：${invLabel}）`:'';
   let html=`<div style="font-family:sans-serif;padding:1rem">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
       <h1 style="font-size:16px;font-weight:600">アニメ制作受注一覧${rangeStr}</h1>
@@ -1620,8 +1644,10 @@ function printGroup(){
   const w=window.open('','_blank','width=1100,height=750');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>受注一覧</title>
     <style>@media print{@page{size:A4 landscape;margin:8mm}}</style>
-  </head><body>${html}<scr'+'ipt>window.onload=()=>window.print();<\/script></body></html>`);
+  </head><body>${html}</body></html>`);
   w.document.close();
+  w.addEventListener('load', function(){ w.print(); });
+  setTimeout(function(){ try{ w.print(); }catch(e){} }, 800);
 }
 
 // ============================================================
