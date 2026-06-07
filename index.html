@@ -484,6 +484,7 @@ button,input,select,textarea{font-family:inherit}
     <div id="d-banner" style="margin-bottom:1rem"></div>
     <div class="sumrow" id="d-sum"></div>
     <div class="igrid" id="d-info"></div>
+
     <div class="csec">
       <div class="csec-hd">
         <h3 id="h-cut">✂ カット進捗</h3>
@@ -517,7 +518,33 @@ button,input,select,textarea{font-family:inherit}
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn dng" onclick="deleteOrder()" id="btn-del-det">🗑 削除</button>
-      <button class="btn" id="btn-edit-det" onclick="editOrder(currentId)">✏ 編集</button>
+      <button class="btn" onclick="toggleDetailEdit()" id="btn-edit-det">✏ 編集</button>
+    </div>
+    <!-- インライン編集フォーム -->
+    <div id="detail-edit-form" style="display:none;background:var(--sur);border:1.5px solid var(--bl);
+      border-radius:var(--rl);padding:1rem;margin-top:10px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--bl)">✏ 数値を修正</div>
+      <div class="fgrid g3" style="gap:10px;margin-bottom:10px">
+        <div class="fg">
+          <label>数量（カット数）</label>
+          <input type="number" id="det-qty" min="1" oninput="detCalc()">
+        </div>
+        <div class="fg">
+          <label>受注単価・税抜（円）</label>
+          <input type="number" id="det-up" oninput="detCalc()">
+        </div>
+        <div class="fg">
+          <label>発注単価・非課税（円）</label>
+          <input type="number" id="det-ap" oninput="detCalc()">
+        </div>
+      </div>
+      <div id="det-preview" style="font-size:12px;color:var(--txt2);
+        background:var(--sur2);border-radius:var(--r);padding:8px 10px;
+        margin-bottom:10px;display:none"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" onclick="toggleDetailEdit()">キャンセル</button>
+        <button class="btn pri" onclick="saveDetailEdit()">💾 保存</button>
+      </div>
     </div>
   </div>
 </main>
@@ -910,10 +937,15 @@ async function loadAll(){
       cutsRawCache = snap.cutsRaw || {};
       orders.forEach(o=>{
         if(cutsRawCache[o.id]) o.cutsRaw=cutsRawCache[o.id];
-        // noteが文字列でない場合（数値など）は空文字に修正してFirebaseを更新
-        if(o.note!==undefined&&o.note!==null&&typeof o.note!=='string'){
-          db.ref('/orders/'+o.id+'/note').set('');
+        // noteが文字列でない場合は強制修正
+        if(typeof o.note!=='string'){
           o.note='';
+          db.ref('/orders/'+o.id+'/note').set('');
+        }
+        // noteが数値文字列（指数表記など）の場合も修正
+        if(o.note&&/^\d+\.?\d*[eE]/.test(o.note)){
+          o.note='';
+          db.ref('/orders/'+o.id+'/note').set('');
         }
         // cutsが空でcutsRawがある場合は自動生成してFirebaseに保存
         if(o.cutsRaw && (!o.cuts || (Array.isArray(o.cuts)?o.cuts.length===0:Object.keys(o.cuts).length===0))){
@@ -945,10 +977,15 @@ async function loadAll(){
       cutsRawCache = initCuts;
       orders.forEach(o=>{
         if(cutsRawCache[o.id]) o.cutsRaw=cutsRawCache[o.id];
-        // noteが文字列でない場合（数値など）は空文字に修正してFirebaseを更新
-        if(o.note!==undefined&&o.note!==null&&typeof o.note!=='string'){
-          db.ref('/orders/'+o.id+'/note').set('');
+        // noteが文字列でない場合は強制修正
+        if(typeof o.note!=='string'){
           o.note='';
+          db.ref('/orders/'+o.id+'/note').set('');
+        }
+        // noteが数値文字列（指数表記など）の場合も修正
+        if(o.note&&/^\d+\.?\d*[eE]/.test(o.note)){
+          o.note='';
+          db.ref('/orders/'+o.id+'/note').set('');
         }
         // cutsが空でcutsRawがある場合は自動生成してFirebaseに保存
         if(o.cutsRaw && (!o.cuts || (Array.isArray(o.cuts)?o.cuts.length===0:Object.keys(o.cuts).length===0))){
@@ -1298,6 +1335,8 @@ function showDetail(id){
     <div class="sc sc-bl"><div class="sl">${t('sumRcv')}</div><div class="sv">¥${fmt(o.totalPriceEx)}</div><div class="ss">${t('taxIn')} ¥${fmt(o.totalPriceIn)}</div></div>
     <div class="sc sc-pk"><div class="sl">${t('sumAt')}</div><div class="sv">¥${fmt(o.atTotalPrice)}</div><div class="ss">${o.qty}${currentLang==='vi'?' cảnh':'カット'} × ¥${fmt(o.atUnitPrice)}</div></div>
     <div class="sc sc-gy"><div class="sl">${t('sumCut')}</div><div class="sv">${done}/${total}</div><div class="ss">${pct}%</div></div>`;
+  // 編集モードのとき
+  if(window._detailEditMode) renderDetailEditMode(o);
   document.getElementById('d-info').innerHTML=`
     <div class="ir"><div class="ik">${t('infoCustomer')}</div><div class="iv">${o.customer||'-'} / ${o.contact||'-'}</div></div>
     <div class="ir"><div class="ik">${t('infoDate')}</div><div class="iv">${o.orderDate||'-'} / ${o.dueDate||'-'}</div></div>
@@ -1307,6 +1346,7 @@ function showDetail(id){
   document.getElementById('d-del').value=o.deliveryDate||'';
   document.getElementById('d-inv').value=o.invoiceDate||'';
   document.getElementById('d-st').value=st;
+
   renderCuts(o);
   // テキスト更新
   (document.getElementById('h-cut')||{textContent:''}).textContent=t('cutProgTitle');
@@ -1549,6 +1589,102 @@ async function addCuts(){
   await saveCutsToFb(o);
   showToast(`${addIds.length}件追加しました`);
 }
+// 詳細画面インライン編集
+window._detailEditMode = false;
+function toggleDetailEdit(){
+  window._detailEditMode = !window._detailEditMode;
+  const form = document.getElementById('detail-edit-form');
+  const btn  = document.getElementById('btn-edit-det');
+  if(window._detailEditMode){
+    const o = orders.find(x=>x.id===currentId); if(!o) return;
+    document.getElementById('det-qty').value = o.qty||'';
+    document.getElementById('det-up').value  = o.unitPrice||'';
+    document.getElementById('det-ap').value  = o.atUnitPrice||'';
+    document.getElementById('det-preview').style.display='none';
+    form.style.display = 'block';
+    btn.textContent = '✕ 閉じる';
+    btn.style.background = 'var(--sur2)';
+  } else {
+    form.style.display = 'none';
+    btn.textContent = '✏ 編集';
+    btn.style.background = '';
+  }
+}
+function detCalc(){
+  const qty = parseFloat(document.getElementById('det-qty').value)||0;
+  const up  = parseFloat(document.getElementById('det-up').value)||0;
+  const ap  = parseFloat(document.getElementById('det-ap').value)||0;
+  const tex = qty*up;
+  const tin = Math.round(tex*(1+TAX));
+  const at  = qty*ap;
+  const prev = document.getElementById('det-preview');
+  if(!qty&&!up&&!ap){ prev.style.display='none'; return; }
+  prev.style.display = 'block';
+  prev.innerHTML = '受注税抜 ¥'+fmt(tex)+'　税込 ¥'+fmt(tin)+'　発注 ¥'+fmt(at);
+}
+async function saveDetailEdit(){
+  const o = orders.find(x=>x.id===currentId); if(!o) return;
+  const qty = parseInt(document.getElementById('det-qty').value)||0;
+  const up  = parseFloat(document.getElementById('det-up').value)||0;
+  const ap  = parseFloat(document.getElementById('det-ap').value)||0;
+  if(!qty){ showToast('数量を入力してください',true); return; }
+  const tex=qty*up, tin=Math.round(tex*(1+TAX)), at=qty*ap, mg=tin-at;
+  const mpct=tin>0?Math.round(mg/tin*1000)/10:null;
+  o.qty=qty; o.unitPrice=up; o.atUnitPrice=ap;
+  o.totalPriceEx=tex; o.totalPriceIn=tin;
+  o.atTotalPrice=at; o.margin=mg; o.marginPct=mpct;
+  await fbUpdate('/orders/'+o.id,{
+    qty,unitPrice:up,atUnitPrice:ap,
+    totalPriceEx:tex,totalPriceIn:tin,
+    atTotalPrice:at,margin:mg,marginPct:mpct
+  });
+  showToast(t('saved'));
+  window._detailEditMode = false;
+  showDetail(currentId);
+}
+// 簡易編集：計算プレビュー（旧コード互換）
+function qeCalc(){
+  const qty=parseFloat(document.getElementById('qe-qty').value)||0;
+  const up=parseFloat(document.getElementById('qe-up').value)||0;
+  const ap=parseFloat(document.getElementById('qe-ap').value)||0;
+  if(!qty&&!up&&!ap) return;
+  const tex=qty*up;
+  const tin=Math.round(tex*(1+TAX));
+  const at=qty*ap;
+  const prev=document.getElementById('qe-preview');
+  prev.style.display='block';
+  prev.innerHTML=
+    '受注税抜 ¥'+fmt(tex)+'　税込 ¥'+fmt(tin)+
+    '　発注 ¥'+fmt(at)+
+    (tin>0?'　数量 '+qty+'カット':'');
+}
+// 簡易編集：保存
+async function saveQuickEdit(){
+  const o=orders.find(x=>x.id===currentId); if(!o) return;
+  const qty=parseInt(document.getElementById('qe-qty').value)||0;
+  const up=parseFloat(document.getElementById('qe-up').value)||0;
+  const ap=parseFloat(document.getElementById('qe-ap').value)||0;
+  if(!qty){showToast(t('lblQty')+'を入力してください',true);return;}
+  const tex=qty*up;
+  const tin=Math.round(tex*(1+TAX));
+  const at=qty*ap;
+  const mg=tin-at;
+  const mpct=tin>0?Math.round(mg/tin*1000)/10:null;
+  // ローカル更新
+  o.qty=qty; o.unitPrice=up; o.atUnitPrice=ap;
+  o.totalPriceEx=tex; o.totalPriceIn=tin;
+  o.atTotalPrice=at; o.margin=mg; o.marginPct=mpct;
+  // Firebase更新
+  await fbUpdate('/orders/'+o.id,{
+    qty:qty, unitPrice:up, atUnitPrice:ap,
+    totalPriceEx:tex, totalPriceIn:tin,
+    atTotalPrice:at, margin:mg, marginPct:mpct
+  });
+  showToast(t('saved'));
+  // 詳細画面を再描画
+  showDetail(currentId);
+}
+
 async function saveCutsToFb(o){
   const cutsObj={};
   (o.cuts||[]).forEach((c,i)=>{ cutsObj[i]={id:String(c.id),done:c.done,date:c.date||''}; });
@@ -2061,7 +2197,7 @@ window.addEventListener('scroll',()=>{
 window.showView=showView; window.showDetail=showDetail;
 window.editOrder=editOrder; window.deleteOrder=deleteOrder;
 window.deleteFromForm=deleteFromForm; window.cancelForm=cancelForm;
-window.saveOrder=saveOrder; window.saveDates=saveDates;
+window.saveOrder=saveOrder; window.saveDates=saveDates; window.toggleDetailEdit=toggleDetailEdit; window.detCalc=detCalc; window.saveDetailEdit=saveDetailEdit;
 window.markAll=markAll; window.previewAddCuts=previewAddCuts; window.toggleCut=toggleCut; window.toggleGroup=toggleGroup; window.deleteCut=deleteCut; window.deleteCutGroup=deleteCutGroup; window.addCuts=addCuts; window.toggleGroupKey=toggleGroupKey; window.deleteCutGroupKey=deleteCutGroupKey; window.ccAct=ccAct;
 window.renderGroup=renderGroup; window.onTitleFilterChange=onTitleFilterChange; window.toggleGrp=toggleGrp; window.printGroup=printGroup;
 window.renderList=renderList; window.loadAll=loadAll; window.toggleDebugMode=toggleDebugMode; window.toggleVerified=toggleVerified; window.clearVerified=clearVerified;
