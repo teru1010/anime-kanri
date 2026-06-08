@@ -511,7 +511,7 @@ button,input,select,textarea{font-family:inherit}
         </div>
       </div>
       <!-- デバッグ確認ボタンエリア（デバッグモード時のみ表示） -->
-      <div id="sv-debug-bar" style="display:none;margin-top:10px;padding:8px 10px;background:var(--sur2);border-radius:var(--r);display:none;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px">
+      <div id="sv-debug-bar" style="display:none;margin-top:10px;padding:8px 10px;background:var(--sur2);border-radius:var(--r);gap:8px;flex-wrap:wrap;align-items:center;font-size:12px">
         🔧 <span id="sv-debug-lbl">確認チェック：</span>
         <button class="vbtn vbtn-order" id="sv-vbtn-order" onclick="svVerifyAll('order')" style="font-size:11px">○ 全件 受注確認</button>
         <button class="vbtn vbtn-delivery" id="sv-vbtn-delivery" onclick="svVerifyAll('delivery')" style="font-size:11px">○ 全件 納品確認</button>
@@ -568,28 +568,35 @@ button,input,select,textarea{font-family:inherit}
       <button class="btn dng" onclick="deleteOrder()" id="btn-del-det">🗑 削除</button>
       <button class="btn" onclick="toggleDetailEdit()" id="btn-edit-det">✏ 編集</button>
     </div>
-    <!-- インライン編集フォーム -->
-    <div id="detail-edit-form" style="display:none;background:var(--sur);border:1.5px solid var(--bl);
-      border-radius:var(--rl);padding:1rem;margin-top:10px">
-      <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--bl)">✏ 数値を修正</div>
-      <div class="fgrid g3" style="gap:10px;margin-bottom:10px">
-        <div class="fg">
-          <label>数量（カット数）</label>
-          <input type="number" id="det-qty" min="1" oninput="detCalc()">
-        </div>
-        <div class="fg">
-          <label>受注単価・税抜（円）</label>
-          <input type="number" id="det-up" oninput="detCalc()">
-        </div>
-        <div class="fg">
-          <label>発注単価・非課税（円）</label>
-          <input type="number" id="det-ap" oninput="detCalc()">
-        </div>
+    <!-- インライン編集フォーム（全項目） -->
+    <div id="detail-edit-form" style="display:none;background:var(--sur);border:1.5px solid var(--bl);border-radius:var(--rl);padding:1rem;margin-top:10px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:12px;color:var(--bl)">✏ 編集</div>
+      <div class="fgrid g4" style="gap:10px;margin-bottom:10px">
+        <div class="fg"><label>受注日</label><input type="date" id="det-od"></div>
+        <div class="fg"><label>納期</label><input type="date" id="det-due"></div>
+        <div class="fg"><label>納入日</label><input type="date" id="det-dl"></div>
+        <div class="fg"><label>請求日</label><input type="date" id="det-inv"></div>
+        <div class="fg s2"><label>顧客</label><input type="text" id="det-cust"></div>
+        <div class="fg"><label>担当者</label><input type="text" id="det-ct"></div>
+        <div class="fg"></div>
+        <div class="fg s2"><label>作品タイトル</label><input type="text" id="det-ttl"></div>
+        <div class="fg"><label>略語</label><input type="text" id="det-abbr" maxlength="8"></div>
+        <div class="fg"><label>話数</label><input type="text" id="det-ep" maxlength="6"></div>
+        <div class="fg s2"><label>作業工程</label>
+          <select id="det-proc" style="font-size:13px;padding:7px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt);width:100%">
+            <option>LO</option><option>2G</option><option>LO作監</option><option>動画</option>
+            <option>仕上</option><option>動仕</option><option>BG</option>
+            <option>動画検査</option><option>仕上検査</option><option>その他</option>
+          </select></div>
+        <div class="fg"></div><div class="fg"></div>
+        <div class="fg"><label>数量（カット数）</label><input type="number" id="det-qty" min="1" oninput="detCalc()"></div>
+        <div class="fg"><label>受注単価・税抜（円）</label><input type="number" id="det-up" oninput="detCalc()"></div>
+        <div class="fg"><label>発注単価・非課税（円）</label><input type="number" id="det-ap" oninput="detCalc()"></div>
+        <div class="fg"></div>
       </div>
-      <div id="det-preview" style="font-size:12px;color:var(--txt2);
-        background:var(--sur2);border-radius:var(--r);padding:8px 10px;
-        margin-bottom:10px;display:none"></div>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
+      <div id="det-preview" style="font-size:12px;color:var(--txt2);background:var(--sur2);border-radius:var(--r);padding:8px 10px;margin-bottom:10px;display:none"></div>
+      <div class="fg s4"><label>備考</label><textarea id="det-note" rows="2" style="font-size:13px;padding:7px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);resize:vertical;background:var(--sur);color:var(--txt);width:100%"></textarea></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
         <button class="btn" onclick="toggleDetailEdit()">キャンセル</button>
         <button class="btn pri" onclick="saveDetailEdit()">💾 保存</button>
       </div>
@@ -813,6 +820,21 @@ vi:{
   confirmDel:'Xóa？', confirmDelFull:' — Xóa vĩnh viễn？',
   infoCustomer:'Khách hàng・Phụ trách', infoDate:'Ngày đặt / Hạn giao',
   infoQtyUp:'Số lượng・Đơn giá nhận', infoAp:'Đơn giá phát（AT）',
+  tabSearch:'🔍 Tìm kiếm',
+  svCutSearch:'✂ Tìm số cảnh', svTitleSearch:'📋 Danh sách cảnh theo tác phẩm・tập số',
+  svSelectTitle:'-- Chọn tác phẩm --', svSelectEp:'-- Chọn tập --',
+  svLblTtlSel:'Tên tác phẩm', svLblEpSel:'Tập số',
+  svCopy:'📋 Sao chép', svPrint:'🖨 In',
+  svEmpty:'Vui lòng chọn tác phẩm', svNoData:'Không có dữ liệu',
+  svCutPH:'Nhập số cảnh（VD：C9999, 9999）',
+  svDone:'Hoàn thành', svTodo:'Chưa xong',
+  svOrderDate:'Ngày đặt', svDelivery:'Ngày giao', svStatus:'Trạng thái', svCutNo:'Số cảnh',
+  svCopied:'Đã sao chép vào clipboard', svCopyFail:'Sao chép thất bại',
+  svSelectFirst:'Vui lòng chọn tác phẩm',
+  svDebugLbl:'Xác nhận：',
+  svVerifyOrder:'○ Xác nhận đặt（tất cả）', svVerifyDelivery:'○ Xác nhận giao（tất cả）',
+  svVerifyOrderOn:'✔ Đã xác nhận đặt（tất cả）', svVerifyDeliveryOn:'✔ Đã xác nhận giao（tất cả）',
+  svClearVerify:'Xóa xác nhận',
 }};
 
 function t(k){ return (DICT[currentLang]&&DICT[currentLang][k])||DICT.ja[k]||k; }
@@ -1765,10 +1787,22 @@ function toggleDetailEdit(){
   const btn  = document.getElementById('btn-edit-det');
   if(window._detailEditMode){
     const o = orders.find(x=>x.id===currentId); if(!o) return;
-    document.getElementById('det-qty').value = o.qty||'';
-    document.getElementById('det-up').value  = o.unitPrice||'';
-    document.getElementById('det-ap').value  = o.atUnitPrice||'';
+    document.getElementById('det-od').value   = o.orderDate||'';
+    document.getElementById('det-due').value  = o.dueDate||'';
+    document.getElementById('det-dl').value   = o.deliveryDate||'';
+    document.getElementById('det-inv').value  = o.invoiceDate||'';
+    document.getElementById('det-cust').value = o.customer||'';
+    document.getElementById('det-ct').value   = o.contact||'';
+    document.getElementById('det-ttl').value  = o.title||'';
+    document.getElementById('det-abbr').value = o.abbr||'';
+    document.getElementById('det-ep').value   = o.episode||'';
+    document.getElementById('det-proc').value = o.process||'LO';
+    document.getElementById('det-qty').value  = o.qty||'';
+    document.getElementById('det-up').value   = o.unitPrice||'';
+    document.getElementById('det-ap').value   = o.atUnitPrice||'';
+    document.getElementById('det-note').value = o.note||'';
     document.getElementById('det-preview').style.display='none';
+    detCalc();
     form.style.display = 'block';
     btn.textContent = '✕ 閉じる';
     btn.style.background = 'var(--sur2)';
@@ -1798,14 +1832,24 @@ async function saveDetailEdit(){
   if(!qty){ showToast('数量を入力してください',true); return; }
   const tex=qty*up, tin=Math.round(tex*(1+TAX)), at=qty*ap, mg=tin-at;
   const mpct=tin>0?Math.round(mg/tin*1000)/10:null;
-  o.qty=qty; o.unitPrice=up; o.atUnitPrice=ap;
-  o.totalPriceEx=tex; o.totalPriceIn=tin;
-  o.atTotalPrice=at; o.margin=mg; o.marginPct=mpct;
-  await fbUpdate('/orders/'+o.id,{
-    qty,unitPrice:up,atUnitPrice:ap,
-    totalPriceEx:tex,totalPriceIn:tin,
-    atTotalPrice:at,margin:mg,marginPct:mpct
-  });
+  const upd={
+    orderDate:   document.getElementById('det-od').value||'',
+    dueDate:     document.getElementById('det-due').value||'',
+    deliveryDate:document.getElementById('det-dl').value||'',
+    invoiceDate: document.getElementById('det-inv').value||'',
+    customer:    document.getElementById('det-cust').value.trim(),
+    contact:     document.getElementById('det-ct').value.trim(),
+    title:       document.getElementById('det-ttl').value.trim(),
+    abbr:        document.getElementById('det-abbr').value.trim(),
+    episode:     document.getElementById('det-ep').value.trim(),
+    process:     document.getElementById('det-proc').value,
+    note:        document.getElementById('det-note').value.trim(),
+    qty, unitPrice:up, atUnitPrice:ap,
+    totalPriceEx:tex, totalPriceIn:tin,
+    atTotalPrice:at, margin:mg, marginPct:mpct
+  };
+  Object.assign(o, upd);
+  await fbUpdate('/orders/'+o.id, upd);
   showToast(t('saved'));
   window._detailEditMode = false;
   showDetail(currentId);
