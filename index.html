@@ -510,13 +510,13 @@ button,input,select,textarea{font-family:inherit}
           <button class="btn sm" id="sv-btn-debug" onclick="svToggleDebug()" style="opacity:.5" title="デバッグモード">🔧</button>
         </div>
       </div>
-      <!-- デバッグ確認ボタンエリア（デバッグモード時のみ表示） -->
-      <div id="sv-debug-bar" style="display:none;margin-top:10px;padding:8px 10px;background:var(--sur2);border-radius:var(--r);gap:8px;flex-wrap:wrap;align-items:center;font-size:12px">
-        🔧 <span id="sv-debug-lbl">確認チェック：</span>
-        <button class="vbtn vbtn-order" id="sv-vbtn-order" onclick="svVerifyAll('order')" style="font-size:11px">○ 全件 受注確認</button>
-        <button class="vbtn vbtn-delivery" id="sv-vbtn-delivery" onclick="svVerifyAll('delivery')" style="font-size:11px">○ 全件 納品確認</button>
-        <button class="btn sm" onclick="svClearVerify()" style="color:var(--rd);font-size:11px;margin-left:auto" id="sv-vbtn-clear">確認済クリア</button>
-      </div>
+    </div>
+    <!-- デバッグ確認ボタンエリア（デバッグモード時のみ表示） -->
+    <div id="sv-debug-bar" style="display:none;margin-bottom:1rem;padding:10px 14px;background:var(--sur);border:1.5px solid #1d4ed8;border-radius:var(--rl);flex-direction:row;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px">
+      🔧 <span id="sv-debug-lbl" style="color:#1d4ed8;font-weight:500">確認チェック：</span>
+      <button class="vbtn vbtn-order" id="sv-vbtn-order" onclick="svVerifyAll('order')" style="font-size:11px">○ 全件 受注確認</button>
+      <button class="vbtn vbtn-delivery" id="sv-vbtn-delivery" onclick="svVerifyAll('delivery')" style="font-size:11px">○ 全件 納品確認</button>
+      <button class="btn sm" onclick="svClearVerify()" style="color:var(--rd);font-size:11px;margin-left:auto" id="sv-vbtn-clear">確認済クリア</button>
     </div>
     <div id="sv-body"></div>
   </div>
