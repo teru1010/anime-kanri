@@ -576,11 +576,20 @@ button,input,select,textarea{font-family:inherit}
         <div class="fg"><label>納期</label><input type="date" id="det-due"></div>
         <div class="fg"><label>納入日</label><input type="date" id="det-dl"></div>
         <div class="fg"><label>請求日</label><input type="date" id="det-inv"></div>
-        <div class="fg s2"><label>顧客</label><input type="text" id="det-cust"></div>
-        <div class="fg"><label>担当者</label><input type="text" id="det-ct"></div>
+        <div class="fg s2"><label>顧客</label>
+          <div class="cbo"><input class="cbo-i" type="text" id="det-cust"
+            oninput="detFilterCbo('cust')" onfocus="detOpenCbo('cust')" onblur="detCloseCbo('cust')">
+            <span class="cbo-a">▾</span><div class="cbo-dd" id="det-dd-cust"></div></div></div>
+        <div class="fg"><label>担当者</label>
+          <div class="cbo"><input class="cbo-i" type="text" id="det-ct"
+            oninput="detFilterCbo('ct')" onfocus="detOpenCbo('ct')" onblur="detCloseCbo('ct')">
+            <span class="cbo-a">▾</span><div class="cbo-dd" id="det-dd-ct"></div></div></div>
         <div class="fg"></div>
-        <div class="fg s2"><label>作品タイトル</label><input type="text" id="det-ttl"></div>
-        <div class="fg"><label>略語</label><input type="text" id="det-abbr" maxlength="8"></div>
+        <div class="fg s2"><label>作品タイトル</label>
+          <div class="cbo"><input class="cbo-i" type="text" id="det-ttl"
+            oninput="detTitleInput()" onfocus="detOpenCbo('ttl')" onblur="detCloseCbo('ttl')">
+            <span class="cbo-a">▾</span><div class="cbo-dd" id="det-dd-ttl"></div></div></div>
+        <div class="fg"><label>略語 <span id="det-abbr-auto" style="font-size:10px;color:var(--bl);display:none">（自動）</span></label><input type="text" id="det-abbr" maxlength="8"></div>
         <div class="fg"><label>話数</label><input type="text" id="det-ep" maxlength="6"></div>
         <div class="fg s2"><label>作業工程</label>
           <select id="det-proc" style="font-size:13px;padding:7px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt);width:100%">
@@ -2244,7 +2253,19 @@ function renderSearchView(){
     const allCuts=[];
     orders2.forEach(o=>{
       const cutsArr=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
-      cutsArr.forEach(c=>allCuts.push({c, oid:o.id}));
+      // cutsRawがある場合はparseGroupsでグループラベルを使用（兼用カットを正しく表示）
+      if(o.cutsRaw){
+        const groups=parseGroups(o.cutsRaw);
+        groups.forEach(g=>{
+          // グループ内いずれかのIDに対応するcutsの完了状態を参照
+          const matched=cutsArr.filter(c=>g.ids.includes(String(c.id).toUpperCase())||g.ids.includes(String(c.id)));
+          const done=matched.length>0&&matched.every(c=>c.done);
+          const date=matched.length>0&&matched[0].date?matched[0].date:'';
+          allCuts.push({c:{id:g.label, done, date}, oid:o.id});
+        });
+      } else {
+        cutsArr.forEach(c=>allCuts.push({c, oid:o.id}));
+      }
     });
     if(!allCuts.length) return; // カット未登録の工程は非表示
     const sorted=allCuts.sort((a,b)=>String(a.c.id).localeCompare(String(b.c.id),undefined,{numeric:true}));
@@ -2462,6 +2483,64 @@ function printGroup(){
 // ============================================================
 // コンボボックス
 // ============================================================
+// 詳細編集フォーム用cbo
+function detOpenCbo(type){ detRenderDd(type,''); document.getElementById('det-dd-'+type).classList.add('open'); }
+function detCloseCbo(type){ setTimeout(()=>document.getElementById('det-dd-'+type).classList.remove('open'),180); }
+function detFilterCbo(type){ detRenderDd(type, document.getElementById('det-'+type).value); }
+function detTitleInput(){ detFilterCbo('ttl'); }
+function detRenderDd(type,q){
+  const dd=document.getElementById('det-dd-'+type);
+  if(!dd) return;
+  let rawList;
+  if(type==='ct'){
+    const s={};orders.forEach(o=>{if(o.contact)s[o.contact]=true;});
+    rawList=Object.keys(s).map(n=>({name:n,color:colorOf(n)}));
+  } else if(type==='cust'){
+    rawList=masters.customers;
+  } else {
+    rawList=masters.titles;
+  }
+  const freq={};
+  orders.forEach(o=>{
+    const key=type==='cust'?o.customer:type==='ttl'?o.title:o.contact;
+    if(key) freq[key]=(freq[key]||0)+1;
+  });
+  const list=[...rawList].sort((a,b)=>{
+    const fa=freq[a.name]||0,fb=freq[b.name]||0;
+    if(fb!==fa) return fb-fa;
+    return a.name.localeCompare(b.name,'ja');
+  });
+  const filtered=q?list.filter(x=>x.name.toLowerCase().includes(q.toLowerCase())):list;
+  window._detCboData=window._detCboData||{};
+  let out=filtered.map((x,i)=>{
+    const key='dk'+Date.now()+i;
+    window._detCboData[key]={type,name:x.name,abbr:x.abbr};
+    const abbrTxt=type==='ttl'&&x.abbr?'<span style="font-size:11px;color:#8A9ABB"> ('+x.abbr+')</span>':'';
+    return '<div class="cbo-item" data-detkey="'+key+'" onmousedown="detPickCboKey(this.dataset.detkey)"><span class="cbo-dot" style="background:'+(x.color||'#999')+'"></span>'+x.name+abbrTxt+'</div>';
+  }).join('');
+  if(q&&!list.find(x=>x.name===q)){
+    const key='dk'+Date.now()+'new';
+    window._detCboData[key]={type,name:q,abbr:''};
+    out+='<div class="cbo-new" data-detkey="'+key+'" onmousedown="detPickCboKey(this.dataset.detkey)">＋「'+q+'」を追加</div>';
+  }
+  dd.innerHTML=out||'<div style="padding:8px 10px;font-size:12px;color:#8A9ABB">入力して追加できます</div>';
+}
+function detPickCboKey(key){
+  const d=(window._detCboData||{})[key]; if(!d) return;
+  document.getElementById('det-'+d.type).value=d.name;
+  document.getElementById('det-dd-'+d.type).classList.remove('open');
+  if(d.type==='ttl'){
+    const found=masters.titles.find(t2=>t2.name===d.name);
+    const el=document.getElementById('det-abbr');
+    const lbl=document.getElementById('det-abbr-auto');
+    if(found&&found.abbr){ el.value=found.abbr; if(lbl) lbl.style.display='inline'; }
+    else { if(lbl) lbl.style.display='none'; }
+    if(!found) masters.titles.push({name:d.name,color:colorOf(d.name)});
+  }
+  if(d.type==='cust'&&!masters.customers.find(c=>c.name===d.name))
+    masters.customers.push({name:d.name,color:colorOf(d.name)});
+}
+
 function openCbo(type){ renderDd(type,''); document.getElementById('dd-'+type).classList.add('open'); }
 function closeCbo(type){ setTimeout(()=>document.getElementById('dd-'+type).classList.remove('open'),180); }
 function filterCbo(type){ renderDd(type, document.getElementById('f-'+type).value); }
@@ -2615,7 +2694,7 @@ function svVerifyProc(proc,type){
 function svCutClick(el){ showDetail(el.dataset.oid); }
 window.svCutClick=svCutClick; window.svToggleDebug=svToggleDebug; window.svVerifyAll=svVerifyAll; window.svClearVerify=svClearVerify; window.svVerifyProc=svVerifyProc; window.updateSvDebugBtnText=updateSvDebugBtnText;
 window.getSvData=getSvData; window.onSvTitleChange=onSvTitleChange; window.renderSearchView=renderSearchView; window.exportSearchView=exportSearchView; window.printSearchView=printSearchView;
-window.openCbo=openCbo; window.closeCbo=closeCbo;
+window.openCbo=openCbo; window.closeCbo=closeCbo; window.detOpenCbo=detOpenCbo; window.detCloseCbo=detCloseCbo; window.detFilterCbo=detFilterCbo; window.detTitleInput=detTitleInput; window.detPickCboKey=detPickCboKey;
 window.filterCbo=filterCbo; window.pickCbo=pickCbo; window.onTitleInput=onTitleInput;
 window.searchCut=searchCut; window.clearSearch=clearSearch; window.clearPrintRange=clearPrintRange;
 window.calcAmt=calcAmt; window.updLimit=updLimit;
