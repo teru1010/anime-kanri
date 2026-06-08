@@ -493,21 +493,29 @@ button,input,select,textarea{font-family:inherit}
       <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--txt2)" id="sv-lbl-title">📋 タイトル・話数別カット一覧</div>
       <div class="fgrid g3" style="gap:10px">
         <div class="fg">
-          <label>作品タイトル</label>
+          <label id="sv-lbl-ttl-sel">作品タイトル</label>
           <select id="sv-title" onchange="onSvTitleChange()" style="font-size:13px;padding:7px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt);width:100%">
             <option value="">-- タイトルを選択 --</option>
           </select>
         </div>
         <div class="fg">
-          <label>話数</label>
+          <label id="sv-lbl-ep-sel">話数</label>
           <select id="sv-ep" onchange="renderSearchView()" style="font-size:13px;padding:7px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt);width:100%">
             <option value="">-- 話数を選択 --</option>
           </select>
         </div>
         <div class="fg" style="justify-content:flex-end;flex-direction:row;align-items:flex-end;gap:8px">
-          <button class="btn sm" onclick="exportSearchView()">📋 コピー</button>
-          <button class="btn sm" onclick="printSearchView()">🖨 印刷</button>
+          <button class="btn sm" onclick="exportSearchView()" id="sv-btn-copy">📋 コピー</button>
+          <button class="btn sm" onclick="printSearchView()" id="sv-btn-print">🖨 印刷</button>
+          <button class="btn sm" id="sv-btn-debug" onclick="svToggleDebug()" style="opacity:.5" title="デバッグモード">🔧</button>
         </div>
+      </div>
+      <!-- デバッグ確認ボタンエリア（デバッグモード時のみ表示） -->
+      <div id="sv-debug-bar" style="display:none;margin-top:10px;padding:8px 10px;background:var(--sur2);border-radius:var(--r);display:none;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px">
+        🔧 <span id="sv-debug-lbl">確認チェック：</span>
+        <button class="vbtn vbtn-order" id="sv-vbtn-order" onclick="svVerifyAll('order')" style="font-size:11px">○ 全件 受注確認</button>
+        <button class="vbtn vbtn-delivery" id="sv-vbtn-delivery" onclick="svVerifyAll('delivery')" style="font-size:11px">○ 全件 納品確認</button>
+        <button class="btn sm" onclick="svClearVerify()" style="color:var(--rd);font-size:11px;margin-left:auto" id="sv-vbtn-clear">確認済クリア</button>
       </div>
     </div>
     <div id="sv-body"></div>
@@ -750,6 +758,11 @@ ja:{
   svOrderDate:'受注日', svDelivery:'納入日', svStatus:'ステータス', svCutNo:'カット番号',
   svCopied:'クリップボードにコピーしました', svCopyFail:'コピー失敗',
   svSelectFirst:'タイトルを選択してください',
+  svLblTtlSel:'作品タイトル', svLblEpSel:'話数',
+  svDebugLbl:'確認チェック：',
+  svVerifyOrder:'○ 全件 受注確認', svVerifyDelivery:'○ 全件 納品確認',
+  svVerifyOrderOn:'✔ 全件 受注確認済', svVerifyDeliveryOn:'✔ 全件 納品確認済',
+  svClearVerify:'確認済クリア',
 },
 vi:{
   synced:'Đã đồng bộ', syncing:'Đang đồng bộ...', syncErr:'Lỗi đồng bộ',
@@ -914,6 +927,10 @@ function applyLang(){
     'cut-hint':'cutHint','cbox-lbl-txt':'cboxLbl',
     'tab-search':'tabSearch',
     'sv-h2':'tabSearch','sv-lbl-cut':'svCutSearch','sv-lbl-title':'svTitleSearch',
+    'sv-lbl-ttl-sel':'svLblTtlSel','sv-lbl-ep-sel':'svLblEpSel',
+    'sv-btn-copy':'svCopy','sv-btn-print':'svPrint',
+    'sv-debug-lbl':'svDebugLbl',
+    'sv-vbtn-clear':'svClearVerify',
   };
   Object.entries(map).forEach(([id,key])=>{
     const el=document.getElementById(id);
@@ -930,6 +947,8 @@ function applyLang(){
   if(svt&&svt.options[0]) svt.options[0].textContent=t('svSelectTitle');
   const sve=document.getElementById('sv-ep');
   if(sve&&sve.options[0]) sve.options[0].textContent=t('svSelectEp');
+  // 検索デバッグボタンのテキスト更新
+  updateSvDebugBtnText();
   // 作業工程プルダウンの翻訳
   const fproc=document.getElementById('f-proc');
   if(fproc){
@@ -2188,7 +2207,17 @@ function renderSearchView(){
     html+='<div class="csec" style="margin-bottom:1rem">';
     const doneCount=sorted.filter(({c})=>c.done).length;
     const totalCount=sorted.length;
-    html+='<div class="csec-hd"><h3>✂ '+proc+'</h3><span style="font-size:12px;color:var(--txt2)">全'+totalCount+'カット&nbsp;&nbsp;完了 <b style="color:#0060E0">'+doneCount+'</b>&nbsp;&nbsp;未完 <b style="color:#C07010">'+(totalCount-doneCount)+'</b></span></div>';
+    const procOrders2=procs[proc];
+    const procOids=procOrders2.map(o=>o.id);
+    const svVerified=JSON.parse(localStorage.getItem('animeVerified')||'{}');
+    const svOAll=svDebugMode&&procOids.every(id=>svVerified[id]&&svVerified[id].order);
+    const svDAll=svDebugMode&&procOids.every(id=>svVerified[id]&&svVerified[id].delivery);
+    let dbgBtns='';
+    if(svDebugMode){
+      dbgBtns='<button class="vbtn vbtn-order'+(svOAll?' on':'')+' sm" style="font-size:10px;margin-left:8px" onclick="svVerifyProc(\''+proc+'\',\'order\')">'+(svOAll?'✔ 受注確認済':'○ 受注確認')+'</button>'+
+              '<button class="vbtn vbtn-delivery'+(svDAll?' on':'')+' sm" style="font-size:10px" onclick="svVerifyProc(\''+proc+'\',\'delivery\')">'+(svDAll?'✔ 納品確認済':'○ 納品確認')+'</button>';
+    }
+    html+='<div class="csec-hd"><h3>✂ '+tProc(proc)+'</h3><span style="font-size:12px;color:var(--txt2)">全'+totalCount+'カット&nbsp;&nbsp;完了 <b style="color:#0060E0">'+doneCount+'</b>&nbsp;&nbsp;未完 <b style="color:#C07010">'+(totalCount-doneCount)+'</b></span>'+dbgBtns+'</div>';
     html+='<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 0 8px">';
     sorted.forEach(({c, oid})=>{
       const isDone=c.done;
@@ -2467,8 +2496,78 @@ window.markAll=markAll; window.previewAddCuts=previewAddCuts; window.toggleCut=t
 window.renderGroup=renderGroup; window.onTitleFilterChange=onTitleFilterChange; window.toggleGrp=toggleGrp; window.printGroup=printGroup;
 window.renderList=renderList; window.loadAll=loadAll; window.toggleDebugMode=toggleDebugMode; window.toggleVerified=toggleVerified; window.getVerified=getVerified; window.clearVerified=clearVerified;
 window.selectLang=selectLang;
+// ============================================================
+// 検索ビュー デバッグ確認機能
+// ============================================================
+let svDebugMode = false;
+function svToggleDebug(){
+  svDebugMode = !svDebugMode;
+  const bar = document.getElementById('sv-debug-bar');
+  const btn = document.getElementById('sv-btn-debug');
+  if(bar){ bar.style.display = svDebugMode ? 'flex' : 'none'; }
+  if(btn){ btn.style.opacity = svDebugMode ? '1' : '.5'; }
+  updateSvDebugBtnText();
+  renderSearchView();
+}
+function getSvCurrentOrderIds(){
+  const d=getSvData(); if(!d) return [];
+  return d.src.map(o=>o.id);
+}
+function svVerifyAll(type){
+  const ids=getSvCurrentOrderIds(); if(!ids.length) return;
+  const verified=JSON.parse(localStorage.getItem('animeVerified')||'{}');
+  // 全件がONなら全件OFFに、そうでなければ全件ON
+  const allOn=ids.every(id=>verified[id]&&verified[id][type]);
+  ids.forEach(id=>{
+    if(!verified[id]) verified[id]={};
+    verified[id][type]=!allOn;
+  });
+  localStorage.setItem('animeVerified',JSON.stringify(verified));
+  updateSvDebugBtnText();
+  renderSearchView();
+  const gv=document.getElementById('view-group');
+  if(gv&&gv.classList.contains('on')) renderGroup();
+  renderList();
+}
+function svClearVerify(){
+  const ids=getSvCurrentOrderIds(); if(!ids.length) return;
+  const verified=JSON.parse(localStorage.getItem('animeVerified')||'{}');
+  ids.forEach(id=>{ delete verified[id]; });
+  localStorage.setItem('animeVerified',JSON.stringify(verified));
+  updateSvDebugBtnText();
+  renderSearchView();
+  const gv=document.getElementById('view-group');
+  if(gv&&gv.classList.contains('on')) renderGroup();
+  renderList();
+}
+function updateSvDebugBtnText(){
+  const ids=getSvCurrentOrderIds();
+  const verified=JSON.parse(localStorage.getItem('animeVerified')||'{}');
+  const oAll=ids.length&&ids.every(id=>verified[id]&&verified[id].order);
+  const dAll=ids.length&&ids.every(id=>verified[id]&&verified[id].delivery);
+  const ob=document.getElementById('sv-vbtn-order');
+  const db=document.getElementById('sv-vbtn-delivery');
+  if(ob) ob.textContent=oAll?t('svVerifyOrderOn'):t('svVerifyOrder');
+  if(db) db.textContent=dAll?t('svVerifyDeliveryOn'):t('svVerifyDelivery');
+  if(ob){ ob.classList.toggle('on',!!oAll); }
+  if(db){ db.classList.toggle('on',!!dAll); }
+}
+function svVerifyProc(proc,type){
+  const d=getSvData(); if(!d) return;
+  const procOrders=d.procs[proc]; if(!procOrders) return;
+  const ids=procOrders.map(o=>o.id);
+  const verified=JSON.parse(localStorage.getItem('animeVerified')||'{}');
+  const allOn=ids.every(id=>verified[id]&&verified[id][type]);
+  ids.forEach(id=>{ if(!verified[id]) verified[id]={}; verified[id][type]=!allOn; });
+  localStorage.setItem('animeVerified',JSON.stringify(verified));
+  updateSvDebugBtnText();
+  renderSearchView();
+  const gv=document.getElementById('view-group');
+  if(gv&&gv.classList.contains('on')) renderGroup();
+  renderList();
+}
 function svCutClick(el){ showDetail(el.dataset.oid); }
-window.svCutClick=svCutClick;
+window.svCutClick=svCutClick; window.svToggleDebug=svToggleDebug; window.svVerifyAll=svVerifyAll; window.svClearVerify=svClearVerify; window.svVerifyProc=svVerifyProc; window.updateSvDebugBtnText=updateSvDebugBtnText;
 window.getSvData=getSvData; window.onSvTitleChange=onSvTitleChange; window.renderSearchView=renderSearchView; window.exportSearchView=exportSearchView; window.printSearchView=printSearchView;
 window.openCbo=openCbo; window.closeCbo=closeCbo;
 window.filterCbo=filterCbo; window.pickCbo=pickCbo; window.onTitleInput=onTitleInput;
