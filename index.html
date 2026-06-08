@@ -480,7 +480,7 @@ button,input,select,textarea{font-family:inherit}
   <!-- DETAIL -->
   <div class="view" id="view-detail">
     <div class="dhd">
-      <button class="back" onclick="showView('list', true)" id="btn-back">← 一覧へ</button>
+      <button class="back" onclick="showView(window._fromView||'list', true)" id="btn-back">← 一覧へ</button>
       <div style="flex:1"></div>
       <div id="d-due"></div>
       <div id="d-pill"></div>
@@ -1099,6 +1099,11 @@ function showView(v, restoreScroll){
   // 現在のビューのスクロール位置を保存
   const curView=document.querySelector('.view.on');
   if(curView) window._scrollPos[curView.id]=window.scrollY;
+  // newフォームへ遷移する前の画面を記録（グループ表示から編集した場合の戻り先に使用）
+  if((v==='new'||v==='detail') && curView){
+    const from=curView.id.replace('view-','');
+    if(from!=='new'&&from!=='detail') window._fromView=from;
+  }
   document.querySelectorAll('.view').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.nt').forEach(e=>e.classList.remove('on'));
   document.getElementById('view-'+v).classList.add('on');
@@ -1559,7 +1564,8 @@ async function toggleGroup(ids){
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   const gc=ids.map(id=>(o.cuts||[]).find(c=>String(c.id)===String(id))).filter(Boolean);
   const allDone=gc.length>0&&gc.every(c=>c.done);
-  gc.forEach(c=>{ c.done=!allDone; c.date=!allDone?today():''; });
+  const cutDate=o.deliveryDate||today();
+  gc.forEach(c=>{ c.done=!allDone; c.date=!allDone?cutDate:''; });
   renderCuts(o); autoStatus(o);
   document.getElementById('d-st').value=getStatus(o);
   document.getElementById('d-pill').innerHTML=`<span class="pill ${pillCls(getStatus(o))}">${tSt(getStatus(o))}</span>`;
@@ -1570,7 +1576,8 @@ async function toggleCut(cid){
   const o=orders.find(x=>x.id===currentId); if(!o) return;
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   const c=o.cuts.find(x=>String(x.id)===String(cid)); if(!c) return;
-  c.done=!c.done; c.date=c.done?today():'';
+  const cutDate2=o.deliveryDate||today();
+  c.done=!c.done; c.date=c.done?cutDate2:'';
   renderCuts(o); autoStatus(o);
   document.getElementById('d-st').value=getStatus(o);
   document.getElementById('d-pill').innerHTML=`<span class="pill ${pillCls(getStatus(o))}">${tSt(getStatus(o))}</span>`;
@@ -1582,7 +1589,8 @@ async function markAll(){
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   if(o.cuts.length===0) return;
   const allDone=o.cuts.every(c=>c.done);
-  o.cuts.forEach(c=>{ c.done=!allDone; c.date=!allDone?today():''; });
+  const cutDateAll=o.deliveryDate||today();
+  o.cuts.forEach(c=>{ c.done=!allDone; c.date=!allDone?cutDateAll:''; });
   renderCuts(o); autoStatus(o); updateSumCard(o);
   await saveCutsToFb(o);
   showToast(t('saved'));
@@ -1808,7 +1816,7 @@ function resetForm(){
   (document.getElementById('cut-preview')||{textContent:''}).textContent='';
   (document.getElementById('cut-limit')||{textContent:''}).textContent='';
 }
-function cancelForm(){ editingId=null; showView('list'); }
+function cancelForm(){ editingId=null; showView(window._fromView||'list'); }
 
 function onTitleInput(){
   filterCbo('ttl');
