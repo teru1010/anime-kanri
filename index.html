@@ -313,6 +313,7 @@ button,input,select,textarea{font-family:inherit}
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
     <div class="nt" onclick="showView('progress')" id="tab-progress">カット進捗<span class="nbadge" id="b-prog">0</span></div>
     <div class="nt" onclick="showView('group')" id="tab-group">グループ表示</div>
+    <div class="nt" onclick="showView('search')" id="tab-search">🔍 検索</div>
   </nav>
   <div class="hdr-r">
     <div class="sync"><div class="sdot" id="sdot" style="display:none"></div><span id="slbl"></span></div>
@@ -475,6 +476,31 @@ button,input,select,textarea{font-family:inherit}
     </div>
 
     <div id="grp-body"></div>
+  </div>
+
+  <!-- SEARCH VIEW -->
+  <div class="view" id="view-search">
+    <div class="lh"><h2>🔍 カット番号検索</h2></div>
+    <div class="fcard" style="margin-bottom:1rem">
+      <div class="fgrid g3" style="gap:10px">
+        <div class="fg">
+          <label>作品タイトル</label>
+          <select id="sv-title" onchange="onSvTitleChange()" style="font-size:13px;padding:7px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt);width:100%">
+            <option value="">-- タイトルを選択 --</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>話数</label>
+          <select id="sv-ep" onchange="renderSearchView()" style="font-size:13px;padding:7px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt);width:100%">
+            <option value="">-- 話数を選択 --</option>
+          </select>
+        </div>
+        <div class="fg" style="justify-content:flex-end;flex-direction:row;align-items:flex-end;gap:8px">
+          <button class="btn sm" onclick="exportSearchView()">📋 コピー</button>
+        </div>
+      </div>
+    </div>
+    <div id="sv-body"></div>
   </div>
 
   <!-- DETAIL -->
@@ -1111,6 +1137,7 @@ function showView(v, restoreScroll){
   if(v==='list') renderList();
   if(v==='progress') renderProg();
   if(v==='group') renderGroup();
+  if(v==='search') initSearchView();
   if(v==='new'&&!editingId) resetForm();
   // カット進捗入力欄をクリア
   const cai=document.getElementById('cut-add-input');
@@ -2075,6 +2102,123 @@ function toggleGrp(id){
   tog.textContent=hidden?'▲':'▼';
 }
 
+// ============================================================
+// 検索ビュー
+// ============================================================
+function initSearchView(){
+  const sel=document.getElementById('sv-title');
+  const cur=sel.value;
+  const titles=[...new Set(orders.map(o=>o.title).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
+  sel.innerHTML='<option value="">-- タイトルを選択 --</option>'+
+    titles.map(t=>'<option value="'+t+'"'+(t===cur?' selected':'')+'>'+t+'</option>').join('');
+  onSvTitleChange();
+}
+function onSvTitleChange(){
+  const title=document.getElementById('sv-title').value;
+  const epSel=document.getElementById('sv-ep');
+  if(!title){ epSel.innerHTML='<option value="">-- 話数を選択 --</option>'; renderSearchView(); return; }
+  const eps=[...new Set(orders.filter(o=>o.title===title&&o.episode).map(o=>o.episode))]
+    .sort((a,b)=>Number(a)-Number(b));
+  epSel.innerHTML='<option value="">-- 話数を選択 --</option>'+
+    eps.map(e=>'<option value="'+e+'">第'+e+'話</option>').join('');
+  renderSearchView();
+}
+function renderSearchView(){
+  const title=document.getElementById('sv-title').value;
+  const ep=document.getElementById('sv-ep').value;
+  const body=document.getElementById('sv-body');
+  if(!title){ body.innerHTML='<div class="empty"><i>🔍</i>タイトルを選択してください</div>'; return; }
+  // 該当受注を絞り込み
+  let src=orders.filter(o=>o.title===title);
+  if(ep) src=src.filter(o=>String(o.episode)===String(ep));
+  if(!src.length){ body.innerHTML='<div class="empty"><i>📭</i>該当データがありません</div>'; return; }
+  // 工程でグループ化
+  const procs={};
+  src.forEach(o=>{
+    const p=o.process||'-';
+    if(!procs[p]) procs[p]=[];
+    procs[p].push(o);
+  });
+  const PROC_ORDER=['LO','LO作監','2G','動画','仕上','動仕','BG','動画検査','仕上検査','その他','-'];
+  const procKeys=Object.keys(procs).sort((a,b)=>{
+    const ia=PROC_ORDER.indexOf(a), ib=PROC_ORDER.indexOf(b);
+    if(ia===-1&&ib===-1) return a.localeCompare(b,'ja');
+    if(ia===-1) return 1; if(ib===-1) return -1;
+    return ia-ib;
+  });
+  let html='';
+  procKeys.forEach(proc=>{
+    const orders2=procs[proc];
+    html+='<div class="csec" style="margin-bottom:1rem">';
+    html+='<div class="csec-hd"><h3>✂ '+proc+'</h3></div>';
+    orders2.forEach(o=>{
+      const cutsArr=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
+      const sorted=[...cutsArr].sort((a,b)=>String(a.id).localeCompare(String(b.id),undefined,{numeric:true}));
+      const done=sorted.filter(c=>c.done).length;
+      const total=sorted.length;
+      // ヘッダー行
+      html+='<div style="background:var(--sur2);border-radius:var(--r);padding:6px 10px;margin-bottom:6px;font-size:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">';
+      html+='<span style="font-weight:500;color:var(--txt)">'+o.title+(o.episode?' 第'+o.episode+'話':'')+'</span>';
+      html+='<span>受注日：<b>'+(o.orderDate||'-')+'</b></span>';
+      html+='<span>納入日：<b>'+(o.deliveryDate||'-')+'</b></span>';
+      html+='<span>納期：<b>'+(o.dueDate||'-')+'</b></span>';
+      html+='<span style="margin-left:auto">完了 <b>'+done+'/'+total+'</b></span>';
+      html+='</div>';
+      if(!sorted.length){
+        html+='<div style="font-size:12px;color:var(--txt3);padding:4px 8px">カット番号未登録</div>';
+      } else {
+        html+='<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 0 8px">';
+        sorted.forEach(c=>{
+          const isDone=c.done;
+          const dateStr=isDone&&c.date?c.date.slice(5):'';
+          const bg=isDone?'#E0ECFF':'var(--sur2)';
+          const col=isDone?'#003A8C':'var(--txt2)';
+          const bd=isDone?'#80B0F0':'var(--bdr2)';
+          html+='<div style="display:inline-flex;flex-direction:column;align-items:center;'+
+            'background:'+bg+';border:0.5px solid '+bd+';border-radius:var(--r);'+
+            'padding:4px 8px;min-width:52px;cursor:pointer" onclick="showDetail(''+o.id+'')">';
+          html+='<span style="font-size:12px;font-weight:600;color:'+col+'">'+String(c.id)+'</span>';
+          html+='<span style="font-size:10px;color:'+(isDone?'#0060E0':'var(--txt3)')+'">'+
+            (isDone?'✓ '+(dateStr||'完了'):'未完')+'</span>';
+          html+='</div>';
+        });
+        html+='</div>';
+      }
+    });
+    html+='</div>';
+  });
+  body.innerHTML=html;
+}
+function exportSearchView(){
+  const title=document.getElementById('sv-title').value;
+  const ep=document.getElementById('sv-ep').value;
+  if(!title){ showToast('タイトルを選択してください',true); return; }
+  let src=orders.filter(o=>o.title===title);
+  if(ep) src=src.filter(o=>String(o.episode)===String(ep));
+  if(!src.length){ showToast('該当データがありません',true); return; }
+  let text=title+(ep?' 第'+ep+'話':'')+'
+
+';
+  const procs={};
+  src.forEach(o=>{ const p=o.process||'-'; if(!procs[p]) procs[p]=[]; procs[p].push(o); });
+  Object.keys(procs).forEach(proc=>{
+    text+='【'+proc+'】
+';
+    procs[proc].forEach(o=>{
+      const cutsArr=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
+      const sorted=[...cutsArr].sort((a,b)=>String(a.id).localeCompare(String(b.id),undefined,{numeric:true}));
+      text+='受注日:'+(o.orderDate||'-')+'　納入日:'+(o.deliveryDate||'-')+'
+';
+      sorted.forEach(c=>{ text+='  '+String(c.id)+'	'+(c.done?'✓ '+(c.date||'完了'):'未完')+'
+'; });
+    });
+    text+='
+';
+  });
+  navigator.clipboard.writeText(text).then(()=>showToast('クリップボードにコピーしました'))
+    .catch(()=>showToast('コピー失敗',true));
+}
+
 function printGroup(){
   const by=document.getElementById('grp-by').value;
   const flt=document.getElementById('grp-flt').value;
@@ -2253,6 +2397,7 @@ window.markAll=markAll; window.previewAddCuts=previewAddCuts; window.toggleCut=t
 window.renderGroup=renderGroup; window.onTitleFilterChange=onTitleFilterChange; window.toggleGrp=toggleGrp; window.printGroup=printGroup;
 window.renderList=renderList; window.loadAll=loadAll; window.toggleDebugMode=toggleDebugMode; window.toggleVerified=toggleVerified; window.getVerified=getVerified; window.clearVerified=clearVerified;
 window.selectLang=selectLang;
+window.onSvTitleChange=onSvTitleChange; window.renderSearchView=renderSearchView; window.exportSearchView=exportSearchView;
 window.openCbo=openCbo; window.closeCbo=closeCbo;
 window.filterCbo=filterCbo; window.pickCbo=pickCbo; window.onTitleInput=onTitleInput;
 window.searchCut=searchCut; window.clearSearch=clearSearch; window.clearPrintRange=clearPrintRange;
