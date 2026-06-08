@@ -2550,8 +2550,8 @@ function svToggleDebug(){
   const btn = document.getElementById('sv-btn-debug');
   if(bar){ bar.style.display = svDebugMode ? 'flex' : 'none'; }
   if(btn){ btn.style.opacity = svDebugMode ? '1' : '.5'; }
-  updateSvDebugBtnText();
-  renderSearchView();
+  try{ updateSvDebugBtnText(); }catch(e){}
+  try{ renderSearchView(); }catch(e){}
 }
 function getSvCurrentOrderIds(){
   const d=getSvData(); if(!d) return [];
@@ -2585,16 +2585,18 @@ function svClearVerify(){
   renderList();
 }
 function updateSvDebugBtnText(){
-  const ids=getSvCurrentOrderIds();
-  const verified=JSON.parse(localStorage.getItem('animeVerified')||'{}');
-  const oAll=ids.length&&ids.every(id=>verified[id]&&verified[id].order);
-  const dAll=ids.length&&ids.every(id=>verified[id]&&verified[id].delivery);
-  const ob=document.getElementById('sv-vbtn-order');
-  const db=document.getElementById('sv-vbtn-delivery');
-  if(ob) ob.textContent=oAll?t('svVerifyOrderOn'):t('svVerifyOrder');
-  if(db) db.textContent=dAll?t('svVerifyDeliveryOn'):t('svVerifyDelivery');
-  if(ob){ ob.classList.toggle('on',!!oAll); }
-  if(db){ db.classList.toggle('on',!!dAll); }
+  try{
+    const ids=getSvCurrentOrderIds();
+    const verified=JSON.parse(localStorage.getItem('animeVerified')||'{}');
+    const oAll=ids.length&&ids.every(id=>verified[id]&&verified[id].order);
+    const dAll=ids.length&&ids.every(id=>verified[id]&&verified[id].delivery);
+    const ob=document.getElementById('sv-vbtn-order');
+    const db=document.getElementById('sv-vbtn-delivery');
+    if(ob) ob.textContent=oAll?t('svVerifyOrderOn'):t('svVerifyOrder');
+    if(db) db.textContent=dAll?t('svVerifyDeliveryOn'):t('svVerifyDelivery');
+    if(ob){ ob.classList.toggle('on',!!oAll); }
+    if(db){ db.classList.toggle('on',!!dAll); }
+  }catch(e){}
 }
 function svVerifyProc(proc,type){
   const d=getSvData(); if(!d) return;
