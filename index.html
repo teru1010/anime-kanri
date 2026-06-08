@@ -2176,7 +2176,7 @@ function renderSearchView(){
           const bd=isDone?'#80B0F0':'var(--bdr2)';
           html+='<div style="display:inline-flex;flex-direction:column;align-items:center;'+
             'background:'+bg+';border:0.5px solid '+bd+';border-radius:var(--r);'+
-            'padding:4px 8px;min-width:52px;cursor:pointer" onclick="showDetail(''+o.id+'')">';
+            'padding:4px 8px;min-width:52px;cursor:pointer" onclick="showDetail(o.id)">';
           html+='<span style="font-size:12px;font-weight:600;color:'+col+'">'+String(c.id)+'</span>';
           html+='<span style="font-size:10px;color:'+(isDone?'#0060E0':'var(--txt3)')+'">'+
             (isDone?'✓ '+(dateStr||'完了'):'未完')+'</span>';
