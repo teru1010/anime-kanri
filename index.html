@@ -1158,8 +1158,8 @@ function makeCard(o){
       ${debugMode?(function(){
         var vf=getVerified(o.id);
         var oOn=!!vf.order,dOn=!!vf.delivery;
-        return '<button class="vbtn vbtn-order'+(oOn?' on':'')+'" onclick="toggleVerified(\'' +o.id+ '\',\'order\')">'+(oOn?'✔ 受注確認済':'○ 受注確認')+'</button> '+
-               '<button class="vbtn vbtn-delivery'+(dOn?' on':'')+'" onclick="toggleVerified(\'' +o.id+ '\',\'delivery\')">'+(dOn?'✔ 納品確認済':'○ 納品確認')+'</button>';
+        return '<button class="vbtn vbtn-order'+(oOn?' on':'')+'" data-vid="'+o.id+'" data-vtype="order" onclick="vAct(this)">'+(oOn?'✔ 受注確認済':'○ 受注確認')+'</button> '+
+               '<button class="vbtn vbtn-delivery'+(dOn?' on':'')+'" data-vid="'+o.id+'" data-vtype="delivery" onclick="vAct(this)">'+(dOn?'✔ 納品確認済':'○ 納品確認')+'</button>';
       })():''}
     </div>
   </div>`;
@@ -1485,6 +1485,12 @@ function renderCuts(o){
   grid.innerHTML=cards.join('');
 }
 
+// デバッグ確認ボタン処理
+function vAct(el){
+  const vid=el.dataset.vid;
+  const vtype=el.dataset.vtype;
+  toggleVerified(vid, vtype);
+}
 // カード内ボタン処理
 function cardAct(el){
   const action=el.dataset.action;
@@ -2225,7 +2231,7 @@ window.addEventListener('scroll',()=>{
 window.showView=showView; window.showDetail=showDetail;
 window.editOrder=editOrder; window.deleteOrder=deleteOrder;
 window.deleteFromForm=deleteFromForm; window.cancelForm=cancelForm;
-window.saveOrder=saveOrder; window.saveDates=saveDates; window.cardAct=cardAct; window.toggleDetailEdit=toggleDetailEdit; window.detCalc=detCalc; window.saveDetailEdit=saveDetailEdit;
+window.saveOrder=saveOrder; window.saveDates=saveDates; window.vAct=vAct; window.cardAct=cardAct; window.toggleDetailEdit=toggleDetailEdit; window.detCalc=detCalc; window.saveDetailEdit=saveDetailEdit;
 window.markAll=markAll; window.previewAddCuts=previewAddCuts; window.toggleCut=toggleCut; window.toggleGroup=toggleGroup; window.deleteCut=deleteCut; window.deleteCutGroup=deleteCutGroup; window.addCuts=addCuts; window.toggleGroupKey=toggleGroupKey; window.deleteCutGroupKey=deleteCutGroupKey; window.ccAct=ccAct;
 window.renderGroup=renderGroup; window.onTitleFilterChange=onTitleFilterChange; window.toggleGrp=toggleGrp; window.printGroup=printGroup;
 window.renderList=renderList; window.loadAll=loadAll; window.toggleDebugMode=toggleDebugMode; window.toggleVerified=toggleVerified; window.getVerified=getVerified; window.clearVerified=clearVerified;
