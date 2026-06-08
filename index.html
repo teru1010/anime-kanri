@@ -1131,20 +1131,23 @@ function makeCard(o){
       ${dueBadge(o.dueDate,st)}
       <span class="pill ${pillCls(st)}">${tSt(st)}</span>
     </div>
-    ${rawDisp?`<div onclick="event.stopPropagation()" style="font-size:11px;color:var(--txt2);
-      padding:3px 0 4px;border-top:0.5px solid var(--bdr);margin-top:4px;
-      line-height:1.6;display:flex;align-items:flex-start;gap:5px;flex-wrap:wrap">
-      <span style="color:var(--txt3);flex-shrink:0">✂</span>
-      <span style="word-break:break-all;flex:1">${rawDisp}</span>
-      <span style="color:var(--bl);flex-shrink:0;font-weight:500">${doneCnt}/${totalCnt}</span>
-    </div>`:''}
+    ${rawDisp?(function(){
+      var grps=parseGroups(rawDisp);
+      grps.sort(function(a,b){return (parseInt(a.ids[0])||0)-(parseInt(b.ids[0])||0);});
+      var chips=grps.map(function(g){
+        var gc=cutsArr2.filter(function(c){return g.ids.indexOf(String(c.id))>=0;});
+        var done=gc.length>0&&gc.every(function(c){return c.done;});
+        return '<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:500;background:'+(done?'#E0ECFF':'var(--sur2)')+';color:'+(done?'#003A8C':'var(--txt2)')+';border:0.5px solid '+(done?'#80B0F0':'var(--bdr2)')+';white-space:nowrap">'+(done?'✓ ':'')+g.label+'</span>';
+      }).join('');
+      return '<div onclick="event.stopPropagation()" style="padding:5px 0 3px;border-top:0.5px solid var(--bdr);margin-top:5px;display:flex;flex-wrap:wrap;gap:3px;align-items:center">'+chips+'<span style="margin-left:auto;font-size:11px;color:#0060E0;font-weight:500">'+doneCnt+'/'+totalCnt+'</span></div>';
+    })():''}
     <div class="pbar">
       <div class="pbar-lbl"><span>${done}/${total}</span><span>${pct}%</span></div>
       <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
     </div>
     <div class="acts" onclick="event.stopPropagation()" style="flex-wrap:wrap">
-      <button class="btn sm" onclick="showDetail('${o.id}')">✂ ${t('cutProgTitle').replace('✂ ','')}</button>
-      <button class="btn sm" onclick="currentId='${o.id}';editOrder('${o.id}');showView('new')">${t('btnEdit')}</button>
+      <button class="btn sm" data-action="detail" data-oid="${o.id}" onclick="cardAct(this)">✂ ${t('cutProgTitle').replace('✂ ','')}</button>
+      <button class="btn sm" data-action="edit" data-oid="${o.id}" onclick="cardAct(this)">${t('btnEdit')}</button>
       ${debugMode?`<button class="verified-btn ${isVerified(o.id)?'on':''}" onclick="toggleVerified('${o.id}')">${isVerified(o.id)?'✔ 確認済み':'○ 未確認'}</button>`:''}
     </div>
   </div>`;
@@ -1470,6 +1473,18 @@ function renderCuts(o){
   grid.innerHTML=cards.join('');
 }
 
+// カード内ボタン処理
+function cardAct(el){
+  const action=el.dataset.action;
+  const oid=el.dataset.oid;
+  if(action==='detail'){
+    showDetail(oid);
+  } else if(action==='edit'){
+    currentId=oid;
+    editingId=oid;
+    editOrder(oid);
+  }
+}
 // data属性経由のアクション処理
 async function ccAct(el){
   const action=el.dataset.action;
@@ -2198,7 +2213,7 @@ window.addEventListener('scroll',()=>{
 window.showView=showView; window.showDetail=showDetail;
 window.editOrder=editOrder; window.deleteOrder=deleteOrder;
 window.deleteFromForm=deleteFromForm; window.cancelForm=cancelForm;
-window.saveOrder=saveOrder; window.saveDates=saveDates; window.toggleDetailEdit=toggleDetailEdit; window.detCalc=detCalc; window.saveDetailEdit=saveDetailEdit;
+window.saveOrder=saveOrder; window.saveDates=saveDates; window.cardAct=cardAct; window.toggleDetailEdit=toggleDetailEdit; window.detCalc=detCalc; window.saveDetailEdit=saveDetailEdit;
 window.markAll=markAll; window.previewAddCuts=previewAddCuts; window.toggleCut=toggleCut; window.toggleGroup=toggleGroup; window.deleteCut=deleteCut; window.deleteCutGroup=deleteCutGroup; window.addCuts=addCuts; window.toggleGroupKey=toggleGroupKey; window.deleteCutGroupKey=deleteCutGroupKey; window.ccAct=ccAct;
 window.renderGroup=renderGroup; window.onTitleFilterChange=onTitleFilterChange; window.toggleGrp=toggleGrp; window.printGroup=printGroup;
 window.renderList=renderList; window.loadAll=loadAll; window.toggleDebugMode=toggleDebugMode; window.toggleVerified=toggleVerified; window.clearVerified=clearVerified;
