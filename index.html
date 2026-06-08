@@ -801,11 +801,15 @@ function selectLang(lang){
 let debugMode = false;
 function toggleDebugMode(){
   debugMode = !debugMode;
+  window.debugMode = debugMode; // グローバルにも同期
   const bar = document.getElementById('debug-bar');
   const btn = document.getElementById('btn-debug');
   if(bar) bar.style.display = debugMode ? 'flex' : 'none';
   if(btn) btn.style.opacity = debugMode ? '1' : '.5';
   renderList();
+  // グループ表示が開いている場合も再描画
+  const gv = document.getElementById('view-group');
+  if(gv && gv.classList.contains('on')) renderGroup();
 }
 function toggleVerified(id, type){
   const verified = JSON.parse(localStorage.getItem('animeVerified')||'{}');
@@ -1498,8 +1502,9 @@ function cardAct(el){
   if(action==='detail'){
     showDetail(oid);
   } else if(action==='edit'){
-    currentId=oid;
-    editingId=oid;
+    // ローカル変数とwindowの両方に同期してからeditOrderを呼ぶ
+    currentId=window.currentId=oid;
+    editingId=window.editingId=oid;
     editOrder(oid);
   }
 }
@@ -1877,7 +1882,7 @@ async function saveOrder(){
 function editOrder(id){
   const oid=id||currentId;
   const o=orders.find(x=>x.id===oid); if(!o) return;
-  editingId=oid;
+  editingId=window.editingId=oid;
   (document.getElementById('form-ttl')||{textContent:''}).textContent=t('formEdit');
   document.getElementById('btn-del-form').style.display='inline-flex';
   document.getElementById('f-od').value=o.orderDate||'';
