@@ -470,15 +470,15 @@ button,input,select,textarea{font-family:inherit}
 
   <!-- SEARCH VIEW -->
   <div class="view" id="view-search">
-    <div class="lh"><h2>🔍 検索</h2></div>
+    <div class="lh"><h2 id="sv-h2">🔍 検索</h2></div>
 
     <!-- カット番号検索 -->
     <div class="fcard" style="margin-bottom:1rem">
-      <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--txt2)">✂ カット番号で検索</div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--txt2)" id="sv-lbl-cut">✂ カット番号で検索</div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div style="position:relative;flex:1;min-width:200px;max-width:400px">
           <input type="text" id="cut-search-input" oninput="searchCut()"
-            placeholder="カット番号を入力（例：C9999, 9999）"
+            id="cut-search-input-ph" placeholder="カット番号を入力（例：C9999, 9999）"
             style="width:100%;font-size:13px;padding:7px 36px 7px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
           <span onclick="clearSearch()" id="srch-clr"
             style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--txt3);font-size:16px;display:none">×</span>
@@ -490,7 +490,7 @@ button,input,select,textarea{font-family:inherit}
 
     <!-- タイトル・話数別カット一覧 -->
     <div class="fcard" style="margin-bottom:1rem">
-      <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--txt2)">📋 タイトル・話数別カット一覧</div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--txt2)" id="sv-lbl-title">📋 タイトル・話数別カット一覧</div>
       <div class="fgrid g3" style="gap:10px">
         <div class="fg">
           <label>作品タイトル</label>
@@ -516,7 +516,7 @@ button,input,select,textarea{font-family:inherit}
   <!-- DETAIL -->
   <div class="view" id="view-detail">
     <div class="dhd">
-      <button class="back" onclick="showView(window._fromView||'list', true)" id="btn-back">← 一覧へ</button>
+      <button class="back" onclick="showView(window._fromView||'list', true)" id="btn-back">← 戻る</button>
       <div style="flex:1"></div>
       <div id="d-due"></div>
       <div id="d-pill"></div>
@@ -697,7 +697,7 @@ ja:{
   appTitle:'受注管理',
   tabList:'受注一覧', tabNew:'＋ 新規受注', tabProg:'カット進捗', tabGrp:'グループ表示',
   btnNew:'＋ 新規受注', btnRefresh:'↺ 更新', btnCancel:'キャンセル',
-  btnSave:'💾 保存', btnDelForm:'🗑 この受注を削除', btnBack:'← 一覧へ',
+  btnSave:'💾 保存', btnDelForm:'🗑 この受注を削除', btnBack:'← 戻る',
   btnDel:'🗑 削除', btnEdit:'✏ 編集', btnAllDone:'全完了', btnPrint:'🖨 印刷',
   formNew:'新規受注入力', formEdit:'受注編集',
   slWork:'作品情報', slAmt:'受注・発注金額（受注は税抜入力）',
@@ -725,7 +725,7 @@ ja:{
   cboxHint:'カンマ区切り：C001, C002　／　連番（チルダ）：001~100<br>兼用カット（ハイフンまたは_）：243-247=2件, 278-285-295=3件',
   searchPH:'✂ カット番号で検索（例：C9999, 9999）',
   searchHit:'件見つかりました', searchMiss:'は見つかりません',
-  cutSearchEdit:'✂ カット管理・編集', rcvEdit:'✏ 受注編集',
+  cutSearchEdit:'カット管理・編集', rcvEdit:'受注編集',
   sumRcv:'受注・税抜', sumAt:'発注（AT・非課税）',
   sumMg:'粗利（税込受注－発注）', sumCut:'カット進捗',
   taxIn:'税込', taxEx:'税抜',
@@ -740,13 +740,23 @@ ja:{
   confirmDel:'を削除しますか？', confirmDelFull:'を削除しますか？\nこの操作は取り消せません。',
   infoCustomer:'顧客・担当', infoDate:'受注日 / 納期',
   infoQtyUp:'数量・受注単価', infoAp:'発注単価（AT）',
+  tabSearch:'🔍 検索',
+  svCutSearch:'✂ カット番号で検索', svTitleSearch:'📋 タイトル・話数別カット一覧',
+  svSelectTitle:'-- タイトルを選択 --', svSelectEp:'-- 話数を選択 --',
+  svCopy:'📋 コピー', svPrint:'🖨 印刷',
+  svEmpty:'タイトルを選択してください', svNoData:'該当データがありません',
+  svCutPH:'カット番号を入力（例：C9999, 9999）',
+  svDone:'完了', svTodo:'未完',
+  svOrderDate:'受注日', svDelivery:'納入日', svStatus:'ステータス', svCutNo:'カット番号',
+  svCopied:'クリップボードにコピーしました', svCopyFail:'コピー失敗',
+  svSelectFirst:'タイトルを選択してください',
 },
 vi:{
   synced:'Đã đồng bộ', syncing:'Đang đồng bộ...', syncErr:'Lỗi đồng bộ',
   appTitle:'Quản lý đặt hàng',
   tabList:'Danh sách', tabNew:'＋ Đặt mới', tabProg:'Tiến độ cảnh', tabGrp:'Nhóm',
   btnNew:'＋ Đặt mới', btnRefresh:'↺ Cập nhật', btnCancel:'Hủy',
-  btnSave:'💾 Lưu', btnDelForm:'🗑 Xóa đơn này', btnBack:'← Danh sách',
+  btnSave:'💾 Lưu', btnDelForm:'🗑 Xóa đơn này', btnBack:'← Quay lại',
   btnDel:'🗑 Xóa', btnEdit:'✏ Sửa', btnAllDone:'Hoàn thành tất cả', btnPrint:'🖨 In',
   formNew:'Nhập đặt hàng mới', formEdit:'Chỉnh sửa đặt hàng',
   slWork:'Thông tin tác phẩm', slAmt:'Giá nhận & phát（chưa thuế）',
@@ -774,7 +784,7 @@ vi:{
   cboxHint:'Cách nhau dấu phẩy：C001, C002　／　Dãy liên tiếp：001~100<br>Cảnh dùng chung：243-247=2 cảnh, 278-285-295=3 cảnh',
   searchPH:'✂ Tìm số cảnh（VD：C9999, 9999）',
   searchHit:' kết quả', searchMiss:'không tìm thấy',
-  cutSearchEdit:'✂ Quản lý cảnh', rcvEdit:'✏ Sửa đơn',
+  cutSearchEdit:'Quản lý cảnh', rcvEdit:'Sửa đơn',
   sumRcv:'Nhận・chưa thuế', sumAt:'Phát（AT）',
   sumMg:'Lợi nhuận', sumCut:'Tiến độ cảnh',
   taxIn:'có thuế', taxEx:'chưa thuế',
@@ -902,6 +912,8 @@ function applyLang(){
     'lbl-deldl':'lblDelDl','lbl-delinv':'lblDelInv','lbl-delst':'lblDelSt',
     'dst-or':'dstOr','dst-wip':'dstWip','dst-dn':'dstDn','dst-iv':'dstIv',
     'cut-hint':'cutHint','cbox-lbl-txt':'cboxLbl',
+    'tab-search':'tabSearch',
+    'sv-h2':'tabSearch','sv-lbl-cut':'svCutSearch','sv-lbl-title':'svTitleSearch',
   };
   Object.entries(map).forEach(([id,key])=>{
     const el=document.getElementById(id);
@@ -910,6 +922,14 @@ function applyLang(){
   // cbox-hint はHTMLで
   const ch=document.getElementById('cbox-hint');
   if(ch) ch.innerHTML=t('cboxHint');
+  // 検索ページのplaceholder
+  const csi=document.getElementById('cut-search-input');
+  if(csi) csi.placeholder=t('svCutPH');
+  // 検索ページのselect
+  const svt=document.getElementById('sv-title');
+  if(svt&&svt.options[0]) svt.options[0].textContent=t('svSelectTitle');
+  const sve=document.getElementById('sv-ep');
+  if(sve&&sve.options[0]) sve.options[0].textContent=t('svSelectEp');
   // 作業工程プルダウンの翻訳
   const fproc=document.getElementById('f-proc');
   if(fproc){
@@ -2137,10 +2157,10 @@ function renderSearchView(){
   const title=document.getElementById('sv-title').value;
   const ep=document.getElementById('sv-ep').value;
   const body=document.getElementById('sv-body');
-  if(!title){ body.innerHTML='<div class="empty"><i>🔍</i>タイトルを選択してください</div>'; return; }
+  if(!title){ body.innerHTML='<div class="empty"><i>🔍</i>'+t('svEmpty')+'</div>'; return; }
   let src=orders.filter(o=>o.title===title);
   if(ep) src=src.filter(o=>String(o.episode)===String(ep));
-  if(!src.length){ body.innerHTML='<div class="empty"><i>📭</i>該当データがありません</div>'; return; }
+  if(!src.length){ body.innerHTML='<div class="empty"><i>📭</i>'+t('svNoData')+'</div>'; return; }
   const procs={};
   src.forEach(o=>{
     const p=o.process||'-';
@@ -2181,7 +2201,7 @@ function renderSearchView(){
         'padding:4px 8px;min-width:52px;cursor:pointer" data-oid="'+oid+'" onclick="svCutClick(this)">'
       html+='<span style="font-size:12px;font-weight:600;color:'+col+'">'+String(c.id)+'</span>';
       html+='<span style="font-size:10px;color:'+(isDone?'#0060E0':'var(--txt3)')+'">'+
-        (isDone?'✓ '+(dateStr||'完了'):'未完')+'</span>';
+        (isDone?'✓ '+(dateStr||t('svDone')):t('svTodo'))+'</span>';
       html+='</div>';
     });
     html+='</div>';
@@ -2208,10 +2228,10 @@ function getSvData(){
 }
 function exportSearchView(){
   const d=getSvData();
-  if(!d){ showToast('タイトルを選択してください',true); return; }
+  if(!d){ showToast(t('svSelectFirst'),true); return; }
   const {title,ep,procs,procKeys}=d;
   let text=title+(ep?' 第'+ep+'話':'')+"\n";
-  text+='\nカット番号\t受注日\tステータス\t納入日\n';
+  text+='\n'+t('svCutNo')+'\t'+t('svOrderDate')+'\t'+t('svStatus')+'\t'+t('svDelivery')+'\n';
   procKeys.forEach(proc=>{
     const allCuts=[];
     procs[proc].forEach(o=>{
@@ -2222,16 +2242,16 @@ function exportSearchView(){
     allCuts.sort((a,b)=>String(a.c.id).localeCompare(String(b.c.id),undefined,{numeric:true}));
     text+='\n【'+proc+'】\n';
     allCuts.forEach(({c,o})=>{
-      const st=c.done?'完了':'未完';
+      const st=c.done?t('svDone'):t('svTodo');
       text+=String(c.id)+'\t'+(o.orderDate||'-')+'\t'+st+'\t'+(o.deliveryDate||'-')+'\n';
     });
   });
-  navigator.clipboard.writeText(text).then(()=>showToast('クリップボードにコピーしました'))
-    .catch(()=>showToast('コピー失敗',true));
+  navigator.clipboard.writeText(text).then(()=>showToast(t('svCopied')))
+    .catch(()=>showToast(t('svCopyFail'),true));
 }
 function printSearchView(){
   const d=getSvData();
-  if(!d){ showToast('タイトルを選択してください',true); return; }
+  if(!d){ showToast(t('svSelectFirst'),true); return; }
   const {title,ep,procs,procKeys}=d;
   const heading=title+(ep?' 第'+ep+'話':'');
   let html='<html><head><meta charset="UTF-8"><title>'+heading+'</title>';
@@ -2253,10 +2273,10 @@ function printSearchView(){
     allCuts.sort((a,b)=>String(a.c.id).localeCompare(String(b.c.id),undefined,{numeric:true}));
     const done=allCuts.filter(({c})=>c.done).length;
     html+='<h2>✂ '+proc+' ('+allCuts.length+'カット　完了:'+done+'　未完:'+(allCuts.length-done)+')</h2>';
-    html+='<table><thead><tr><th>カット番号</th><th>受注日</th><th>ステータス</th><th>納入日</th></tr></thead><tbody>';
+    html+='<table><thead><tr><th>'+t('svCutNo')+'</th><th>'+t('svOrderDate')+'</th><th>'+t('svStatus')+'</th><th>'+t('svDelivery')+'</th></tr></thead><tbody>';
     allCuts.forEach(({c,o})=>{
       const isDone=c.done;
-      const st=isDone?'✓ 完了':'未完';
+      const st=isDone?'✓ '+t('svDone'):t('svTodo');
       const cls=isDone?'done':'todo';
       html+='<tr class="'+cls+'"><td>'+String(c.id)+'</td><td>'+(o.orderDate||'-')+'</td><td>'+st+'</td><td>'+(o.deliveryDate||'-')+'</td></tr>';
     });
