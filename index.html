@@ -1153,13 +1153,13 @@ function makeCard(o){
       <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
     </div>
     <div class="acts" onclick="event.stopPropagation()" style="flex-wrap:wrap">
-      <button class="btn sm" data-action="detail" data-oid="${o.id}" onclick="cardAct(this)">✂ ${t('cutProgTitle').replace('✂ ','')}</button>
-      <button class="btn sm" data-action="edit" data-oid="${o.id}" onclick="cardAct(this)">${t('btnEdit')}</button>
+      <button class="btn sm" data-action="detail" data-oid="${o.id}" onclick="event.stopPropagation();cardAct(this)">✂ ${t('cutProgTitle').replace('✂ ','')}</button>
+      <button class="btn sm" data-action="edit" data-oid="${o.id}" onclick="event.stopPropagation();cardAct(this)">${t('btnEdit')}</button>
       ${debugMode?(function(){
         var vf=getVerified(o.id);
         var oOn=!!vf.order,dOn=!!vf.delivery;
-        return '<button class="vbtn vbtn-order'+(oOn?' on':'')+'" data-vid="'+o.id+'" data-vtype="order" onclick="vAct(this)">'+(oOn?'✔ 受注確認済':'○ 受注確認')+'</button> '+
-               '<button class="vbtn vbtn-delivery'+(dOn?' on':'')+'" data-vid="'+o.id+'" data-vtype="delivery" onclick="vAct(this)">'+(dOn?'✔ 納品確認済':'○ 納品確認')+'</button>';
+        return '<button class="vbtn vbtn-order'+(oOn?' on':'')+'" data-vid="'+o.id+'" data-vtype="order" onclick="event.stopPropagation();vAct(this)">'+(oOn?'✔ 受注確認済':'○ 受注確認')+'</button> '+
+               '<button class="vbtn vbtn-delivery'+(dOn?' on':'')+'" data-vid="'+o.id+'" data-vtype="delivery" onclick="event.stopPropagation();vAct(this)">'+(dOn?'✔ 納品確認済':'○ 納品確認')+'</button>';
       })():''}
     </div>
   </div>`;
