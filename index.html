@@ -344,17 +344,7 @@ button,input,select,textarea{font-family:inherit}
       <button class="btn pri" onclick="showView('new')" id="btn-new">＋ 新規受注</button>
       <button class="btn" onclick="loadAll()" id="btn-refresh">↺ 更新</button>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
-      <div style="position:relative;flex:1;min-width:200px;max-width:360px">
-        <input type="text" id="cut-search-input" oninput="searchCut()"
-          placeholder="✂ カット番号で検索（例：C9999, 9999）"
-          style="width:100%;font-size:13px;padding:7px 36px 7px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
-        <span onclick="clearSearch()" id="srch-clr"
-          style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--txt3);font-size:16px;display:none">×</span>
-      </div>
-      <div id="srch-hint" style="font-size:12px;color:var(--txt2)"></div>
-    </div>
-    <div id="srch-result" style="display:none;margin-bottom:1rem"></div>
+
     <div id="debug-bar" class="debug-bar" style="display:none">
       🔧 デバッグモード：<span style="color:#1d4ed8">■ 受注確認済</span>　<span style="color:#166534">■ 納品確認済</span>　<span style="color:#a855f7">■ 両方確認済</span>
       <button class="btn sm" onclick="toggleDebugMode()" style="margin-left:auto">デバッグ終了</button>
@@ -480,8 +470,27 @@ button,input,select,textarea{font-family:inherit}
 
   <!-- SEARCH VIEW -->
   <div class="view" id="view-search">
-    <div class="lh"><h2>🔍 カット番号検索</h2></div>
+    <div class="lh"><h2>🔍 検索</h2></div>
+
+    <!-- カット番号検索 -->
     <div class="fcard" style="margin-bottom:1rem">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--txt2)">✂ カット番号で検索</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="position:relative;flex:1;min-width:200px;max-width:400px">
+          <input type="text" id="cut-search-input" oninput="searchCut()"
+            placeholder="カット番号を入力（例：C9999, 9999）"
+            style="width:100%;font-size:13px;padding:7px 36px 7px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
+          <span onclick="clearSearch()" id="srch-clr"
+            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--txt3);font-size:16px;display:none">×</span>
+        </div>
+        <div id="srch-hint" style="font-size:12px;color:var(--txt2)"></div>
+      </div>
+      <div id="srch-result" style="display:none;margin-top:10px"></div>
+    </div>
+
+    <!-- タイトル・話数別カット一覧 -->
+    <div class="fcard" style="margin-bottom:1rem">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--txt2)">📋 タイトル・話数別カット一覧</div>
       <div class="fgrid g3" style="gap:10px">
         <div class="fg">
           <label>作品タイトル</label>
@@ -497,6 +506,7 @@ button,input,select,textarea{font-family:inherit}
         </div>
         <div class="fg" style="justify-content:flex-end;flex-direction:row;align-items:flex-end;gap:8px">
           <button class="btn sm" onclick="exportSearchView()">📋 コピー</button>
+          <button class="btn sm" onclick="printSearchView()">🖨 印刷</button>
         </div>
       </div>
     </div>
@@ -2156,7 +2166,9 @@ function renderSearchView(){
     if(!allCuts.length) return; // カット未登録の工程は非表示
     const sorted=allCuts.sort((a,b)=>String(a.c.id).localeCompare(String(b.c.id),undefined,{numeric:true}));
     html+='<div class="csec" style="margin-bottom:1rem">';
-    html+='<div class="csec-hd"><h3>✂ '+proc+'</h3></div>';
+    const doneCount=sorted.filter(({c})=>c.done).length;
+    const totalCount=sorted.length;
+    html+='<div class="csec-hd"><h3>✂ '+proc+'</h3><span style="font-size:12px;color:var(--txt2)">全'+totalCount+'カット&nbsp;&nbsp;完了 <b style="color:#0060E0">'+doneCount+'</b>&nbsp;&nbsp;未完 <b style="color:#C07010">'+(totalCount-doneCount)+'</b></span></div>';
     html+='<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 0 8px">';
     sorted.forEach(({c, oid})=>{
       const isDone=c.done;
@@ -2177,28 +2189,84 @@ function renderSearchView(){
   });
   body.innerHTML=html;
 }
-function exportSearchView(){
+function getSvData(){
   const title=document.getElementById('sv-title').value;
   const ep=document.getElementById('sv-ep').value;
-  if(!title){ showToast('タイトルを選択してください',true); return; }
+  if(!title) return null;
   let src=orders.filter(o=>o.title===title);
   if(ep) src=src.filter(o=>String(o.episode)===String(ep));
-  if(!src.length){ showToast('該当データがありません',true); return; }
-  let text=title+(ep?' 第'+ep+'話':'')+'\n\n';
+  if(!src.length) return null;
+  const PROC_ORDER=['LO','LO作監','2G','動画','仕上','動仕','BG','動画検査','仕上検査','その他','-'];
   const procs={};
   src.forEach(o=>{ const p=o.process||'-'; if(!procs[p]) procs[p]=[]; procs[p].push(o); });
-  Object.keys(procs).forEach(proc=>{
-    text+='【'+proc+'】\n';
+  const procKeys=Object.keys(procs).sort((a,b)=>{
+    const ia=PROC_ORDER.indexOf(a),ib=PROC_ORDER.indexOf(b);
+    if(ia===-1&&ib===-1) return a.localeCompare(b,'ja');
+    if(ia===-1) return 1; if(ib===-1) return -1; return ia-ib;
+  });
+  return {title,ep,src,procs,procKeys};
+}
+function exportSearchView(){
+  const d=getSvData();
+  if(!d){ showToast('タイトルを選択してください',true); return; }
+  const {title,ep,procs,procKeys}=d;
+  let text=title+(ep?' 第'+ep+'話':'')+"\n";
+  text+='\nカット番号\t受注日\tステータス\t納入日\n';
+  procKeys.forEach(proc=>{
+    const allCuts=[];
     procs[proc].forEach(o=>{
       const cutsArr=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
-      const sorted=[...cutsArr].sort((a,b)=>String(a.id).localeCompare(String(b.id),undefined,{numeric:true}));
-      text+='受注日:'+(o.orderDate||'-')+'　納入日:'+(o.deliveryDate||'-')+'\n';
-      sorted.forEach(c=>{ text+='  '+String(c.id)+'	'+(c.done?'✓ '+(c.date||'完了'):'未完')+'\n'; });
+      cutsArr.forEach(c=>allCuts.push({c,o}));
     });
-    text+='\n';
+    if(!allCuts.length) return;
+    allCuts.sort((a,b)=>String(a.c.id).localeCompare(String(b.c.id),undefined,{numeric:true}));
+    text+='\n【'+proc+'】\n';
+    allCuts.forEach(({c,o})=>{
+      const st=c.done?'完了':'未完';
+      text+=String(c.id)+'\t'+(o.orderDate||'-')+'\t'+st+'\t'+(o.deliveryDate||'-')+'\n';
+    });
   });
   navigator.clipboard.writeText(text).then(()=>showToast('クリップボードにコピーしました'))
     .catch(()=>showToast('コピー失敗',true));
+}
+function printSearchView(){
+  const d=getSvData();
+  if(!d){ showToast('タイトルを選択してください',true); return; }
+  const {title,ep,procs,procKeys}=d;
+  const heading=title+(ep?' 第'+ep+'話':'');
+  let html='<html><head><meta charset="UTF-8"><title>'+heading+'</title>';
+  html+='<style>body{font-family:sans-serif;font-size:12px;padding:1rem}';
+  html+='h1{font-size:15px;margin-bottom:8px}h2{font-size:13px;margin:12px 0 4px;color:#003A8C}';
+  html+='table{border-collapse:collapse;width:100%;margin-bottom:8px}';
+  html+='th{background:#c8dcf4;padding:4px 8px;text-align:left;border:0.5px solid #90B0D8}';
+  html+='td{padding:4px 8px;border:0.5px solid #ccc}';
+  html+='.done{background:#E0ECFF;color:#003A8C}.todo{color:#7A4400}';
+  html+='@media print{@page{size:A4;margin:10mm}}</style></head><body>';
+  html+='<h1>'+heading+'</h1>';
+  procKeys.forEach(proc=>{
+    const allCuts=[];
+    procs[proc].forEach(o=>{
+      const cutsArr=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
+      cutsArr.forEach(c=>allCuts.push({c,o}));
+    });
+    if(!allCuts.length) return;
+    allCuts.sort((a,b)=>String(a.c.id).localeCompare(String(b.c.id),undefined,{numeric:true}));
+    const done=allCuts.filter(({c})=>c.done).length;
+    html+='<h2>✂ '+proc+' ('+allCuts.length+'カット　完了:'+done+'　未完:'+(allCuts.length-done)+')</h2>';
+    html+='<table><thead><tr><th>カット番号</th><th>受注日</th><th>ステータス</th><th>納入日</th></tr></thead><tbody>';
+    allCuts.forEach(({c,o})=>{
+      const isDone=c.done;
+      const st=isDone?'✓ 完了':'未完';
+      const cls=isDone?'done':'todo';
+      html+='<tr class="'+cls+'"><td>'+String(c.id)+'</td><td>'+(o.orderDate||'-')+'</td><td>'+st+'</td><td>'+(o.deliveryDate||'-')+'</td></tr>';
+    });
+    html+='</tbody></table>';
+  });
+  html+='</body></html>';
+  const w=window.open('','_blank','width=800,height=700');
+  w.document.write(html); w.document.close();
+  w.addEventListener('load',function(){ w.print(); });
+  setTimeout(function(){ try{ w.print(); }catch(e){} },600);
 }
 
 function printGroup(){
@@ -2381,7 +2449,7 @@ window.renderList=renderList; window.loadAll=loadAll; window.toggleDebugMode=tog
 window.selectLang=selectLang;
 function svCutClick(el){ showDetail(el.dataset.oid); }
 window.svCutClick=svCutClick;
-window.onSvTitleChange=onSvTitleChange; window.renderSearchView=renderSearchView; window.exportSearchView=exportSearchView;
+window.getSvData=getSvData; window.onSvTitleChange=onSvTitleChange; window.renderSearchView=renderSearchView; window.exportSearchView=exportSearchView; window.printSearchView=printSearchView;
 window.openCbo=openCbo; window.closeCbo=closeCbo;
 window.filterCbo=filterCbo; window.pickCbo=pickCbo; window.onTitleInput=onTitleInput;
 window.searchCut=searchCut; window.clearSearch=clearSearch; window.clearPrintRange=clearPrintRange;
