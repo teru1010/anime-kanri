@@ -2196,24 +2196,18 @@ function exportSearchView(){
   let src=orders.filter(o=>o.title===title);
   if(ep) src=src.filter(o=>String(o.episode)===String(ep));
   if(!src.length){ showToast('該当データがありません',true); return; }
-  let text=title+(ep?' 第'+ep+'話':'')+'
-
-';
+  let text=title+(ep?' 第'+ep+'話':'')+'\n\n';
   const procs={};
   src.forEach(o=>{ const p=o.process||'-'; if(!procs[p]) procs[p]=[]; procs[p].push(o); });
   Object.keys(procs).forEach(proc=>{
-    text+='【'+proc+'】
-';
+    text+='【'+proc+'】\n';
     procs[proc].forEach(o=>{
       const cutsArr=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
       const sorted=[...cutsArr].sort((a,b)=>String(a.id).localeCompare(String(b.id),undefined,{numeric:true}));
-      text+='受注日:'+(o.orderDate||'-')+'　納入日:'+(o.deliveryDate||'-')+'
-';
-      sorted.forEach(c=>{ text+='  '+String(c.id)+'	'+(c.done?'✓ '+(c.date||'完了'):'未完')+'
-'; });
+      text+='受注日:'+(o.orderDate||'-')+'　納入日:'+(o.deliveryDate||'-')+'\n';
+      sorted.forEach(c=>{ text+='  '+String(c.id)+'	'+(c.done?'✓ '+(c.date||'完了'):'未完')+'\n'; });
     });
-    text+='
-';
+    text+='\n';
   });
   navigator.clipboard.writeText(text).then(()=>showToast('クリップボードにコピーしました'))
     .catch(()=>showToast('コピー失敗',true));
