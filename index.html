@@ -2128,11 +2128,9 @@ function renderSearchView(){
   const ep=document.getElementById('sv-ep').value;
   const body=document.getElementById('sv-body');
   if(!title){ body.innerHTML='<div class="empty"><i>🔍</i>タイトルを選択してください</div>'; return; }
-  // 該当受注を絞り込み
   let src=orders.filter(o=>o.title===title);
   if(ep) src=src.filter(o=>String(o.episode)===String(ep));
   if(!src.length){ body.innerHTML='<div class="empty"><i>📭</i>該当データがありません</div>'; return; }
-  // 工程でグループ化
   const procs={};
   src.forEach(o=>{
     const p=o.process||'-';
@@ -2149,42 +2147,32 @@ function renderSearchView(){
   let html='';
   procKeys.forEach(proc=>{
     const orders2=procs[proc];
-    html+='<div class="csec" style="margin-bottom:1rem">';
-    html+='<div class="csec-hd"><h3>✂ '+proc+'</h3></div>';
+    // 工程内の全カットをまとめて収集
+    const allCuts=[];
     orders2.forEach(o=>{
       const cutsArr=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
-      const sorted=[...cutsArr].sort((a,b)=>String(a.id).localeCompare(String(b.id),undefined,{numeric:true}));
-      const done=sorted.filter(c=>c.done).length;
-      const total=sorted.length;
-      // ヘッダー行
-      html+='<div style="background:var(--sur2);border-radius:var(--r);padding:6px 10px;margin-bottom:6px;font-size:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">';
-      html+='<span style="font-weight:500;color:var(--txt)">'+o.title+(o.episode?' 第'+o.episode+'話':'')+'</span>';
-      html+='<span>受注日：<b>'+(o.orderDate||'-')+'</b></span>';
-      html+='<span>納入日：<b>'+(o.deliveryDate||'-')+'</b></span>';
-      html+='<span>納期：<b>'+(o.dueDate||'-')+'</b></span>';
-      html+='<span style="margin-left:auto">完了 <b>'+done+'/'+total+'</b></span>';
-      html+='</div>';
-      if(!sorted.length){
-        html+='<div style="font-size:12px;color:var(--txt3);padding:4px 8px">カット番号未登録</div>';
-      } else {
-        html+='<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 0 8px">';
-        sorted.forEach(c=>{
-          const isDone=c.done;
-          const dateStr=isDone&&c.date?c.date.slice(5):'';
-          const bg=isDone?'#E0ECFF':'var(--sur2)';
-          const col=isDone?'#003A8C':'var(--txt2)';
-          const bd=isDone?'#80B0F0':'var(--bdr2)';
-          html+='<div style="display:inline-flex;flex-direction:column;align-items:center;'+
-            'background:'+bg+';border:0.5px solid '+bd+';border-radius:var(--r);'+
-            'padding:4px 8px;min-width:52px;cursor:pointer" onclick="showDetail(o.id)">';
-          html+='<span style="font-size:12px;font-weight:600;color:'+col+'">'+String(c.id)+'</span>';
-          html+='<span style="font-size:10px;color:'+(isDone?'#0060E0':'var(--txt3)')+'">'+
-            (isDone?'✓ '+(dateStr||'完了'):'未完')+'</span>';
-          html+='</div>';
-        });
-        html+='</div>';
-      }
+      cutsArr.forEach(c=>allCuts.push({c, oid:o.id}));
     });
+    if(!allCuts.length) return; // カット未登録の工程は非表示
+    const sorted=allCuts.sort((a,b)=>String(a.c.id).localeCompare(String(b.c.id),undefined,{numeric:true}));
+    html+='<div class="csec" style="margin-bottom:1rem">';
+    html+='<div class="csec-hd"><h3>✂ '+proc+'</h3></div>';
+    html+='<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 0 8px">';
+    sorted.forEach(({c, oid})=>{
+      const isDone=c.done;
+      const dateStr=isDone&&c.date?c.date.slice(5):'';
+      const bg=isDone?'#E0ECFF':'var(--sur2)';
+      const col=isDone?'#003A8C':'var(--txt2)';
+      const bd=isDone?'#80B0F0':'var(--bdr2)';
+      html+='<div style="display:inline-flex;flex-direction:column;align-items:center;'+
+        'background:'+bg+';border:0.5px solid '+bd+';border-radius:var(--r);'+
+        'padding:4px 8px;min-width:52px;cursor:pointer" data-oid="'+oid+'" onclick="svCutClick(this)">'
+      html+='<span style="font-size:12px;font-weight:600;color:'+col+'">'+String(c.id)+'</span>';
+      html+='<span style="font-size:10px;color:'+(isDone?'#0060E0':'var(--txt3)')+'">'+
+        (isDone?'✓ '+(dateStr||'完了'):'未完')+'</span>';
+      html+='</div>';
+    });
+    html+='</div>';
     html+='</div>';
   });
   body.innerHTML=html;
@@ -2391,6 +2379,8 @@ window.markAll=markAll; window.previewAddCuts=previewAddCuts; window.toggleCut=t
 window.renderGroup=renderGroup; window.onTitleFilterChange=onTitleFilterChange; window.toggleGrp=toggleGrp; window.printGroup=printGroup;
 window.renderList=renderList; window.loadAll=loadAll; window.toggleDebugMode=toggleDebugMode; window.toggleVerified=toggleVerified; window.getVerified=getVerified; window.clearVerified=clearVerified;
 window.selectLang=selectLang;
+function svCutClick(el){ showDetail(el.dataset.oid); }
+window.svCutClick=svCutClick;
 window.onSvTitleChange=onSvTitleChange; window.renderSearchView=renderSearchView; window.exportSearchView=exportSearchView;
 window.openCbo=openCbo; window.closeCbo=closeCbo;
 window.filterCbo=filterCbo; window.pickCbo=pickCbo; window.onTitleInput=onTitleInput;
