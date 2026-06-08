@@ -274,10 +274,14 @@ button,input,select,textarea{font-family:inherit}
 /* MISC */
 .lh{display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
 /* デバッグ確認済みフラグ */
-.card.verified{border-left:4px solid #22c55e;border-color:#22c55e}
-.verified-btn{font-size:11px;padding:3px 8px;border-radius:99px;cursor:pointer;
-  border:0.5px solid #22c55e;background:#f0fdf4;color:#166534;margin-left:auto}
-.verified-btn.on{background:#22c55e;color:#fff}
+.card.v-order{border-left:4px solid #3b82f6;border-color:#3b82f6;border-width:1px 1px 1px 4px}
+.card.v-delivery{border-left:4px solid #22c55e;border-color:#22c55e;border-width:1px 1px 1px 4px}
+.card.v-both{border-left:4px solid #a855f7;border-color:#a855f7;border-width:1px 1px 1px 4px}
+.vbtn{font-size:11px;padding:3px 8px;border-radius:99px;cursor:pointer;white-space:nowrap}
+.vbtn-order{border:0.5px solid #93c5fd;background:#eff6ff;color:#1d4ed8}
+.vbtn-order.on{background:#3b82f6;color:#fff;border-color:#3b82f6}
+.vbtn-delivery{border:0.5px solid #86efac;background:#f0fdf4;color:#166534}
+.vbtn-delivery.on{background:#22c55e;color:#fff;border-color:#22c55e}
 .debug-bar{background:#fef9c3;border:0.5px solid #eab308;border-radius:var(--r);
   padding:6px 12px;margin-bottom:10px;font-size:12px;color:#713f12;
   display:flex;align-items:center;gap:8px}
@@ -351,7 +355,7 @@ button,input,select,textarea{font-family:inherit}
     </div>
     <div id="srch-result" style="display:none;margin-bottom:1rem"></div>
     <div id="debug-bar" class="debug-bar" style="display:none">
-      🔧 デバッグモード：各カードに「確認済み」ボタンが表示されます
+      🔧 デバッグモード：<span style="color:#1d4ed8">■ 受注確認済</span>　<span style="color:#166534">■ 納品確認済</span>　<span style="color:#a855f7">■ 両方確認済</span>
       <button class="btn sm" onclick="toggleDebugMode()" style="margin-left:auto">デバッグ終了</button>
       <button class="btn sm" onclick="clearVerified()" style="color:var(--rd)">確認済みクリア</button>
     </div>
@@ -803,9 +807,10 @@ function toggleDebugMode(){
   if(btn) btn.style.opacity = debugMode ? '1' : '.5';
   renderList();
 }
-function toggleVerified(id){
+function toggleVerified(id, type){
   const verified = JSON.parse(localStorage.getItem('animeVerified')||'{}');
-  verified[id] = !verified[id];
+  if(!verified[id]) verified[id]={};
+  verified[id][type] = !verified[id][type];
   localStorage.setItem('animeVerified', JSON.stringify(verified));
   renderList();
 }
@@ -813,9 +818,9 @@ function clearVerified(){
   localStorage.removeItem('animeVerified');
   renderList();
 }
-function isVerified(id){
+function getVerified(id){
   const verified = JSON.parse(localStorage.getItem('animeVerified')||'{}');
-  return !!verified[id];
+  return verified[id]||{};
 }
 
 function applyLang(){
@@ -1119,7 +1124,9 @@ function makeCard(o){
   const cutsArr2=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
   const doneCnt=cutsArr2.filter(c=>c.done).length;
   const totalCnt=cutsArr2.length;
-  return `<div class="card" onclick="showDetail('${o.id}')">
+  const vf3=debugMode?getVerified(o.id):{};
+  const verCls=debugMode?(vf3.order&&vf3.delivery?' v-both':vf3.order?' v-order':vf3.delivery?' v-delivery':''):'';
+  return `<div class="card${verCls}" onclick="showDetail('${o.id}')">
     ${makeBanner(o)}
     <div class="sub">${o.customer||'-'}　${t('contact')}：${o.contact||'-'}</div>
     <div class="meta">
@@ -1148,7 +1155,12 @@ function makeCard(o){
     <div class="acts" onclick="event.stopPropagation()" style="flex-wrap:wrap">
       <button class="btn sm" data-action="detail" data-oid="${o.id}" onclick="cardAct(this)">✂ ${t('cutProgTitle').replace('✂ ','')}</button>
       <button class="btn sm" data-action="edit" data-oid="${o.id}" onclick="cardAct(this)">${t('btnEdit')}</button>
-      ${debugMode?`<button class="verified-btn ${isVerified(o.id)?'on':''}" onclick="toggleVerified('${o.id}')">${isVerified(o.id)?'✔ 確認済み':'○ 未確認'}</button>`:''}
+      ${debugMode?(function(){
+        var vf=getVerified(o.id);
+        var oOn=!!vf.order,dOn=!!vf.delivery;
+        return '<button class="vbtn vbtn-order'+(oOn?' on':'')+'" onclick="toggleVerified(\'' +o.id+ '\',\'order\')">'+(oOn?'✔ 受注確認済':'○ 受注確認')+'</button> '+
+               '<button class="vbtn vbtn-delivery'+(dOn?' on':'')+'" onclick="toggleVerified(\'' +o.id+ '\',\'delivery\')">'+(dOn?'✔ 納品確認済':'○ 納品確認')+'</button>';
+      })():''}
     </div>
   </div>`;
 }
@@ -2216,7 +2228,7 @@ window.deleteFromForm=deleteFromForm; window.cancelForm=cancelForm;
 window.saveOrder=saveOrder; window.saveDates=saveDates; window.cardAct=cardAct; window.toggleDetailEdit=toggleDetailEdit; window.detCalc=detCalc; window.saveDetailEdit=saveDetailEdit;
 window.markAll=markAll; window.previewAddCuts=previewAddCuts; window.toggleCut=toggleCut; window.toggleGroup=toggleGroup; window.deleteCut=deleteCut; window.deleteCutGroup=deleteCutGroup; window.addCuts=addCuts; window.toggleGroupKey=toggleGroupKey; window.deleteCutGroupKey=deleteCutGroupKey; window.ccAct=ccAct;
 window.renderGroup=renderGroup; window.onTitleFilterChange=onTitleFilterChange; window.toggleGrp=toggleGrp; window.printGroup=printGroup;
-window.renderList=renderList; window.loadAll=loadAll; window.toggleDebugMode=toggleDebugMode; window.toggleVerified=toggleVerified; window.clearVerified=clearVerified;
+window.renderList=renderList; window.loadAll=loadAll; window.toggleDebugMode=toggleDebugMode; window.toggleVerified=toggleVerified; window.getVerified=getVerified; window.clearVerified=clearVerified;
 window.selectLang=selectLang;
 window.openCbo=openCbo; window.closeCbo=closeCbo;
 window.filterCbo=filterCbo; window.pickCbo=pickCbo; window.onTitleInput=onTitleInput;
