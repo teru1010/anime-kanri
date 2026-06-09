@@ -306,6 +306,38 @@ button,input,select,textarea{font-family:inherit}
 </head>
 <body>
 
+<!-- ログイン画面 -->
+<div id="login-screen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;
+  display:flex;align-items:center;justify-content:center;flex-direction:column">
+  <div style="background:var(--sur);border:0.5px solid var(--bdr);border-radius:var(--rl);
+    padding:2rem;width:320px;max-width:90vw;box-shadow:var(--sh)">
+    <div style="font-size:18px;font-weight:600;margin-bottom:1.5rem;text-align:center;color:var(--txt)">
+      ✂ アニメ受注管理
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:12px;color:var(--txt2);display:block;margin-bottom:4px">メールアドレス / Email</label>
+      <input type="email" id="login-email" placeholder="example@email.com"
+        style="width:100%;font-size:13px;padding:8px 10px;border:0.5px solid var(--bdr2);
+        border-radius:var(--r);background:var(--sur);color:var(--txt);box-sizing:border-box"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px;color:var(--txt2);display:block;margin-bottom:4px">パスワード / Mật khẩu</label>
+      <input type="password" id="login-pass" placeholder="パスワード"
+        style="width:100%;font-size:13px;padding:8px 10px;border:0.5px solid var(--bdr2);
+        border-radius:var(--r);background:var(--sur);color:var(--txt);box-sizing:border-box"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="login-err" style="font-size:12px;color:#dc2626;margin-bottom:12px;display:none;
+      background:#fef2f2;border-radius:var(--r);padding:6px 10px"></div>
+    <button onclick="doLogin()" id="login-btn"
+      style="width:100%;padding:10px;background:var(--bl);color:#fff;border:none;
+      border-radius:var(--r);font-size:14px;font-weight:500;cursor:pointer">
+      ログイン / Đăng nhập
+    </button>
+  </div>
+</div>
+
 <header class="hdr">
   <div class="logo">✂ <span id="logo-txt">受注管理</span></div>
   <nav class="nav">
@@ -622,30 +654,62 @@ button,input,select,textarea{font-family:inherit}
 
 <script src="https://unpkg.com/firebase@8.10.1/firebase-app.js"></script>
 <script src="https://unpkg.com/firebase@8.10.1/firebase-database.js"></script>
+<script src="https://unpkg.com/firebase@8.10.1/firebase-auth.js"></script>
+<script src="https://unpkg.com/firebase@8.10.1/firebase-auth.js"></script>
 <script>
 // Firebase compat SDK loaded above
 
 // ============================================================
 // パスワード認証
 // ============================================================
-const ADMIN_PASS = null;      // セン管理者：パスワードなし（日本語側）
-const MEMBER_PASS = 'at2024'; // ATメンバー：要パスワード
-const SESS_KEY = 'animeAuth';
+// ============================================================
+// Firebase Authentication
+// ============================================================
+const auth = firebase.auth();
 
-function checkAuth(){
-  // すでに認証済み（セッション内）
-  if(sessionStorage.getItem(SESS_KEY)==='ok') return true;
-  // 言語がviの場合はパスワード必須
-  const lang=localStorage.getItem('animeLang')||'ja';
-  if(lang!=='vi') return true; // 日本語側は認証不要
-  const pw=prompt('パスワードを入力してください / Nhập mật khẩu:');
-  if(pw===MEMBER_PASS){
-    sessionStorage.setItem(SESS_KEY,'ok');
-    return true;
-  }
-  alert('パスワードが違います / Mật khẩu không đúng');
-  return false;
+// ATメンバーのメールアドレス（ベトナム語モードで使用）
+const VI_EMAIL = 'ngocnguyen@alpha-technime.com';
+
+function showLoginScreen(){
+  document.getElementById('login-screen').style.display='flex';
+  document.querySelector('.hdr').style.visibility='hidden';
+  document.querySelector('.main').style.visibility='hidden';
 }
+function hideLoginScreen(){
+  document.getElementById('login-screen').style.display='none';
+  document.querySelector('.hdr').style.visibility='visible';
+  document.querySelector('.main').style.visibility='visible';
+}
+
+async function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const err   = document.getElementById('login-err');
+  const btn   = document.getElementById('login-btn');
+  if(!email||!pass){
+    err.textContent='メールアドレスとパスワードを入力してください / Vui lòng nhập email và mật khẩu';
+    err.style.display='block'; return;
+  }
+  btn.textContent='ログイン中... / Đang đăng nhập...';
+  btn.disabled=true;
+  err.style.display='none';
+  try{
+    await auth.signInWithEmailAndPassword(email, pass);
+    // onAuthStateChangedが自動的に処理
+  } catch(e){
+    let msg='メールアドレスまたはパスワードが違います / Email hoặc mật khẩu không đúng';
+    err.textContent=msg;
+    err.style.display='block';
+    btn.textContent='ログイン / Đăng nhập';
+    btn.disabled=false;
+  }
+}
+window.doLogin=doLogin;
+
+function doLogout(){
+  auth.signOut();
+}
+window.doLogout=doLogout;
 
 // ============================================================
 // Firebase 設定
@@ -863,15 +927,6 @@ function tProc(p){ return currentLang==='vi'?(PROC_VN[p]||p):p; }
 // 言語切替
 // ============================================================
 function selectLang(lang){
-  // VN選択時はパスワードチェック
-  if(lang==='vi' && sessionStorage.getItem(SESS_KEY)!=='ok'){
-    const pw=prompt('パスワードを入力してください / Nhập mật khẩu:');
-    if(pw!==MEMBER_PASS){
-      alert('パスワードが違います / Mật khẩu không đúng');
-      return;
-    }
-    sessionStorage.setItem(SESS_KEY,'ok');
-  }
   currentLang=lang;
   localStorage.setItem('animeLang',lang);
   applyLang();
@@ -2253,18 +2308,28 @@ function renderSearchView(){
     const allCuts=[];
     orders2.forEach(o=>{
       const cutsArr=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
-      // cutsRawがある場合はparseGroupsでグループラベルを使用（兼用カットを正しく表示）
-      if(o.cutsRaw){
-        const groups=parseGroups(o.cutsRaw);
+      // cutsRaw（またはcutsRawCache）がある場合はparseGroupsでグループラベルを使用（兼用カットを正しく表示）
+      const rawStr = o.cutsRaw || (cutsRawCache&&cutsRawCache[o.id]) || '';
+      if(rawStr){
+        const groups=parseGroups(rawStr);
         groups.forEach(g=>{
           // グループ内いずれかのIDに対応するcutsの完了状態を参照
-          const matched=cutsArr.filter(c=>g.ids.includes(String(c.id).toUpperCase())||g.ids.includes(String(c.id)));
+          const matched=cutsArr.filter(c=>g.ids.some(gid=>String(c.id).toUpperCase()===gid.toUpperCase()||String(c.id)===gid));
           const done=matched.length>0&&matched.every(c=>c.done);
           const date=matched.length>0&&matched[0].date?matched[0].date:'';
           allCuts.push({c:{id:g.label, done, date}, oid:o.id});
         });
       } else {
-        cutsArr.forEach(c=>allCuts.push({c, oid:o.id}));
+        // cutsRawがなくても、cuts内のIDにハイフン/アンダースコアが含まれる場合は兼用カットとして表示
+        // 同じラベルの重複を防ぐためにグループ化
+        const seen={};
+        cutsArr.forEach(c=>{
+          const rawId=String(c.id);
+          if(!seen[rawId]){
+            seen[rawId]=true;
+            allCuts.push({c, oid:o.id});
+          }
+        });
       }
     });
     if(!allCuts.length) return; // カット未登録の工程は非表示
@@ -2702,12 +2767,46 @@ window.calcAmt=calcAmt; window.updLimit=updLimit;
 // script はbody末尾なのでDOMは確実に存在する
 // Firebaseも上のscriptタグで読み込み済み
 applyLang();
-if(!checkAuth()){
-  currentLang='ja';
-  localStorage.setItem('animeLang','ja');
-  applyLang();
-}
-loadAll();
+
+// Firebase Auth 状態監視
+showLoginScreen();
+auth.onAuthStateChanged(function(user){
+  if(user){
+    // ログイン済み
+    hideLoginScreen();
+    // ATメンバー（ngoc）はベトナム語に自動切替
+    if(user.email===VI_EMAIL){
+      currentLang='vi';
+      localStorage.setItem('animeLang','vi');
+      applyLang();
+    }
+    // ヘッダーにユーザー情報とログアウトボタンを表示
+    const hdrR = document.querySelector('.hdr-r');
+    if(hdrR && !document.getElementById('logout-btn')){
+      const lb = document.createElement('button');
+      lb.id='logout-btn';
+      lb.className='lbtn';
+      lb.style.fontSize='11px';
+      lb.textContent='⏏ ログアウト';
+      lb.onclick=doLogout;
+      hdrR.appendChild(lb);
+      const ui = document.createElement('span');
+      ui.id='user-info';
+      ui.style.cssText='font-size:11px;color:var(--txt3);margin-right:4px';
+      ui.textContent=user.email.split('@')[0];
+      hdrR.insertBefore(ui, lb);
+    }
+    loadAll();
+  } else {
+    // 未ログイン
+    showLoginScreen();
+    // ログアウトボタンを削除
+    const lb=document.getElementById('logout-btn');
+    const ui=document.getElementById('user-info');
+    if(lb) lb.remove();
+    if(ui) ui.remove();
+  }
+});
 </script>
 </body>
 </html>
