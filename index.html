@@ -826,6 +826,7 @@ ja:{
   loadMsg:'データ読込中...', loadDone:'件読み込みました',
   confirmDel:'を削除しますか？', confirmDelFull:'を削除しますか？\nこの操作は取り消せません。',
   infoCustomer:'顧客・担当', infoDate:'受注日 / 納期',
+  infoProc:'作業工程',
   infoQtyUp:'数量・受注単価', infoAp:'発注単価（AT）',
   tabSearch:'🔍 検索',
   svCutSearch:'✂ カット番号で検索', svTitleSearch:'📋 タイトル・話数別カット一覧',
@@ -891,6 +892,7 @@ vi:{
   loadMsg:'Đang tải dữ liệu...', loadDone:' đơn hàng',
   confirmDel:'Xóa？', confirmDelFull:' — Xóa vĩnh viễn？',
   infoCustomer:'Khách hàng・Phụ trách', infoDate:'Ngày đặt / Hạn giao',
+  infoProc:'Công đoạn',
   infoQtyUp:'Số lượng・Đơn giá nhận', infoAp:'Đơn giá phát（AT）',
   tabSearch:'🔍 Tìm kiếm',
   svCutSearch:'✂ Tìm số cảnh', svTitleSearch:'📋 Danh sách cảnh theo tác phẩm・tập số',
@@ -1558,6 +1560,7 @@ function showDetail(id){
   document.getElementById('d-info').innerHTML=`
     <div class="ir"><div class="ik">${t('infoCustomer')}</div><div class="iv">${o.customer||'-'} / ${o.contact||'-'}</div></div>
     <div class="ir"><div class="ik">${t('infoDate')}</div><div class="iv">${o.orderDate||'-'} / ${o.dueDate||'-'}</div></div>
+    <div class="ir"><div class="ik">${t('infoProc')}</div><div class="iv">${tProc(o.process||'-')}</div></div>
     <div class="ir"><div class="ik">${t('infoQtyUp')}</div><div class="iv">${o.qty}${currentLang==='vi'?' cảnh':'カット'} × ¥${fmt(o.unitPrice)}</div></div>
     <div class="ir"><div class="ik">${t('infoAp')}</div><div class="iv">¥${fmt(o.atUnitPrice)}</div></div>
     ${o.note?`<div class="ir" style="grid-column:span 2"><div class="ik">${t('slNote')}</div><div class="iv">${o.note}</div></div>`:''}`;
