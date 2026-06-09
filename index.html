@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.5</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.4</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -1781,7 +1781,8 @@ async function deleteCut(cid){
     await fbSet(`/cutsRaw/${o.id}`, newRaw);
   }
   await saveCutsToFb(o);
-  renderCuts(o); autoStatus(o); updateSumCard(o);
+  // Firebaseから最新データを再取得して再描画
+  showDetail(o.id);
   showToast('削除しました');
 }
 async function deleteCutGroup(ids){
@@ -1808,7 +1809,8 @@ async function deleteCutGroup(ids){
     await fbSet(`/cutsRaw/${o.id}`, newRaw);
   }
   await saveCutsToFb(o);
-  renderCuts(o); autoStatus(o); updateSumCard(o);
+  // Firebaseから最新データを再取得して再描画
+  showDetail(o.id);
   showToast('削除しました');
 }
 function previewAddCuts(){
@@ -2023,7 +2025,7 @@ function resetForm(){
   ['f-cust','f-ct','f-ttl','f-abbr','f-ep','f-qty','f-up','f-ap',
    'f-tex','f-tin','f-at','f-mg','f-mp','f-cuts','f-note'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('f-proc').value='LO';
-  document.getElementById('abbr-auto').style.display='none';
+  (document.getElementById('abbr-auto')||{style:{}}).style.display='none';
   (document.getElementById('cut-preview')||{textContent:''}).textContent='';
   (document.getElementById('cut-limit')||{textContent:''}).textContent='';
 }
@@ -2104,10 +2106,7 @@ async function saveOrder(){
 
 function editOrder(id){
   const oid=id||currentId;
-  orders=window.orders;
-  const o=orders.find(x=>x.id===oid);
-  console.log('[editOrder] oid=',oid,'o=',o?o.id:'NOT FOUND');
-  if(!o) return;
+  const o=orders.find(x=>x.id===oid); if(!o) return;
   editingId=window.editingId=oid;
   (document.getElementById('form-ttl')||{textContent:''}).textContent=t('formEdit');
   document.getElementById('btn-del-form').style.display='inline-flex';
@@ -2132,7 +2131,7 @@ function editOrder(id){
     document.getElementById('f-cuts').value=cutsArr.map(c=>c.id).join(', ');
   }
   document.getElementById('f-note').value=o.note||'';
-  document.getElementById('abbr-auto').style.display='none';
+  (document.getElementById('abbr-auto')||{style:{}}).style.display='none';
   calcAmt(); updLimit(); prevPreview();
   showView('new');
 }
