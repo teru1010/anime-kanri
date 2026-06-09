@@ -433,7 +433,7 @@ button,input,select,textarea{font-family:inherit}
             <div class="cbox-lbl">✂ <span id="cbox-lbl-txt">カット番号を一括入力</span></div>
             <div class="cbox-hint" id="cbox-hint">カンマ区切り：C001, C002　／　連番（チルダ）：001~100<br>兼用カット（ハイフンまたは_）：243-247=2件, 278-285-295=3件</div>
             <div class="cbox-row">
-              <input type="text" id="f-cuts" placeholder="例：C001~C020, 243-247, 278-285-295">
+              <input type="text" id="f-cuts" placeholder="例：C001~C020, 243-247, 278-285-295" oninput="prevPreview()">
               <span class="climit" id="cut-limit"></span>
             </div>
             <div id="cut-preview" style="margin-top:6px;font-size:12px;color:var(--bl)"></div>
