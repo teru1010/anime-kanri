@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.1</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.2</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -1774,8 +1774,9 @@ async function deleteCut(cid){
     cutsRawCache[o.id]=newRaw;
     await fbSet(`/cutsRaw/${o.id}`, newRaw);
   }
-  renderCuts(o); autoStatus(o); updateSumCard(o);
   await saveCutsToFb(o);
+  // Firebaseから最新データを再取得して再描画
+  showDetail(o.id);
   showToast('削除しました');
 }
 async function deleteCutGroup(ids){
@@ -1800,8 +1801,9 @@ async function deleteCutGroup(ids){
     cutsRawCache[o.id]=newRaw;
     await fbSet(`/cutsRaw/${o.id}`, newRaw);
   }
-  renderCuts(o); autoStatus(o); updateSumCard(o);
   await saveCutsToFb(o);
+  // Firebaseから最新データを再取得して再描画
+  showDetail(o.id);
   showToast('削除しました');
 }
 function previewAddCuts(){
