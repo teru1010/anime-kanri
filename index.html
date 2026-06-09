@@ -1537,7 +1537,7 @@ function clearSearch(){
 // 詳細
 // ============================================================
 function showDetail(id){
-  currentId=id;
+  currentId=window.currentId=id;
   // 編集モードをリセット
   window._detailEditMode=false;
   const form=document.getElementById('detail-edit-form');
@@ -1700,7 +1700,7 @@ async function ccAct(el){
       }
     }
     if(!ids||!ids.length) return;
-    currentId=oid;
+    currentId=window.currentId=oid;
     if(action==='toggle') await toggleGroup(ids);
     else await deleteCutGroup(ids);
   } else if(action==='togglesingle'){
@@ -1724,7 +1724,7 @@ async function deleteCutGroupKey(orderId,gkey){
 }
 
 async function toggleGroup(ids){
-  const o=orders.find(x=>x.id===currentId); if(!o) return;
+  const o=orders.find(x=>x.id===(currentId||window.currentId)); if(!o) return;
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   const gc=ids.map(id=>(o.cuts||[]).find(c=>String(c.id)===String(id))).filter(Boolean);
   const allDone=gc.length>0&&gc.every(c=>c.done);
@@ -1737,7 +1737,7 @@ async function toggleGroup(ids){
   await saveCutsToFb(o);
 }
 async function toggleCut(cid){
-  const o=orders.find(x=>x.id===currentId); if(!o) return;
+  const o=orders.find(x=>x.id===(currentId||window.currentId)); if(!o) return;
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   const c=o.cuts.find(x=>String(x.id)===String(cid)); if(!c) return;
   const cutDate2=o.deliveryDate||today();
@@ -1749,7 +1749,7 @@ async function toggleCut(cid){
   await saveCutsToFb(o);
 }
 async function markAll(){
-  const o=orders.find(x=>x.id===currentId); if(!o) return;
+  const o=orders.find(x=>x.id===(currentId||window.currentId)); if(!o) return;
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   if(o.cuts.length===0) return;
   const allDone=o.cuts.every(c=>c.done);
@@ -1760,7 +1760,7 @@ async function markAll(){
   showToast(t('saved'));
 }
 async function deleteCut(cid){
-  const o=orders.find(x=>x.id===currentId); if(!o) return;
+  const o=orders.find(x=>x.id===(currentId||window.currentId)); if(!o) return;
   if(!confirm('カット「'+cid+'」を削除しますか？')) return;
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   o.cuts=o.cuts.filter(c=>String(c.id)!==String(cid));
@@ -1779,7 +1779,8 @@ async function deleteCut(cid){
   showToast('削除しました');
 }
 async function deleteCutGroup(ids){
-  const o=orders.find(x=>x.id===currentId);
+  const _cid=currentId||window.currentId;
+  const o=orders.find(x=>x.id===_cid);
   console.log('[deleteCutGroup] currentId=',currentId,'o=',o?o.id:'NOT FOUND','ids=',ids);
   if(!o) return;
   if(!confirm('カット「'+ids.join('-')+'」を削除しますか？')) return;
