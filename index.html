@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.7.0</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.7.1</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -471,6 +471,10 @@ button,input,select,textarea{font-family:inherit}
         <option value="deliveryMonth" id="go-del">納入月</option>
         <option value="title" id="go-title">タイトル</option>
         <option value="customer" id="go-cust">顧客</option>
+      </select>
+      <select id="grp-month-filter" onchange="renderGroup()"
+        style="display:none;font-size:13px;padding:6px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
+        <option value="">すべての月</option>
       </select>
       <select id="grp-title-filter" onchange="onTitleFilterChange()"
         style="display:none;font-size:13px;padding:6px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
@@ -1312,7 +1316,7 @@ function makeCard(o){
       <span>${t('qty')} <b>${o.qty}${currentLang==='vi'?' cảnh':'カット'}</b></span>
       <span>受注単価 <b>¥${fmt(o.unitPrice)}</b></span>
       <span>発注単価 <b>¥${fmt(o.atUnitPrice)}</b></span>
-      <span>受注・税込 <b>¥${fmt(o.totalPriceIn)}</b></span>
+      <span style="white-space:nowrap">受注・税込 <b>¥${fmt(o.totalPriceIn)}</b></span>
       <span>発注 <b>¥${fmt(o.atTotalPrice)}</b></span>
       <span>${t('dueLabel')} <b>${o.dueDate||'-'}</b></span>
       ${dueBadge(o.dueDate,st)}
@@ -1333,10 +1337,7 @@ function makeCard(o){
       <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
     </div>
     <div class="acts" onclick="event.stopPropagation()" style="flex-wrap:wrap">
-      <label onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;border-radius:var(--r);background:${o.dailyReport?'#dcfce7':'var(--sur2)'};border:0.5px solid ${o.dailyReport?'#86efac':'var(--bdr2)'};color:${o.dailyReport?'#166534':'var(--txt2)'}">
-        <input type="checkbox" ${o.dailyReport?'checked':''} onchange="toggleDailyReport('${o.id}',this.checked)" style="cursor:pointer">
-        ${t('dailyReport')}
-      </label>
+      ${(o.title==='踊る千年家族'&&(String(o.episode)==='6'||String(o.episode)==='9'))?`<label onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;border-radius:var(--r);background:${o.dailyReport?'#dcfce7':'var(--sur2)'};border:0.5px solid ${o.dailyReport?'#86efac':'var(--bdr2)'};color:${o.dailyReport?'#166534':'var(--txt2)'}"><input type="checkbox" ${o.dailyReport?'checked':''} onchange="toggleDailyReport('${o.id}',this.checked)" style="cursor:pointer">${t('dailyReport')}</label>`:''}
       <button class="btn sm" data-action="detail" data-oid="${o.id}" onclick="event.stopPropagation();cardAct(this)">✂ ${t('cutProgTitle').replace('✂ ','')}</button>
       <button class="btn sm" data-action="edit" data-oid="${o.id}" onclick="event.stopPropagation();cardAct(this)">${t('btnEdit')}</button>
       ${debugMode?(function(){
@@ -2205,6 +2206,12 @@ function renderGroup(){
     :flt?orders.filter(o=>getStatus(o)===flt):[...orders];
   if(selectedTitle) src=src.filter(o=>o.title===selectedTitle);
   if(selectedEp) src=src.filter(o=>String(o.episode)===String(selectedEp));
+  const monthFilter=document.getElementById('grp-month-filter');
+  const selectedMonth=monthFilter?monthFilter.value:'';
+  if(selectedMonth){
+    const dateKey=by==='orderMonth'?'orderDate':by==='invoiceMonth'?'invoiceDate':'deliveryDate';
+    src=src.filter(o=>(o[dateKey]||'').startsWith(selectedMonth));
+  }
   const keyOf=o=>{
     if(by==='all') return t('goAll');
     if(by==='orderMonth'){
@@ -2284,8 +2291,25 @@ function onTitleFilterChange(){
 function onGrpByChange(){
   const by=document.getElementById('grp-by').value;
   const tf=document.getElementById('grp-title-filter');
+  const mf=document.getElementById('grp-month-filter');
+  const isMonth=(by==='orderMonth'||by==='invoiceMonth'||by==='deliveryMonth');
+  // 月フィルター
+  if(isMonth&&mf){
+    const dateKey=by==='orderMonth'?'orderDate':by==='invoiceMonth'?'invoiceDate':'deliveryDate';
+    const months=[...new Set(orders.map(o=>o[dateKey]?o[dateKey].slice(0,7):'').filter(Boolean))].sort();
+    const allLbl=currentLang==='vi'?'Tất cả tháng':'すべての月';
+    mf.innerHTML='<option value="">'+allLbl+'</option>'+
+      months.map(m=>{
+        if(currentLang==='vi'){const[yr,mo]=m.split('-');return`<option value="${m}">Tháng ${parseInt(mo)} năm ${yr}</option>`;}
+        return`<option value="${m}">${m.replace('-','年')}月</option>`;
+      }).join('');
+    mf.style.display='block';
+  } else if(mf){
+    mf.style.display='none';
+    mf.value='';
+  }
+  // タイトルフィルター
   if(by==='title'){
-    // タイトル一覧をプルダウンに設定
     const titles=[...new Set(orders.map(o=>o.title).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
     tf.innerHTML='<option value="">すべてのタイトル</option>'+
       titles.map(t=>`<option value="${t}">${t}</option>`).join('');
@@ -2524,37 +2548,38 @@ function printGroup(){
   const keys=Object.keys(groups).sort((a,b)=>sdir==='desc'?b.localeCompare(a,'ja'):a.localeCompare(b,'ja'));
   let gIn=0,gAt=0;
   const rangeStr='';
+  const isVi=currentLang==='vi';
+  const pTitle=isVi?'Danh sách đặt hàng sản xuất anime':'アニメ制作受注一覧';
+  const pDate=isVi?'Ngày in：':'印刷日：';
+  const pH=['タイトル','話数','工程','顧客','担当','受注日','納期','数量','受注(税込)','発注','状態'];
+  const pHv=['Tên tác phẩm','Tập','Công đoạn','Khách hàng','Phụ trách','Ngày đặt','Hạn giao','Số cảnh','Đặt hàng(VAT)','Phát lệnh','Trạng thái'];
+  const ph=isVi?pHv:pH;
+  const epLbl=o=>o.episode?(isVi?'Tập '+o.episode:'第'+o.episode+'話'):'-';
+  const stLbl=o=>isVi?tSt(getStatus(o)):getStatus(o);
   let html=`<div style="font-family:sans-serif;padding:1rem">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
-      <h1 style="font-size:16px;font-weight:600">アニメ制作受注一覧${rangeStr}</h1>
-      <span style="font-size:12px;color:#666">印刷日：${today()}</span>
+      <h1 style="font-size:16px;font-weight:600">${pTitle}${rangeStr}</h1>
+      <span style="font-size:12px;color:#666">${pDate}${today()}</span>
     </div>`;
   keys.forEach(k=>{
     const items=groups[k];
     const tIn=items.reduce((s,o)=>s+(Number(o.totalPriceIn)||0),0);
     const tAt=items.reduce((s,o)=>s+(Number(o.atTotalPrice)||0),0);
     const tMg=tIn-tAt; gIn+=tIn; gAt+=tAt;
+    const subtotalLbl=isVi?'Tổng phụ':'小計';
+    const orderLbl=isVi?'Đặt':'受注';
+    const atLbl=isVi?'Phát':'発注';
     html+=`<div style="margin-bottom:1.2rem">
       <div style="font-size:13px;font-weight:600;padding:5px 8px;background:#f0f0f0;border-left:4px solid #0060E0;margin-bottom:4px">
-        ${k}（${items.length}件　受注¥${fmt(tIn)}　発注¥${fmt(tAt)}）</div>
+        ${k}（${items.length}${isVi?'đơn':'件'}　${orderLbl}¥${fmt(tIn)}　${atLbl}¥${fmt(tAt)}）</div>
       <table style="width:100%;border-collapse:collapse;font-size:11px">
         <thead><tr style="background:#c8dcf4">
-          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">タイトル</th>
-          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">話数</th>
-          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">工程</th>
-          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">顧客</th>
-          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">担当</th>
-          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">受注日</th>
-          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">納期</th>
-          <th style="padding:4px 6px;text-align:right;border:0.5px solid #90B0D8">数量</th>
-          <th style="padding:4px 6px;text-align:right;border:0.5px solid #90B0D8">受注(税込)</th>
-          <th style="padding:4px 6px;text-align:right;border:0.5px solid #90B0D8">発注</th>
-          <th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">状態</th>
+          ${ph.map(h=>`<th style="padding:4px 6px;text-align:left;border:0.5px solid #90B0D8">${h}</th>`).join('')}
         </tr></thead><tbody>
         ${items.map((o,i)=>`<tr style="${i%2===1?'background:#f8f8f8':''}">
           <td style="padding:4px 6px;border:0.5px solid #ccc">${o.title}${o.abbr?`(${o.abbr})`:''}</td>
-          <td style="padding:4px 6px;border:0.5px solid #ccc">${o.episode?`第${o.episode}話`:'-'}</td>
-          <td style="padding:4px 6px;border:0.5px solid #ccc">${o.process}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc">${epLbl(o)}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc">${tProc(o.process)}</td>
           <td style="padding:4px 6px;border:0.5px solid #ccc">${o.customer||'-'}</td>
           <td style="padding:4px 6px;border:0.5px solid #ccc">${o.contact||'-'}</td>
           <td style="padding:4px 6px;border:0.5px solid #ccc">${o.orderDate||'-'}</td>
@@ -2562,7 +2587,7 @@ function printGroup(){
           <td style="padding:4px 6px;border:0.5px solid #ccc;text-align:right">${o.qty}</td>
           <td style="padding:4px 6px;border:0.5px solid #ccc;text-align:right">¥${fmt(o.totalPriceIn)}</td>
           <td style="padding:4px 6px;border:0.5px solid #ccc;text-align:right">¥${fmt(o.atTotalPrice)}</td>
-          <td style="padding:4px 6px;border:0.5px solid #ccc">${getStatus(o)}</td>
+          <td style="padding:4px 6px;border:0.5px solid #ccc">${stLbl(o)}</td>
         </tr>`).join('')}
         <tr style="background:#c8dcf4;font-weight:600">
           <td colspan="8" style="padding:4px 6px;border:0.5px solid #90B0D8;text-align:right">小計</td>
