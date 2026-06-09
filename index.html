@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.7.1</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.7.2</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -446,6 +446,7 @@ button,input,select,textarea{font-family:inherit}
       <div class="ffoot">
         <button class="btn dng" id="btn-del-form" onclick="deleteFromForm()" style="display:none;margin-right:auto" id="btn-del-form-el">🗑 この受注を削除</button>
         <button class="btn" onclick="cancelForm()" id="btn-cancel">キャンセル</button>
+        <button class="btn" onclick="showView(window._fromView||'list',true)" style="margin-left:4px">← 戻る</button>
         <button class="btn pri" onclick="saveOrder()" id="btn-save">💾 保存</button>
       </div>
     </div>
@@ -1315,8 +1316,8 @@ function makeCard(o){
       <span>${t('work')} <b>${tProc(o.process)||'-'}</b></span>
       <span>${t('qty')} <b>${o.qty}${currentLang==='vi'?' cảnh':'カット'}</b></span>
       <span>受注単価 <b>¥${fmt(o.unitPrice)}</b></span>
-      <span>発注単価 <b>¥${fmt(o.atUnitPrice)}</b></span>
-      <span style="white-space:nowrap">受注・税込 <b>¥${fmt(o.totalPriceIn)}</b></span>
+      <span>発注単価 <b>¥${fmt(o.atUnitPrice)}</b></span>&nbsp;&nbsp;
+      <span style="white-space:nowrap">受注・税込 <b>¥${fmt(o.totalPriceIn)}</b></span>&nbsp;&nbsp;
       <span>発注 <b>¥${fmt(o.atTotalPrice)}</b></span>
       <span>${t('dueLabel')} <b>${o.dueDate||'-'}</b></span>
       ${dueBadge(o.dueDate,st)}
@@ -1385,7 +1386,15 @@ function parseCuts(str){
       ids.push(p.toUpperCase()); return;
     }
     if(p.indexOf('-')>=0||p.indexOf('_')>=0){
-      p.split(/[-_]/).forEach(pt=>{ pt=pt.trim(); if(pt) ids.push(pt.toUpperCase()); });
+      // 全パーツが純粋な数字のみの場合だけ兼用カットとして分割
+      // S50-002のような英字含む場合は単一IDとして扱う
+      const pts=p.split(/[-_]/).map(x=>x.trim()).filter(Boolean);
+      const allNumeric=pts.every(x=>/^\d+$/.test(x));
+      if(allNumeric){
+        pts.forEach(pt=>ids.push(pt.toUpperCase()));
+      } else {
+        ids.push(p.toUpperCase());
+      }
       return;
     }
     ids.push(p.toUpperCase());
@@ -1416,8 +1425,15 @@ function parseGroups(str){
       groups.push({label:p.toUpperCase(),ids:[p.toUpperCase()]}); return;
     }
     if(p.indexOf('-')>=0||p.indexOf('_')>=0){
-      const pts=p.split(/[-_]/).map(x=>x.trim()).filter(Boolean).map(x=>x.toUpperCase());
-      if(pts.length>0) groups.push({label:p.toUpperCase(),ids:pts});
+      const pts=p.split(/[-_]/).map(x=>x.trim()).filter(Boolean);
+      const allNumeric=pts.every(x=>/^\d+$/.test(x));
+      if(allNumeric){
+        // 純粋な数字のみ→兼用カット（複数ID）
+        groups.push({label:p.toUpperCase(),ids:pts.map(x=>x.toUpperCase())});
+      } else {
+        // 英字含む→単一ID（S50-002など）
+        groups.push({label:p.toUpperCase(),ids:[p.toUpperCase()]});
+      }
       return;
     }
     groups.push({label:p.toUpperCase(),ids:[p.toUpperCase()]});
@@ -2244,6 +2260,12 @@ function renderGroup(){
   const el=document.getElementById('grp-body');
   if(!Object.keys(groups).length){ el.innerHTML=`<div class="empty"><i>📂</i>${t('emptyGrp')}</div>`; return; }
   const keys=Object.keys(groups).sort((a,b)=>{
+    // タイトルモードで古い順/新しい順の場合はグループ内最初の受注日で比較
+    if(by==='title'&&(sdir==='asc'||sdir==='desc')){
+      const da=(groups[a][0]&&groups[a][0].orderDate)||'9999';
+      const db=(groups[b][0]&&groups[b][0].orderDate)||'9999';
+      return sdir==='desc'?db.localeCompare(da):da.localeCompare(db);
+    }
     // 「第N話」形式の場合は数値でソート
     const epA=a.match(/第(\d+)話/), epB=b.match(/第(\d+)話/);
     if(epA&&epB){
