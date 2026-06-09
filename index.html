@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.2</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.3</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -1675,9 +1675,10 @@ function cardAct(el){
   if(action==='detail'){
     showDetail(oid);
   } else if(action==='edit'){
-    // ローカル変数とwindowの両方に同期してからeditOrderを呼ぶ
     currentId=window.currentId=oid;
     editingId=window.editingId=oid;
+    // ordersをwindow.ordersに同期してからeditOrderを呼ぶ
+    orders=window.orders;
     editOrder(oid);
   }
 }
@@ -1760,6 +1761,7 @@ async function markAll(){
   showToast(t('saved'));
 }
 async function deleteCut(cid){
+  orders=window.orders;
   const o=orders.find(x=>x.id===(currentId||window.currentId)); if(!o) return;
   if(!confirm('カット「'+cid+'」を削除しますか？')) return;
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
@@ -1780,6 +1782,7 @@ async function deleteCut(cid){
   showToast('削除しました');
 }
 async function deleteCutGroup(ids){
+  orders=window.orders;
   const _cid=currentId||window.currentId;
   const o=orders.find(x=>x.id===_cid);
   console.log('[deleteCutGroup] currentId=',currentId,'o=',o?o.id:'NOT FOUND','ids=',ids);
