@@ -1274,7 +1274,7 @@ function showView(v, restoreScroll){
   if(v==='progress') renderProg();
   if(v==='group') renderGroup();
   if(v==='search') initSearchView();
-  if(v==='new'&&!editingId) resetForm();
+  if(v==='new'&&!(editingId||window.editingId)) resetForm();
   // カット進捗入力欄をクリア
   const cai=document.getElementById('cut-add-input');
   const cap=document.getElementById('cut-add-preview');
@@ -1766,6 +1766,16 @@ async function deleteCut(cid){
   if(!confirm('カット「'+cid+'」を削除しますか？')) return;
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   o.cuts=o.cuts.filter(c=>String(c.id)!==String(cid));
+  // cutsRawからも削除
+  const rawStr=o.cutsRaw||(cutsRawCache&&cutsRawCache[o.id])||'';
+  if(rawStr){
+    const newRaw=rawStr.split(',').map(s=>s.trim())
+      .filter(p=>p.toUpperCase()!==String(cid).toUpperCase())
+      .join(', ');
+    o.cutsRaw=newRaw;
+    cutsRawCache[o.id]=newRaw;
+    await fbSet(`/cutsRaw/${o.id}`, newRaw);
+  }
   renderCuts(o); autoStatus(o); updateSumCard(o);
   await saveCutsToFb(o);
   showToast('削除しました');
@@ -1776,9 +1786,10 @@ async function deleteCutGroup(ids){
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   o.cuts=o.cuts.filter(c=>!ids.map(String).includes(String(c.id)));
   // cutsRawからも削除
-  if(o.cutsRaw){
-    const newRaw=o.cutsRaw.split(',').map(s=>s.trim())
-      .filter(p=>!ids.some(id=>p.toUpperCase().includes(id.toUpperCase())))
+  const rawStr=o.cutsRaw||(cutsRawCache&&cutsRawCache[o.id])||'';
+  if(rawStr){
+    const newRaw=rawStr.split(',').map(s=>s.trim())
+      .filter(p=>!ids.some(id=>p.toUpperCase().replace(/[-_]/g,'').includes(id.toUpperCase().replace(/[-_]/g,''))))
       .join(', ');
     o.cutsRaw=newRaw;
     cutsRawCache[o.id]=newRaw;
