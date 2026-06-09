@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.7.6</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.7.8</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -561,7 +561,7 @@ button,input,select,textarea{font-family:inherit}
   <!-- DETAIL -->
   <div class="view" id="view-detail">
     <div class="dhd">
-      <button class="back" onclick="showView(window._fromView||'list', true)" id="btn-back">← 戻る</button>
+      <button class="back" onclick="event.stopPropagation();showView(window._fromView||'list', true)" id="btn-back">← 戻る</button>
       <div style="flex:1"></div>
       <div id="d-due"></div>
       <div id="d-pill"></div>
@@ -1671,8 +1671,7 @@ function renderCuts(o){
       const priceHtml=grpPrice
         ?'<span class="cc-price" onclick="event.stopPropagation()"><input type="number" value="'+grpPrice+'" min="0" style="width:56px;font-size:10px;padding:1px 4px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation()"><span onclick="clearCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" style="font-size:9px;color:#C07010;cursor:pointer;margin-left:1px" title="単価削除">✕</span></span>'
         :'<span class="cc-add-price" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation();openCutPrice(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;padding:1px 4px;border:0.5px dashed var(--bdr2);border-radius:3px;white-space:nowrap">＋単価</span>';
-
-
+      return '<div class="cc'+dnCls+'">'+
         '<div class="ck">'+svg+'</div>'+
         '<span class="cn" style="font-size:'+(g.label.length>6?'10':'11')+'px">'+g.label+'</span>'+
         (date?'<span class="cd">'+date.slice(5)+'</span>':'')+
@@ -1696,8 +1695,7 @@ function renderCuts(o){
       const sPriceHtml=singlePrice
         ?'<span class="cc-price" onclick="event.stopPropagation()"><input type="number" value="'+singlePrice+'" min="0" style="width:56px;font-size:10px;padding:1px 4px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" onclick="event.stopPropagation()"><span onclick="clearCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" style="font-size:9px;color:#C07010;cursor:pointer;margin-left:1px" title="単価削除">✕</span></span>'
         :'<span class="cc-add-price" data-oid="'+currentId+'" data-cid="'+c.id+'" onclick="event.stopPropagation();openCutPriceSingle(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;padding:1px 4px;border:0.5px dashed var(--bdr2);border-radius:3px;white-space:nowrap">＋単価</span>';
-
-
+      return '<div class="cc'+dnCls+'">'+
         '<div class="ck"><svg width="8" height="7" viewBox="0 0 8 7" fill="none" stroke="#fff" stroke-width="1.5"><path d="M1 3.5l2 2 4-4"/></svg></div>'+
         '<span class="cn">'+String(c.id)+'</span>'+
         (c.done&&c.date?'<span class="cd">'+c.date.slice(5)+'</span>':'')+
@@ -2283,12 +2281,19 @@ function renderGroup(){
     return o.customer||'-';
   };
   const groups={};
+  // allモードの場合はsrc自体をorderDateでソートしてからグループ化
+  if(by==='all'){
+    src.sort((a,b)=>{
+      const da=a.orderDate||'9999', db=b.orderDate||'9999';
+      return sdir==='desc'?db.localeCompare(da):da.localeCompare(db);
+    });
+  }
   src.forEach(o=>{ const k=keyOf(o); if(!groups[k]) groups[k]=[]; groups[k].push(o); });
   const el=document.getElementById('grp-body');
   if(!Object.keys(groups).length){ el.innerHTML=`<div class="empty"><i>📂</i>${t('emptyGrp')}</div>`; return; }
   const keys=Object.keys(groups).sort((a,b)=>{
-    // タイトルモードで古い順/新しい順の場合はグループ内最初の受注日で比較
-    if(by==='title'&&(sdir==='asc'||sdir==='desc')){
+    // all/titleモードで古い順/新しい順の場合はグループ内最初の受注日で比較
+    if((by==='all'||by==='title')&&(sdir==='asc'||sdir==='desc')){
       const da=(groups[a][0]&&groups[a][0].orderDate)||'9999';
       const db=(groups[b][0]&&groups[b][0].orderDate)||'9999';
       return sdir==='desc'?db.localeCompare(da):da.localeCompare(db);
