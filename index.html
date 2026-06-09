@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.7</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.8</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -1773,11 +1773,11 @@ async function deleteCut(cid){
   // cutsRawからも削除（範囲指定～の中に含まれるIDにも対応）
   const rawStr=o.cutsRaw||(cutsRawCache&&cutsRawCache[o.id])||'';
   if(rawStr){
-    // 削除後のcutsのIDリスト
-    const remainIds=o.cuts.map(c=>String(c.id));
-    // cutsRawをparseCutsで全展開してremainingのみで再構築
+    // 削除後のcutsのIDリスト（大文字で比較）
+    const remainIds=o.cuts.map(c=>String(c.id).toUpperCase());
+    // cutsRawをparseCutsで全展開して残存IDのみに絞り込み
     const allIds=parseCuts(rawStr);
-    const newIds=allIds.filter(id=>remainIds.includes(id));
+    const newIds=allIds.filter(id=>remainIds.includes(id.toUpperCase()));
     const newRaw=newIds.join(', ');
     o.cutsRaw=newRaw;
     cutsRawCache[o.id]=newRaw;
