@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.8</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.7.0</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -785,6 +785,7 @@ ja:{
   tabList:'受注一覧', tabNew:'＋ 新規受注', tabProg:'カット進捗', tabGrp:'グループ表示',
   btnNew:'＋ 新規受注', btnRefresh:'↺ 更新', btnCancel:'キャンセル',
   btnSave:'💾 保存', btnDelForm:'🗑 この受注を削除', btnBack:'← 戻る',
+  dailyReport:'日報入力',
   btnDel:'🗑 削除', btnEdit:'✏ 編集', btnAllDone:'全完了', btnPrint:'🖨 印刷',
   formNew:'新規受注入力', formEdit:'受注編集',
   slWork:'作品情報', slAmt:'受注・発注金額（受注は税抜入力）',
@@ -850,6 +851,7 @@ vi:{
   tabList:'Danh sách', tabNew:'＋ Đặt mới', tabProg:'Tiến độ cảnh', tabGrp:'Nhóm',
   btnNew:'＋ Đặt mới', btnRefresh:'↺ Cập nhật', btnCancel:'Hủy',
   btnSave:'💾 Lưu', btnDelForm:'🗑 Xóa đơn này', btnBack:'← Quay lại',
+  dailyReport:'Nhật ký',
   btnDel:'🗑 Xóa', btnEdit:'✏ Sửa', btnAllDone:'Hoàn thành tất cả', btnPrint:'🖨 In',
   formNew:'Nhập đặt hàng mới', formEdit:'Chỉnh sửa đặt hàng',
   slWork:'Thông tin tác phẩm', slAmt:'Giá nhận & phát（chưa thuế）',
@@ -1331,6 +1333,10 @@ function makeCard(o){
       <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
     </div>
     <div class="acts" onclick="event.stopPropagation()" style="flex-wrap:wrap">
+      <label onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;border-radius:var(--r);background:${o.dailyReport?'#dcfce7':'var(--sur2)'};border:0.5px solid ${o.dailyReport?'#86efac':'var(--bdr2)'};color:${o.dailyReport?'#166534':'var(--txt2)'}">
+        <input type="checkbox" ${o.dailyReport?'checked':''} onchange="toggleDailyReport('${o.id}',this.checked)" style="cursor:pointer">
+        ${t('dailyReport')}
+      </label>
       <button class="btn sm" data-action="detail" data-oid="${o.id}" onclick="event.stopPropagation();cardAct(this)">✂ ${t('cutProgTitle').replace('✂ ','')}</button>
       <button class="btn sm" data-action="edit" data-oid="${o.id}" onclick="event.stopPropagation();cardAct(this)">${t('btnEdit')}</button>
       ${debugMode?(function(){
@@ -1669,6 +1675,19 @@ function vAct(el){
   toggleVerified(vid, vtype);
 }
 // カード内ボタン処理
+// 日報入力チェックボックス
+async function toggleDailyReport(oid, checked){
+  orders=window.orders;
+  const o=orders.find(x=>x.id===oid); if(!o) return;
+  o.dailyReport=checked;
+  await fbUpdate('/orders/'+oid, {dailyReport:checked});
+  // カードのラベル色を即時更新
+  renderList();
+  const gv=document.getElementById('view-group');
+  if(gv&&gv.classList.contains('on')) renderGroup();
+}
+window.toggleDailyReport=toggleDailyReport;
+
 function cardAct(el){
   const action=el.dataset.action;
   const oid=el.dataset.oid;
