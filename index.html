@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.1</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -1543,8 +1543,8 @@ function showDetail(id){
   const form=document.getElementById('detail-edit-form');
   if(form) form.style.display='none';
   const o=orders.find(x=>x.id===id); if(!o) return;
-  // cutsRawCacheから最新のcutsRawを復元
-  if(cutsRawCache[id]) o.cutsRaw=cutsRawCache[id];
+  // cutsRawはorders配列から直接取得（cutsRawCacheで上書きしない）
+  if(!o.cutsRaw&&cutsRawCache[id]) o.cutsRaw=cutsRawCache[id];
   // cutsをArray正規化
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   const st=getStatus(o);
@@ -1591,8 +1591,6 @@ function showDetail(id){
 
 function renderCuts(o){
   if(!o) o=orders.find(x=>x.id===currentId); if(!o) return;
-  // cutsRawCacheから最新を取得
-  if(cutsRawCache[o.id]) o.cutsRaw=cutsRawCache[o.id];
   // cutsをArrayに正規化
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   const cuts=o.cuts;
@@ -1781,16 +1779,22 @@ async function deleteCut(cid){
   showToast('削除しました');
 }
 async function deleteCutGroup(ids){
-  const o=orders.find(x=>x.id===currentId); if(!o) return;
+  const o=orders.find(x=>x.id===currentId);
+  console.log('[deleteCutGroup] currentId=',currentId,'o=',o?o.id:'NOT FOUND','ids=',ids);
+  if(!o) return;
   if(!confirm('カット「'+ids.join('-')+'」を削除しますか？')) return;
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
+  console.log('[deleteCutGroup] cuts before=',o.cuts.map(c=>c.id));
   o.cuts=o.cuts.filter(c=>!ids.map(String).includes(String(c.id)));
+  console.log('[deleteCutGroup] cuts after=',o.cuts.map(c=>c.id));
   // cutsRawからも削除
   const rawStr=o.cutsRaw||(cutsRawCache&&cutsRawCache[o.id])||'';
+  console.log('[deleteCutGroup] rawStr=',rawStr);
   if(rawStr){
     const newRaw=rawStr.split(',').map(s=>s.trim())
       .filter(p=>!ids.some(id=>p.toUpperCase().replace(/[-_]/g,'').includes(id.toUpperCase().replace(/[-_]/g,''))))
       .join(', ');
+    console.log('[deleteCutGroup] newRaw=',newRaw);
     o.cutsRaw=newRaw;
     cutsRawCache[o.id]=newRaw;
     await fbSet(`/cutsRaw/${o.id}`, newRaw);
