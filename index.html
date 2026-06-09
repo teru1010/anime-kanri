@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.7.2</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.7.3</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -1637,7 +1637,7 @@ function renderCuts(o){
     // 昇順ソート：兼用カットは先頭カット番号の数値を基準に
     groups.sort((a,b)=>{
       // 先頭IDから数値部分を抽出
-      const numOf=id=>{const m=String(id).match(/\d+/);return m?parseInt(m[0]):0;};
+      const numOf=id=>{const m=String(id).match(/(\d+)(?!.*\d)/);return m?parseInt(m[0]):0;};
       return numOf(a.ids[0])-numOf(b.ids[0]);
     });
     cards=groups.map((g,gi)=>{
@@ -1652,10 +1652,17 @@ function renderCuts(o){
       const btnTxt=allDone?t('cutUndone'):t('cutDone');
       const delTxt=t('cutDel');
       const oid=currentId;
+      // 個別単価（グループ内最初のカットの単価を代表値として使用）
+      const grpPrice=gc.length>0&&gc[0].price?gc[0].price:'';
+      const priceHtml='<span class="cc-price" onclick="event.stopPropagation()" title="個別単価（空=受注単価）">'+
+        '<input type="number" placeholder="単価" value="'+grpPrice+'" min="0" style="width:52px;font-size:10px;padding:1px 3px;border:0.5px solid var(--bdr2);border-radius:3px;background:var(--sur);color:'+(grpPrice?'#C07010':'var(--txt3)')+';" '+
+        'onchange="setCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation()">'+ 
+        '</span>';
       return '<div class="cc'+dnCls+'">'+
         '<div class="ck">'+svg+'</div>'+
         '<span class="cn" style="font-size:'+(g.label.length>6?'10':'11')+'px">'+g.label+'</span>'+
         (date?'<span class="cd">'+date.slice(5)+'</span>':'')+
+        priceHtml+
         '<div class="cc-acts" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation()">'+
           '<span class="cc-act '+btnCls+'" data-action="toggle" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="ccAct(this)">'+btnTxt+'</span>'+
           '<span class="cc-act del-btn" data-action="del" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="ccAct(this)" title="削除">'+delTxt+'</span>'+
@@ -1671,10 +1678,16 @@ function renderCuts(o){
       const btnCls=c.done?'un-btn':'done-btn';
       const btnTxt=c.done?t('cutUndone'):t('cutDone');
       const delTxt=t('cutDel');
+      const singlePrice=c.price||'';
+      const sPriceHtml='<span class="cc-price" onclick="event.stopPropagation()" title="個別単価（空=受注単価）">'+
+        '<input type="number" placeholder="単価" value="'+singlePrice+'" min="0" style="width:52px;font-size:10px;padding:1px 3px;border:0.5px solid var(--bdr2);border-radius:3px;background:var(--sur);color:'+(singlePrice?'#C07010':'var(--txt3)')+';" '+
+        'onchange="setCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" onclick="event.stopPropagation()">'+ 
+        '</span>';
       return '<div class="cc'+dnCls+'">'+
         '<div class="ck"><svg width="8" height="7" viewBox="0 0 8 7" fill="none" stroke="#fff" stroke-width="1.5"><path d="M1 3.5l2 2 4-4"/></svg></div>'+
         '<span class="cn">'+String(c.id)+'</span>'+
         (c.done&&c.date?'<span class="cd">'+c.date.slice(5)+'</span>':'')+
+        sPriceHtml+
         '<div class="cc-acts" onclick="event.stopPropagation()">'+
           '<span class="cc-act '+btnCls+'" data-action="togglesingle" data-cid="'+c.id+'" data-oid="'+currentId+'" onclick="ccAct(this)">'+btnTxt+'</span>'+
           '<span class="cc-act del-btn" data-action="delsingle" data-cid="'+c.id+'" data-oid="'+currentId+'" onclick="ccAct(this)" title="削除">'+delTxt+'</span>'+
@@ -1983,7 +1996,7 @@ async function saveDetailEdit(){
 
 async function saveCutsToFb(o){
   const cutsObj={};
-  (o.cuts||[]).forEach((c,i)=>{ cutsObj[i]={id:String(c.id),done:c.done,date:c.date||''}; });
+  (o.cuts||[]).forEach((c,i)=>{ const e={id:String(c.id),done:c.done,date:c.date||''}; if(c.price) e.price=c.price; cutsObj[i]=e; });
   await fbUpdate(`/orders/${o.id}`,{cuts:cutsObj,status:o.status});
 }
 function autoStatus(o){
@@ -2847,6 +2860,30 @@ function svVerifyProc(proc,type){
   if(gv&&gv.classList.contains('on')) renderGroup();
   renderList();
 }
+// カット個別単価の設定
+async function setCutPrice(el){ const oid=el.dataset.oid; const gkey=el.dataset.gkey; const val=el.value;
+  orders=window.orders;
+  const o=orders.find(x=>x.id===oid); if(!o) return;
+  const ids=(window._cutGroups[oid]||{})[gkey]||[];
+  const price=val?parseFloat(val):null;
+  if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
+  ids.forEach(id=>{
+    const c=o.cuts.find(c=>String(c.id)===String(id));
+    if(c){ if(price) c.price=price; else delete c.price; }
+  });
+  await saveCutsToFb(o);
+}
+async function setCutPriceSingle(el){ const oid=el.dataset.oid; const cid=el.dataset.cid; const val=el.value;
+  orders=window.orders;
+  const o=orders.find(x=>x.id===oid); if(!o) return;
+  if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
+  const c=o.cuts.find(c=>String(c.id)===String(cid)); if(!c) return;
+  const price=val?parseFloat(val):null;
+  if(price) c.price=price; else delete c.price;
+  await saveCutsToFb(o);
+}
+window.setCutPrice=setCutPrice; window.setCutPriceSingle=setCutPriceSingle;
+
 function svCutClick(el){ showDetail(el.dataset.oid); }
 window.svCutClick=svCutClick; window.svToggleDebug=svToggleDebug; window.svVerifyAll=svVerifyAll; window.svClearVerify=svClearVerify; window.svVerifyProc=svVerifyProc; window.updateSvDebugBtnText=updateSvDebugBtnText;
 window.getSvData=getSvData; window.onSvTitleChange=onSvTitleChange; window.renderSearchView=renderSearchView; window.exportSearchView=exportSearchView; window.printSearchView=printSearchView;
