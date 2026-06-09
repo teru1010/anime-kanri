@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.4</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.6</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -1781,36 +1781,29 @@ async function deleteCut(cid){
     await fbSet(`/cutsRaw/${o.id}`, newRaw);
   }
   await saveCutsToFb(o);
-  // Firebaseから最新データを再取得して再描画
-  showDetail(o.id);
+  renderCuts(o); autoStatus(o); updateSumCard(o);
   showToast('削除しました');
 }
 async function deleteCutGroup(ids){
   orders=window.orders;
   const _cid=currentId||window.currentId;
   const o=orders.find(x=>x.id===_cid);
-  console.log('[deleteCutGroup] currentId=',currentId,'o=',o?o.id:'NOT FOUND','ids=',ids);
   if(!o) return;
   if(!confirm('カット「'+ids.join('-')+'」を削除しますか？')) return;
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
-  console.log('[deleteCutGroup] cuts before=',o.cuts.map(c=>c.id));
   o.cuts=o.cuts.filter(c=>!ids.map(String).includes(String(c.id)));
-  console.log('[deleteCutGroup] cuts after=',o.cuts.map(c=>c.id));
   // cutsRawからも削除
   const rawStr=o.cutsRaw||(cutsRawCache&&cutsRawCache[o.id])||'';
-  console.log('[deleteCutGroup] rawStr=',rawStr);
   if(rawStr){
     const newRaw=rawStr.split(',').map(s=>s.trim())
       .filter(p=>!ids.some(id=>p.toUpperCase().replace(/[-_]/g,'').includes(id.toUpperCase().replace(/[-_]/g,''))))
       .join(', ');
-    console.log('[deleteCutGroup] newRaw=',newRaw);
-    o.cutsRaw=newRaw;
+      o.cutsRaw=newRaw;
     cutsRawCache[o.id]=newRaw;
     await fbSet(`/cutsRaw/${o.id}`, newRaw);
   }
   await saveCutsToFb(o);
-  // Firebaseから最新データを再取得して再描画
-  showDetail(o.id);
+  renderCuts(o); autoStatus(o); updateSumCard(o);
   showToast('削除しました');
 }
 function previewAddCuts(){
