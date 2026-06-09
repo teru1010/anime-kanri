@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.7.8</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.0</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -1237,6 +1237,24 @@ function getStatus(o){
   return o.status||'受注済';
 }
 function pillCls(s){ return {受注済:'p-or',作業中:'p-wip',納品済:'p-dn',請求済:'p-iv'}[s]||'p-or'; }
+// 個別単価を考慮した受注合計を計算（個別単価が設定されているカットがある場合のみ）
+function calcPriceWithCutPrices(o){
+  const cuts=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
+  const hasCutPrice=cuts.some(c=>c.price);
+  if(!hasCutPrice||!cuts.length) return null;
+  const up=o.unitPrice||0;
+  const ap=o.atUnitPrice||0;
+  let tex=0, at=0;
+  cuts.forEach(c=>{
+    const cp=c.price||up;
+    const cap=ap&&up?Math.round(cp*(ap/up)):ap;
+    tex+=cp; at+=cap;
+  });
+  const tin=Math.round(tex*(1+TAX));
+  const mg=tin-at;
+  const mpct=tin>0?Math.round(mg/tin*1000)/10:null;
+  return {totalPriceEx:tex,totalPriceIn:tin,atTotalPrice:at,margin:mg,marginPct:mpct};
+}
 function progOf(o){
   const done=(o.cuts||[]).filter(c=>c.done).length;
   const total=Number(o.qty)||0;
@@ -1303,6 +1321,7 @@ function updateBadges(){
 function makeCard(o){
   const st=getStatus(o);
   const {done,total,pct}=progOf(o);
+  const cprice2=calcPriceWithCutPrices(o);
   const rawDisp=o.cutsRaw||'';
   const cutsArr2=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
   const doneCnt=cutsArr2.filter(c=>c.done).length;
@@ -1317,8 +1336,8 @@ function makeCard(o){
       <span>${t('qty')} <b>${o.qty}${currentLang==='vi'?' cảnh':'カット'}</b></span>
       <span>受注単価 <b>¥${fmt(o.unitPrice)}</b></span>
       <span>発注単価 <b>¥${fmt(o.atUnitPrice)}</b></span>&nbsp;&nbsp;
-      <span style="white-space:nowrap">受注・税込 <b>¥${fmt(o.totalPriceIn)}</b></span>&nbsp;&nbsp;
-      <span>発注 <b>¥${fmt(o.atTotalPrice)}</b></span>
+      <span style="white-space:nowrap">受注・税込 <b>¥${fmt(cprice2?cprice2.totalPriceIn:o.totalPriceIn)}</b>${cprice2?'<span style="font-size:10px;color:#C07010;font-weight:500">*</span>':''}</span>&nbsp;&nbsp;
+      <span>発注 <b>¥${fmt(cprice2?cprice2.atTotalPrice:o.atTotalPrice)}</b></span>
       <span>${t('dueLabel')} <b>${o.dueDate||'-'}</b></span>
       ${dueBadge(o.dueDate,st)}
       <span class="pill ${pillCls(st)}" style="text-align:center;justify-content:center">${tSt(st)}</span>
@@ -1334,13 +1353,14 @@ function makeCard(o){
         chips=grps.map(function(g){
           var gc=cutsArr2.filter(function(c){return g.ids.some(function(id){return id.toUpperCase()===String(c.id).toUpperCase();});});
           var isDone=gc.length>0&&gc.every(function(c){return c.done;});
-          return '<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:500;background:'+(isDone?'#E0ECFF':'var(--sur2)')+';color:'+(isDone?'#003A8C':'var(--txt2)')+';border:0.5px solid '+(isDone?'#80B0F0':'var(--bdr2)')+';white-space:nowrap">'+(isDone?'✓ ':'')+g.label+'</span>';
+          var hasGrpPrice=gc.length>0&&gc.some(function(c){return c.price;});
+          return '<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:500;background:'+(isDone?'#E0ECFF':'var(--sur2)')+';color:'+(isDone?'#003A8C':'var(--txt2)')+';border:0.5px solid '+(isDone?'#80B0F0':'var(--bdr2)')+';white-space:nowrap">'+(isDone?'✓ ':'')+g.label+(hasGrpPrice?'<sup style="color:#C07010;font-size:9px">＊</sup>':'')+'</span>';
         }).join('');
       } else if(cutsArr2.length>0){
         var sorted=[...cutsArr2].sort(function(a,b){return String(a.id).localeCompare(String(b.id),undefined,{numeric:true});});
         chips=sorted.map(function(c){
           var isDone=c.done;
-          return '<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:500;background:'+(isDone?'#E0ECFF':'var(--sur2)')+';color:'+(isDone?'#003A8C':'var(--txt2)')+';border:0.5px solid '+(isDone?'#80B0F0':'var(--bdr2)')+';white-space:nowrap">'+(isDone?'✓ ':'')+String(c.id)+'</span>';
+          return '<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:500;background:'+(isDone?'#E0ECFF':'var(--sur2)')+';color:'+(isDone?'#003A8C':'var(--txt2)')+';border:0.5px solid '+(isDone?'#80B0F0':'var(--bdr2)')+';white-space:nowrap">'+(isDone?'✓ ':'')+String(c.id)+(c.price?'<sup style="color:#C07010;font-size:9px">＊</sup>':'')+'</span>';
         }).join('');
       }
       if(!chips) return '';
@@ -1589,10 +1609,15 @@ function showDetail(id){
   document.getElementById('d-due').innerHTML=dueBadge(o.dueDate,st);
   document.getElementById('d-banner').innerHTML=makeBanner(o);
   const {done,total,pct}=progOf(o);
-  const pctStr=o.marginPct!=null?Number(o.marginPct).toFixed(1)+'%':'-';
+  const cprice=calcPriceWithCutPrices(o);
+  const dispTex=cprice?cprice.totalPriceEx:o.totalPriceEx;
+  const dispTin=cprice?cprice.totalPriceIn:o.totalPriceIn;
+  const dispAt=cprice?cprice.atTotalPrice:o.atTotalPrice;
+  const dispMg=cprice?cprice.marginPct:o.marginPct;
+  const pctStr=dispMg!=null?Number(dispMg).toFixed(1)+'%':'-';
   document.getElementById('d-sum').innerHTML=`
-    <div class="sc sc-bl"><div class="sl">${t('sumRcv')}</div><div class="sv">¥${fmt(o.totalPriceEx)}</div><div class="ss">${t('taxIn')} ¥${fmt(o.totalPriceIn)}</div></div>
-    <div class="sc sc-pk"><div class="sl">${t('sumAt')}</div><div class="sv">¥${fmt(o.atTotalPrice)}</div><div class="ss">${o.qty}${currentLang==='vi'?' cảnh':'カット'} × ¥${fmt(o.atUnitPrice)}</div></div>
+    <div class="sc sc-bl"><div class="sl">${t('sumRcv')}</div><div class="sv">¥${fmt(dispTex)}</div><div class="ss">${t('taxIn')} ¥${fmt(dispTin)}${cprice?'<span style="font-size:10px;color:#C07010">*</span>':''}</div></div>
+    <div class="sc sc-pk"><div class="sl">${t('sumAt')}</div><div class="sv">¥${fmt(dispAt)}</div><div class="ss">${o.qty}${currentLang==='vi'?' cảnh':'カット'} × ¥${fmt(o.atUnitPrice)}</div></div>
     <div class="sc sc-gy"><div class="sl">${t('sumCut')}</div><div class="sv">${done}/${total}</div><div class="ss">${pct}%</div></div>`;
   // 編集モードのとき
   if(window._detailEditMode) renderDetailEditMode(o);
@@ -1669,7 +1694,7 @@ function renderCuts(o){
       // 個別単価（グループ内最初のカットの単価を代表値として使用）
       const grpPrice=gc.length>0&&gc[0].price?gc[0].price:'';
       const priceHtml=grpPrice
-        ?'<span class="cc-price" onclick="event.stopPropagation()"><input type="number" value="'+grpPrice+'" min="0" style="width:56px;font-size:10px;padding:1px 4px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation()"><span onclick="clearCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" style="font-size:9px;color:#C07010;cursor:pointer;margin-left:1px" title="単価削除">✕</span></span>'
+        ?'<span class="cc-price" onclick="event.stopPropagation()"><input type="number" value="'+grpPrice+'" min="0" style="width:52px;font-size:9px;padding:1px 3px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation()"><span onclick="clearCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" style="font-size:9px;color:#C07010;cursor:pointer;margin-left:1px" title="単価削除">✕</span></span>'
         :'<span class="cc-add-price" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation();openCutPrice(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;padding:1px 4px;border:0.5px dashed var(--bdr2);border-radius:3px;white-space:nowrap">＋単価</span>';
       return '<div class="cc'+dnCls+'">'+
         '<div class="ck">'+svg+'</div>'+
@@ -1693,7 +1718,7 @@ function renderCuts(o){
       const delTxt=t('cutDel');
       const singlePrice=c.price||'';
       const sPriceHtml=singlePrice
-        ?'<span class="cc-price" onclick="event.stopPropagation()"><input type="number" value="'+singlePrice+'" min="0" style="width:56px;font-size:10px;padding:1px 4px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" onclick="event.stopPropagation()"><span onclick="clearCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" style="font-size:9px;color:#C07010;cursor:pointer;margin-left:1px" title="単価削除">✕</span></span>'
+        ?'<span class="cc-price" onclick="event.stopPropagation()"><input type="number" value="'+singlePrice+'" min="0" style="width:52px;font-size:9px;padding:1px 3px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" onclick="event.stopPropagation()"><span onclick="clearCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" style="font-size:9px;color:#C07010;cursor:pointer;margin-left:1px" title="単価削除">✕</span></span>'
         :'<span class="cc-add-price" data-oid="'+currentId+'" data-cid="'+c.id+'" onclick="event.stopPropagation();openCutPriceSingle(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;padding:1px 4px;border:0.5px dashed var(--bdr2);border-radius:3px;white-space:nowrap">＋単価</span>';
       return '<div class="cc'+dnCls+'">'+
         '<div class="ck"><svg width="8" height="7" viewBox="0 0 8 7" fill="none" stroke="#fff" stroke-width="1.5"><path d="M1 3.5l2 2 4-4"/></svg></div>'+
@@ -2314,7 +2339,11 @@ function renderGroup(){
     const tAt=items.reduce((s,o)=>s+(Number(o.atTotalPrice)||0),0);
     const tMg=tIn-tAt;
     const bc=bcOf(k);
-    const rows=items.map(o=>makeCard(o)).join('');
+    const sortedItems=[...items].sort((a,b)=>{
+      const da=a.orderDate||'9999', db=b.orderDate||'9999';
+      return (sdir==='desc'||sdir==='za')?db.localeCompare(da):da.localeCompare(db);
+    });
+    const rows=sortedItems.map(o=>makeCard(o)).join('');
     return `<div class="gsec">
       <div class="ghd" onclick="toggleGrp('g${ki}')">
         <h3>${k}</h3>
@@ -2904,11 +2933,11 @@ async function setCutPriceSingle(el){ const oid=el.dataset.oid; const cid=el.dat
 // ＋単価ボタン：インライン入力に切り替え
 function openCutPrice(el){
   const oid=el.dataset.oid; const gkey=el.dataset.gkey;
-  el.outerHTML='<span class="cc-price" onclick="event.stopPropagation()"><input type="number" placeholder="単価" min="0" autofocus style="width:56px;font-size:10px;padding:1px 4px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation()"><span onclick="cancelCutPrice(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;margin-left:1px">✕</span></span>';
+  el.outerHTML='<span class="cc-price" onclick="event.stopPropagation()"><input type="number" placeholder="単価" min="0" autofocus style="width:52px;font-size:9px;padding:1px 3px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation()"><span onclick="cancelCutPrice(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;margin-left:1px">✕</span></span>';
 }
 function openCutPriceSingle(el){
   const oid=el.dataset.oid; const cid=el.dataset.cid;
-  el.outerHTML='<span class="cc-price" onclick="event.stopPropagation()"><input type="number" placeholder="単価" min="0" autofocus style="width:56px;font-size:10px;padding:1px 4px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPriceSingle(this)" data-oid="'+oid+'" data-cid="'+cid+'" onclick="event.stopPropagation()"><span onclick="cancelCutPrice(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;margin-left:1px">✕</span></span>';
+  el.outerHTML='<span class="cc-price" onclick="event.stopPropagation()"><input type="number" placeholder="単価" min="0" autofocus style="width:52px;font-size:9px;padding:1px 3px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPriceSingle(this)" data-oid="'+oid+'" data-cid="'+cid+'" onclick="event.stopPropagation()"><span onclick="cancelCutPrice(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;margin-left:1px">✕</span></span>';
 }
 function cancelCutPrice(el){ renderCuts(); }
 async function clearCutPrice(el){
