@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.4</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.5</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -1781,8 +1781,7 @@ async function deleteCut(cid){
     await fbSet(`/cutsRaw/${o.id}`, newRaw);
   }
   await saveCutsToFb(o);
-  // Firebaseから最新データを再取得して再描画
-  showDetail(o.id);
+  renderCuts(o); autoStatus(o); updateSumCard(o);
   showToast('削除しました');
 }
 async function deleteCutGroup(ids){
@@ -1809,8 +1808,7 @@ async function deleteCutGroup(ids){
     await fbSet(`/cutsRaw/${o.id}`, newRaw);
   }
   await saveCutsToFb(o);
-  // Firebaseから最新データを再取得して再描画
-  showDetail(o.id);
+  renderCuts(o); autoStatus(o); updateSumCard(o);
   showToast('削除しました');
 }
 function previewAddCuts(){
@@ -2106,7 +2104,10 @@ async function saveOrder(){
 
 function editOrder(id){
   const oid=id||currentId;
-  const o=orders.find(x=>x.id===oid); if(!o) return;
+  orders=window.orders;
+  const o=orders.find(x=>x.id===oid);
+  console.log('[editOrder] oid=',oid,'o=',o?o.id:'NOT FOUND');
+  if(!o) return;
   editingId=window.editingId=oid;
   (document.getElementById('form-ttl')||{textContent:''}).textContent=t('formEdit');
   document.getElementById('btn-del-form').style.display='inline-flex';
