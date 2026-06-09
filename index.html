@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.3</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.6.4</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -1653,8 +1653,8 @@ function renderCuts(o){
         '<span class="cn">'+String(c.id)+'</span>'+
         (c.done&&c.date?'<span class="cd">'+c.date.slice(5)+'</span>':'')+
         '<div class="cc-acts" onclick="event.stopPropagation()">'+
-          '<span class="cc-act '+btnCls+'" data-action="togglesingle" data-cid="'+c.id+'" onclick="ccAct(this)">'+btnTxt+'</span>'+
-          '<span class="cc-act del-btn" data-action="delsingle" data-cid="'+c.id+'" onclick="ccAct(this)" title="削除">'+delTxt+'</span>'+
+          '<span class="cc-act '+btnCls+'" data-action="togglesingle" data-cid="'+c.id+'" data-oid="'+currentId+'" onclick="ccAct(this)">'+btnTxt+'</span>'+
+          '<span class="cc-act del-btn" data-action="delsingle" data-cid="'+c.id+'" data-oid="'+currentId+'" onclick="ccAct(this)" title="削除">'+delTxt+'</span>'+
         '</div>'+
       '</div>';
     });
@@ -1705,8 +1705,12 @@ async function ccAct(el){
     if(action==='toggle') await toggleGroup(ids);
     else await deleteCutGroup(ids);
   } else if(action==='togglesingle'){
+    if(el.dataset.oid) currentId=window.currentId=el.dataset.oid;
+    orders=window.orders;
     await toggleCut(el.dataset.cid);
   } else if(action==='delsingle'){
+    if(el.dataset.oid) currentId=window.currentId=el.dataset.oid;
+    orders=window.orders;
     await deleteCut(el.dataset.cid);
   }
 }
