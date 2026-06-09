@@ -655,7 +655,6 @@ button,input,select,textarea{font-family:inherit}
 <script src="https://unpkg.com/firebase@8.10.1/firebase-app.js"></script>
 <script src="https://unpkg.com/firebase@8.10.1/firebase-database.js"></script>
 <script src="https://unpkg.com/firebase@8.10.1/firebase-auth.js"></script>
-<script src="https://unpkg.com/firebase@8.10.1/firebase-auth.js"></script>
 <script>
 // Firebase compat SDK loaded above
 
@@ -665,7 +664,6 @@ button,input,select,textarea{font-family:inherit}
 // ============================================================
 // Firebase Authentication
 // ============================================================
-const auth = firebase.auth();
 
 // ATメンバーのメールアドレス（ベトナム語モードで使用）
 const VI_EMAIL = 'ngocnguyen@alpha-technime.com';
@@ -729,6 +727,7 @@ const firebaseConfig = {
 };
 const app = firebase.initializeApp(firebaseConfig);
 const db  = firebase.database();
+const auth = firebase.auth();
 
 // ============================================================
 // 状態
