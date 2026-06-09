@@ -697,7 +697,7 @@ async function doLogin(){
     await auth.signInWithEmailAndPassword(email, pass);
     // onAuthStateChangedが自動的に処理
   } catch(e){
-    let msg='メールアドレスまたはパスワードが違います / Email hoặc mật khẩu không đúng';
+    let msg='エラー: '+e.code+' / '+e.message;
     err.textContent=msg;
     err.style.display='block';
     btn.textContent='ログイン / Đăng nhập';
