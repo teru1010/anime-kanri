@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.7.4</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.7.5</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -1386,12 +1386,13 @@ function parseCuts(str){
       ids.push(p.toUpperCase()); return;
     }
     if(p.indexOf('-')>=0||p.indexOf('_')>=0){
-      // 全パーツが純粋な数字のみの場合だけ兼用カットとして分割
-      // S50-002のような英字含む場合は単一IDとして扱う
+      // parseGroupsと同じ判定：全パーツが純粋な数字→兼用カット（ラベルそのままで1件）
+      // S50-002のような英字含む場合も単一IDとして扱う
       const pts=p.split(/[-_]/).map(x=>x.trim()).filter(Boolean);
       const allNumeric=pts.every(x=>/^\d+$/.test(x));
       if(allNumeric){
-        pts.forEach(pt=>ids.push(pt.toUpperCase()));
+        // 兼用カットは分割せず、各IDを個別に登録（toggle/delete用）
+        pts.forEach(pt=>ids.push(pt));
       } else {
         ids.push(p.toUpperCase());
       }
