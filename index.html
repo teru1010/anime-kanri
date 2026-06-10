@@ -339,13 +339,13 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.6</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.7</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
     <div class="nt" onclick="showView('progress')" id="tab-progress">カット進捗<span class="nbadge" id="b-prog">0</span></div>
     <div class="nt" onclick="showView('group')" id="tab-group">グループ表示</div>
-    <div class="nt" onclick="showView('kosu')" id="tab-kosu">📊 工数</div>
+    <div class="nt" onclick="showView('kosu')" id="tab-kosu">📊 受注工数</div>
     <div class="nt" onclick="showView('search')" id="tab-search">🔍 検索</div>
   </nav>
   <div class="hdr-r">
@@ -514,7 +514,7 @@ button,input,select,textarea{font-family:inherit}
 
   <!-- KOSU VIEW -->
   <div class="view" id="view-kosu">
-    <div class="lh"><h2>📊 工数</h2></div>
+    <div class="lh"><h2>📊 受注工数</h2></div>
     <div class="fcard" style="margin-bottom:1rem">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <div>
@@ -840,7 +840,7 @@ ja:{
   infoCustomer:'顧客・担当', infoDate:'受注日 / 納期',
   infoProc:'作業工程',
   infoQtyUp:'数量・受注単価', infoAp:'発注単価（AT）',
-  tabKosu:'📊 工数', tabSearch:'🔍 検索',
+  tabKosu:'📊 受注工数', tabSearch:'🔍 検索',
   svCutSearch:'✂ カット番号で検索', svTitleSearch:'📋 タイトル・話数別カット一覧',
   svSelectTitle:'-- タイトルを選択 --', svSelectEp:'-- 話数を選択 --',
   svCopy:'📋 コピー', svPrint:'🖨 印刷',
@@ -907,7 +907,7 @@ vi:{
   infoCustomer:'Khách hàng・Phụ trách', infoDate:'Ngày đặt / Hạn giao',
   infoProc:'Công đoạn',
   infoQtyUp:'Số lượng・Đơn giá nhận', infoAp:'Đơn giá phát（AT）',
-  tabKosu:'📊 Công số', tabSearch:'🔍 Tìm kiếm',
+  tabKosu:'📊 Công số đặt', tabSearch:'🔍 Tìm kiếm',
   svCutSearch:'✂ Tìm số cảnh', svTitleSearch:'📋 Danh sách cảnh theo tác phẩm・tập số',
   svSelectTitle:'-- Chọn tác phẩm --', svSelectEp:'-- Chọn tập --',
   svLblTtlSel:'Tên tác phẩm', svLblEpSel:'Tập số',
@@ -2674,6 +2674,22 @@ function printSearchView(){
   setTimeout(function(){ try{ w.print(); }catch(e){} },600);
 }
 
+function resetGroup(){
+  document.getElementById('grp-by').value='all';
+  const mf=document.getElementById('grp-month-filter');
+  const tf=document.getElementById('grp-title-filter');
+  const cf=document.getElementById('grp-cust-filter');
+  const ef=document.getElementById('grp-ep-filter');
+  if(mf){mf.style.display='none';mf.value='';}
+  if(tf){tf.style.display='none';tf.value='';}
+  if(cf){cf.style.display='none';cf.value='';}
+  if(ef){ef.style.display='none';ef.value='';}
+  document.getElementById('grp-sort').value='desc';
+  document.getElementById('grp-flt').value='';
+  renderGroup();
+}
+window.resetGroup=resetGroup;
+
 function printGroup(){
   const by=document.getElementById('grp-by').value;
   const flt=document.getElementById('grp-flt').value;
@@ -3054,11 +3070,11 @@ function renderKosu(){
   if(!body) return;
   const sdir=(document.getElementById('kosu-sort')||{value:'desc'}).value;
 
-  // 受注月を抽出してソート
+  // 受注月を抽出してソート（受注データのみ）
   const months=[...new Set(orders.map(o=>o.orderDate?o.orderDate.slice(0,7):'').filter(Boolean))];
   months.sort((a,b)=>sdir==='desc'?b.localeCompare(a):a.localeCompare(b));
 
-  // 工程リスト
+  // 実データのある工程のみ
   const PROC_ORDER=['LO','LO作監','2G','動画','仕上','動仕','BG','動画検査','仕上検査','その他'];
   const allProcs=[...new Set(orders.map(o=>o.process).filter(Boolean))];
   const procs=PROC_ORDER.filter(p=>allProcs.includes(p)).concat(allProcs.filter(p=>!PROC_ORDER.includes(p)));
@@ -3070,9 +3086,9 @@ function renderKosu(){
   html+='<thead><tr style="background:var(--sur2)">';
   html+='<th style="padding:8px 12px;text-align:left;border:0.5px solid var(--bdr);white-space:nowrap;position:sticky;left:0;background:var(--sur2)">年月</th>';
   procs.forEach(p=>{
-    html+='<th style="padding:8px 10px;text-align:right;border:0.5px solid var(--bdr);white-space:nowrap">'+tProc(p)+'</th>';
+    const unit=isSheetProc({process:p})?'<span style="font-size:9px;color:var(--txt3);font-weight:400;display:block">枚</span>':'<span style="font-size:9px;color:var(--txt3);font-weight:400;display:block">カット</span>';
+    html+='<th style="padding:6px 10px;text-align:right;border:0.5px solid var(--bdr);white-space:nowrap">'+tProc(p)+unit+'</th>';
   });
-  html+='<th style="padding:8px 10px;text-align:right;border:0.5px solid var(--bdr);white-space:nowrap;color:var(--bl)">合計</th>';
   html+='</tr></thead><tbody>';
 
   months.forEach((month,mi)=>{
@@ -3082,7 +3098,6 @@ function renderKosu(){
       month.replace('-','年')+'月';
     html+='<tr style="'+(mi%2===1?'background:var(--sur2)':'')+'">';
     html+='<td style="padding:8px 12px;border:0.5px solid var(--bdr);font-weight:500;white-space:nowrap;position:sticky;left:0;background:'+(mi%2===1?'var(--sur2)':'var(--sur)')+'">'+mLabel+'</td>';
-    let mTotal=0;
     procs.forEach(proc=>{
       const pOrders=mOrders.filter(o=>o.process===proc);
       let cnt=0;
@@ -3094,33 +3109,12 @@ function renderKosu(){
           cnt+=Number(o.qty)||0;
         }
       });
-      mTotal+=cnt;
-      html+='<td style="padding:8px 10px;border:0.5px solid var(--bdr);text-align:right;color:'+(cnt>0?'var(--txt)':'var(--txt3)')+'">'+
-        (cnt>0?'<b>'+cnt+'</b>':'-')+'</td>';
+      html+='<td style="padding:8px 10px;border:0.5px solid var(--bdr);text-align:right">'+
+        (cnt>0?'<b>'+cnt+'</b>':'0')+'</td>';
     });
-    html+='<td style="padding:8px 10px;border:0.5px solid var(--bdr);text-align:right;font-weight:600;color:var(--bl)">'+mTotal+'</td>';
     html+='</tr>';
   });
-
-  // 合計行
-  html+='<tr style="background:var(--sur2);font-weight:600">';
-  html+='<td style="padding:8px 12px;border:0.5px solid var(--bdr);position:sticky;left:0;background:var(--sur2)">合計</td>';
-  let grandTotal=0;
-  procs.forEach(proc=>{
-    let cnt=0;
-    orders.filter(o=>o.process===proc).forEach(o=>{
-      const cuts=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
-      if(isSheetProc(o)&&cuts.some(c=>c.sheets)){
-        cnt+=cuts.reduce((s,c)=>s+(c.sheets||1),0);
-      } else {
-        cnt+=Number(o.qty)||0;
-      }
-    });
-    grandTotal+=cnt;
-    html+='<td style="padding:8px 10px;border:0.5px solid var(--bdr);text-align:right;color:var(--bl)">'+cnt+'</td>';
-  });
-  html+='<td style="padding:8px 10px;border:0.5px solid var(--bdr);text-align:right;color:var(--bl)">'+grandTotal+'</td>';
-  html+='</tr></tbody></table></div>';
+  html+='</tbody></table></div>';
   body.innerHTML=html;
 }
 window.renderKosu=renderKosu;
