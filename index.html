@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.0</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.1</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
@@ -1339,8 +1339,10 @@ function makeCard(o){
       if(rawDisp){
         var grps=parseGroups(rawDisp);
         grps.sort(function(a,b){
-          var na=String(a.ids[0]).replace(/[^0-9]/g,''); var nb=String(b.ids[0]).replace(/[^0-9]/g,'');
-          return (parseInt(na)||0)-(parseInt(nb)||0);
+          var ma=String(a.label).match(/(\d+)(?!.*\d)/); var mb=String(b.label).match(/(\d+)(?!.*\d)/);
+          var na=ma?parseInt(ma[1]):0; var nb=mb?parseInt(mb[1]):0;
+          if(na!==nb) return na-nb;
+          return String(a.label).localeCompare(String(b.label));
         });
         chips=grps.map(function(g){
           var gc=cutsArr2.filter(function(c){return g.ids.some(function(id){return id.toUpperCase()===String(c.id).toUpperCase();});});
@@ -1413,22 +1415,19 @@ function parseCuts(str){
           return;
         }
       }
-      ids.push(p.toUpperCase()); return;
+      ids.push(p); return;
     }
     if(p.indexOf('-')>=0||p.indexOf('_')>=0){
-      // parseGroupsと同じ判定：全パーツが純粋な数字→兼用カット（ラベルそのままで1件）
-      // S50-002のような英字含む場合も単一IDとして扱う
       const pts=p.split(/[-_]/).map(x=>x.trim()).filter(Boolean);
       const allNumeric=pts.every(x=>/^\d+$/.test(x));
       if(allNumeric){
-        // 兼用カットは分割せず、各IDを個別に登録（toggle/delete用）
         pts.forEach(pt=>ids.push(pt));
       } else {
-        ids.push(p.toUpperCase());
+        ids.push(p);
       }
       return;
     }
-    ids.push(p.toUpperCase());
+    ids.push(p);
   });
   const seen=new Set();
   return ids.filter(x=>{ if(seen.has(x)) return false; seen.add(x); return true; });
@@ -1453,21 +1452,21 @@ function parseGroups(str){
           return;
         }
       }
-      groups.push({label:p.toUpperCase(),ids:[p.toUpperCase()]}); return;
+      groups.push({label:p,ids:[p]}); return;
     }
     if(p.indexOf('-')>=0||p.indexOf('_')>=0){
       const pts=p.split(/[-_]/).map(x=>x.trim()).filter(Boolean);
       const allNumeric=pts.every(x=>/^\d+$/.test(x));
       if(allNumeric){
         // 純粋な数字のみ→兼用カット（複数ID）
-        groups.push({label:p.toUpperCase(),ids:pts.map(x=>x.toUpperCase())});
+        groups.push({label:p,ids:pts});
       } else {
         // 英字含む→単一ID（S50-002など）
-        groups.push({label:p.toUpperCase(),ids:[p.toUpperCase()]});
+        groups.push({label:p,ids:[p]});
       }
       return;
     }
-    groups.push({label:p.toUpperCase(),ids:[p.toUpperCase()]});
+    groups.push({label:p,ids:[p]});
   });
   return groups;
 }
