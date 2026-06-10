@@ -339,12 +339,13 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.3</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.4</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
     <div class="nt" onclick="showView('progress')" id="tab-progress">カット進捗<span class="nbadge" id="b-prog">0</span></div>
     <div class="nt" onclick="showView('group')" id="tab-group">グループ表示</div>
+    <div class="nt" onclick="showView('kosu')" id="tab-kosu">📊 工数</div>
     <div class="nt" onclick="showView('search')" id="tab-search">🔍 検索</div>
   </nav>
   <div class="hdr-r">
@@ -509,6 +510,23 @@ button,input,select,textarea{font-family:inherit}
     </div>
 
     <div id="grp-body"></div>
+  </div>
+
+  <!-- KOSU VIEW -->
+  <div class="view" id="view-kosu">
+    <div class="lh"><h2>📊 工数</h2></div>
+    <div class="fcard" style="margin-bottom:1rem">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div>
+          <label style="font-size:12px;color:var(--txt2);display:block;margin-bottom:4px">並び順</label>
+          <select id="kosu-sort" onchange="renderKosu()" style="font-size:13px;padding:6px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
+            <option value="desc">新しい順</option>
+            <option value="asc">古い順</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div id="kosu-body"></div>
   </div>
 
   <!-- SEARCH VIEW -->
@@ -822,7 +840,7 @@ ja:{
   infoCustomer:'顧客・担当', infoDate:'受注日 / 納期',
   infoProc:'作業工程',
   infoQtyUp:'数量・受注単価', infoAp:'発注単価（AT）',
-  tabSearch:'🔍 検索',
+  tabKosu:'📊 工数', tabSearch:'🔍 検索',
   svCutSearch:'✂ カット番号で検索', svTitleSearch:'📋 タイトル・話数別カット一覧',
   svSelectTitle:'-- タイトルを選択 --', svSelectEp:'-- 話数を選択 --',
   svCopy:'📋 コピー', svPrint:'🖨 印刷',
@@ -889,7 +907,7 @@ vi:{
   infoCustomer:'Khách hàng・Phụ trách', infoDate:'Ngày đặt / Hạn giao',
   infoProc:'Công đoạn',
   infoQtyUp:'Số lượng・Đơn giá nhận', infoAp:'Đơn giá phát（AT）',
-  tabSearch:'🔍 Tìm kiếm',
+  tabKosu:'📊 Công số', tabSearch:'🔍 Tìm kiếm',
   svCutSearch:'✂ Tìm số cảnh', svTitleSearch:'📋 Danh sách cảnh theo tác phẩm・tập số',
   svSelectTitle:'-- Chọn tác phẩm --', svSelectEp:'-- Chọn tập --',
   svLblTtlSel:'Tên tác phẩm', svLblEpSel:'Tập số',
@@ -1007,7 +1025,7 @@ function applyLang(){
     'lbl-deldl':'lblDelDl','lbl-delinv':'lblDelInv','lbl-delst':'lblDelSt',
     'dst-or':'dstOr','dst-wip':'dstWip','dst-dn':'dstDn','dst-iv':'dstIv',
     'cut-hint':'cutHint','cbox-lbl-txt':'cboxLbl',
-    'tab-search':'tabSearch',
+    'tab-kosu':'tabKosu', 'tab-search':'tabSearch',
     'sv-h2':'tabSearch','sv-lbl-cut':'svCutSearch','sv-lbl-title':'svTitleSearch',
     'sv-lbl-ttl-sel':'svLblTtlSel','sv-lbl-ep-sel':'svLblEpSel',
     'sv-btn-copy':'svCopy','sv-btn-print':'svPrint',
@@ -1296,6 +1314,7 @@ function showView(v, restoreScroll){
   if(v==='progress') renderProg();
   if(v==='group') renderGroup();
   if(v==='search') initSearchView();
+  if(v==='kosu') renderKosu();
   if(v==='new'&&!(editingId||window.editingId)) resetForm();
   // カット進捗入力欄をクリア
   const cai=document.getElementById('cut-add-input');
@@ -1506,8 +1525,24 @@ function renderList(){
       mLabel=month.replace('-','年')+'月';
     }
     if(mLabel!==lastMonth){
-      cards.push(`<div class="mhdr" style="margin-top:${cards.length?'1rem':'0'}">
-        <span>${mLabel}</span></div>`);
+      // その月の受注金額・発注金額合計を計算
+      const mMonth=month;
+      const mOrders=src.filter(o2=>{
+        const om=o2.orderDate?o2.orderDate.slice(0,7):'';
+        return om===mMonth;
+      });
+      const mTin=mOrders.reduce((s,o2)=>{
+        const cp=calcPriceWithCutPrices(o2);
+        return s+(cp?cp.totalPriceIn:Number(o2.totalPriceIn)||0);
+      },0);
+      const mAt=mOrders.reduce((s,o2)=>{
+        const cp=calcPriceWithCutPrices(o2);
+        return s+(cp?cp.atTotalPrice:Number(o2.atTotalPrice)||0);
+      },0);
+      cards.push(`<div class="mhdr" style="margin-top:${cards.length?'1rem':'0'};display:flex;align-items:center;gap:8px">
+        <span>${mLabel}</span>
+        <span style="font-size:11px;color:var(--txt2);margin-left:4px">受注税込 <b style="color:var(--bl)">¥${fmt(mTin)}</b>　発注 <b style="color:#C07010">¥${fmt(mAt)}</b></span>
+        </div>`);
       lastMonth=mLabel;
     }
         cards.push(makeCard(o));
@@ -3011,6 +3046,85 @@ function svMakeDebugBtns(proc,svOAll,svDAll){
 window.svMakeDebugBtns=svMakeDebugBtns;
 function svVerifyProcEl(el){ svVerifyProc(el.dataset.proc, el.dataset.vtype); }
 window.svVerifyProcEl=svVerifyProcEl;
+// ============================================================
+// 工数ビュー
+// ============================================================
+function renderKosu(){
+  const body=document.getElementById('kosu-body');
+  if(!body) return;
+  const sdir=(document.getElementById('kosu-sort')||{value:'desc'}).value;
+
+  // 受注月を抽出してソート
+  const months=[...new Set(orders.map(o=>o.orderDate?o.orderDate.slice(0,7):'').filter(Boolean))];
+  months.sort((a,b)=>sdir==='desc'?b.localeCompare(a):a.localeCompare(b));
+
+  // 工程リスト
+  const PROC_ORDER=['LO','LO作監','2G','動画','仕上','動仕','BG','動画検査','仕上検査','その他'];
+  const allProcs=[...new Set(orders.map(o=>o.process).filter(Boolean))];
+  const procs=PROC_ORDER.filter(p=>allProcs.includes(p)).concat(allProcs.filter(p=>!PROC_ORDER.includes(p)));
+
+  if(!months.length){ body.innerHTML='<div class="empty"><i>📊</i>データがありません</div>'; return; }
+
+  let html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+  // ヘッダー行
+  html+='<thead><tr style="background:var(--sur2)">';
+  html+='<th style="padding:8px 12px;text-align:left;border:0.5px solid var(--bdr);white-space:nowrap;position:sticky;left:0;background:var(--sur2)">年月</th>';
+  procs.forEach(p=>{
+    html+='<th style="padding:8px 10px;text-align:right;border:0.5px solid var(--bdr);white-space:nowrap">'+tProc(p)+'</th>';
+  });
+  html+='<th style="padding:8px 10px;text-align:right;border:0.5px solid var(--bdr);white-space:nowrap;color:var(--bl)">合計</th>';
+  html+='</tr></thead><tbody>';
+
+  months.forEach((month,mi)=>{
+    const mOrders=orders.filter(o=>o.orderDate&&o.orderDate.startsWith(month));
+    const mLabel=currentLang==='vi'?
+      (()=>{const[yr,mo]=month.split('-');return 'Tháng '+parseInt(mo)+' '+yr;})():
+      month.replace('-','年')+'月';
+    html+='<tr style="'+(mi%2===1?'background:var(--sur2)':'')+'">';
+    html+='<td style="padding:8px 12px;border:0.5px solid var(--bdr);font-weight:500;white-space:nowrap;position:sticky;left:0;background:'+(mi%2===1?'var(--sur2)':'var(--sur)')+'">'+mLabel+'</td>';
+    let mTotal=0;
+    procs.forEach(proc=>{
+      const pOrders=mOrders.filter(o=>o.process===proc);
+      let cnt=0;
+      pOrders.forEach(o=>{
+        const cuts=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
+        if(isSheetProc(o)&&cuts.some(c=>c.sheets)){
+          cnt+=cuts.reduce((s,c)=>s+(c.sheets||1),0);
+        } else {
+          cnt+=Number(o.qty)||0;
+        }
+      });
+      mTotal+=cnt;
+      html+='<td style="padding:8px 10px;border:0.5px solid var(--bdr);text-align:right;color:'+(cnt>0?'var(--txt)':'var(--txt3)')+'">'+
+        (cnt>0?'<b>'+cnt+'</b>':'-')+'</td>';
+    });
+    html+='<td style="padding:8px 10px;border:0.5px solid var(--bdr);text-align:right;font-weight:600;color:var(--bl)">'+mTotal+'</td>';
+    html+='</tr>';
+  });
+
+  // 合計行
+  html+='<tr style="background:var(--sur2);font-weight:600">';
+  html+='<td style="padding:8px 12px;border:0.5px solid var(--bdr);position:sticky;left:0;background:var(--sur2)">合計</td>';
+  let grandTotal=0;
+  procs.forEach(proc=>{
+    let cnt=0;
+    orders.filter(o=>o.process===proc).forEach(o=>{
+      const cuts=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
+      if(isSheetProc(o)&&cuts.some(c=>c.sheets)){
+        cnt+=cuts.reduce((s,c)=>s+(c.sheets||1),0);
+      } else {
+        cnt+=Number(o.qty)||0;
+      }
+    });
+    grandTotal+=cnt;
+    html+='<td style="padding:8px 10px;border:0.5px solid var(--bdr);text-align:right;color:var(--bl)">'+cnt+'</td>';
+  });
+  html+='<td style="padding:8px 10px;border:0.5px solid var(--bdr);text-align:right;color:var(--bl)">'+grandTotal+'</td>';
+  html+='</tr></tbody></table></div>';
+  body.innerHTML=html;
+}
+window.renderKosu=renderKosu;
+
 function svCutClick(el){ showDetail(el.dataset.oid); }
 window.svCutClick=svCutClick; window.svToggleDebug=svToggleDebug; window.svVerifyAll=svVerifyAll; window.svClearVerify=svClearVerify; window.svVerifyProc=svVerifyProc; window.updateSvDebugBtnText=updateSvDebugBtnText;
 window.getSvData=getSvData; window.onSvTitleChange=onSvTitleChange; window.renderSearchView=renderSearchView; window.exportSearchView=exportSearchView; window.printSearchView=printSearchView;
