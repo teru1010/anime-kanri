@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.8</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.9</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
@@ -1008,6 +1008,7 @@ function applyLang(){
     'sv-btn-copy':'svCopy','sv-btn-print':'svPrint',
     'sv-debug-lbl':'svDebugLbl',
     'sv-vbtn-clear':'svClearVerify',
+    'btn-cut-add':'cutAdd',
   };
   Object.entries(map).forEach(([id,key])=>{
     const el=document.getElementById(id);
@@ -1043,6 +1044,9 @@ function applyLang(){
       opt.textContent=t(stKeys[i]);
     });
   }
+  // カット追加placeholder
+  const cai2=document.getElementById('cut-add-input');
+  if(cai2) cai2.placeholder=t('cutAddPH');
   // search placeholder
   const si=document.getElementById('cut-search-input');
   if(si) si.placeholder=t('searchPH');
@@ -1698,13 +1702,14 @@ function renderCuts(o){
       const grpAtPrice=gc.length>0&&gc[0].atPrice?gc[0].atPrice:'';
       const priceHtml=grpPrice
         ?'<span class="cc-price" onclick="event.stopPropagation()" style="display:inline-flex;flex-direction:column;gap:1px">'+
-          '<span style="font-size:7px;color:#888">受注</span>'+
+          '<span style="font-size:7px;color:#888">'+(currentLang==="vi"?"Đặt":"受注")+"</span>"+
           '<input type="number" value="'+grpPrice+'" min="0" style="width:48px;font-size:8px;padding:1px 2px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" data-field="price" onclick="event.stopPropagation()">'+
-          '<span style="font-size:7px;color:#888">発注</span>'+
+          '<span style="font-size:7px;color:#888">'+(currentLang==="vi"?"Phát":"発注")+"</span>"+
           '<input type="number" value="'+grpAtPrice+'" placeholder="-" min="0" style="width:48px;font-size:8px;padding:1px 2px;border:0.5px solid #93C5FD;border-radius:3px;background:#EFF6FF;color:#1D4ED8;font-weight:500;" onchange="setCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" data-field="atPrice" onclick="event.stopPropagation()">'+
           '<span onclick="clearCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" style="font-size:9px;color:#C07010;cursor:pointer;text-align:center" title="単価削除">✕</span>'+
           '</span>'
-        :'<span class="cc-add-price" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation();openCutPrice(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;padding:1px 4px;border:0.5px dashed var(--bdr2);border-radius:3px;white-space:nowrap">＋単価</span>';
+        :'<span class="cc-add-price" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation();openCutPrice(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;padding:1px 4px;border:0.5px dashed var(--bdr2);border-radius:3px;white-space:nowrap">'+(currentLang==='vi'?'＋Giá':'＋単価')+'</span>';
+
       return '<div class="cc'+dnCls+'">'+
         '<div class="ck">'+svg+'</div>'+
         '<span class="cn" style="font-size:'+(g.label.length>6?'10':'11')+'px">'+g.label+'</span>'+
@@ -1729,13 +1734,14 @@ function renderCuts(o){
       const sAtPrice=c.atPrice||'';
       const sPriceHtml=singlePrice
         ?'<span class="cc-price" onclick="event.stopPropagation()" style="display:inline-flex;flex-direction:column;gap:1px">'+
-          '<span style="font-size:7px;color:#888">受注</span>'+
+          '<span style="font-size:7px;color:#888">'+(currentLang==="vi"?"Đặt":"受注")+"</span>"+
           '<input type="number" value="'+singlePrice+'" min="0" style="width:48px;font-size:8px;padding:1px 2px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" data-field="price" onclick="event.stopPropagation()">'+
-          '<span style="font-size:7px;color:#888">発注</span>'+
+          '<span style="font-size:7px;color:#888">'+(currentLang==="vi"?"Phát":"発注")+"</span>"+
           '<input type="number" value="'+sAtPrice+'" placeholder="-" min="0" style="width:48px;font-size:8px;padding:1px 2px;border:0.5px solid #93C5FD;border-radius:3px;background:#EFF6FF;color:#1D4ED8;font-weight:500;" onchange="setCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" data-field="atPrice" onclick="event.stopPropagation()">'+
           '<span onclick="clearCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" style="font-size:9px;color:#C07010;cursor:pointer;text-align:center" title="単価削除">✕</span>'+
           '</span>'
-        :'<span class="cc-add-price" data-oid="'+currentId+'" data-cid="'+c.id+'" onclick="event.stopPropagation();openCutPriceSingle(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;padding:1px 4px;border:0.5px dashed var(--bdr2);border-radius:3px;white-space:nowrap">＋単価</span>';
+        :'<span class="cc-add-price" data-oid="'+currentId+'" data-cid="'+c.id+'" onclick="event.stopPropagation();openCutPriceSingle(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;padding:1px 4px;border:0.5px dashed var(--bdr2);border-radius:3px;white-space:nowrap">'+(currentLang==='vi'?'＋Giá':'＋単価')+'</span>';
+
       return '<div class="cc'+dnCls+'">'+
         '<div class="ck"><svg width="8" height="7" viewBox="0 0 8 7" fill="none" stroke="#fff" stroke-width="1.5"><path d="M1 3.5l2 2 4-4"/></svg></div>'+
         '<span class="cn">'+String(c.id)+'</span>'+
