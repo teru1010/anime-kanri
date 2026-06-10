@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.0</span></div>
+  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.1</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
@@ -368,8 +368,7 @@ button,input,select,textarea{font-family:inherit}
       <select id="flt-st" onchange="renderList()" style="font-size:12px;padding:5px 8px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
         <option value="" id="opt-all">すべて</option>
         <option id="opt-or">受注済</option>
-        <option id="opt-wip">作業中</option>
-        <option id="opt-dn">納品済</option>
+                <option id="opt-dn">納品済</option>
         <option id="opt-iv">請求済</option>
         <option value="uninvoiced" id="opt-un">未請求</option>
       </select>
@@ -494,8 +493,7 @@ button,input,select,textarea{font-family:inherit}
       <select id="grp-flt" onchange="renderGroup()">
         <option value="" id="go-fall">すべてのステータス</option>
         <option id="go-for">受注済</option>
-        <option id="go-fwip">作業中</option>
-        <option id="go-fdn">納品済</option>
+                <option id="go-fdn">納品済</option>
         <option id="go-fiv">請求済</option>
         <option value="uninvoiced" id="go-fun">未請求</option>
       </select>
@@ -596,7 +594,7 @@ button,input,select,textarea{font-family:inherit}
         <div class="fg"><label id="lbl-delinv">請求日</label><input type="date" id="d-inv" onchange="saveDates()"></div>
         <div class="fg s2"><label id="lbl-delst">ステータス</label>
           <select id="d-st" onchange="saveDates()">
-            <option id="dst-or">受注済</option><option id="dst-wip">作業中</option>
+            <option id="dst-or">受注済</option>
             <option id="dst-dn">納品済</option><option id="dst-iv">請求済</option>
           </select></div>
       </div>
@@ -920,7 +918,7 @@ vi:{
 
 function t(k){ return (DICT[currentLang]&&DICT[currentLang][k])||DICT.ja[k]||k; }
 function tSt(s){
-  const m={受注済:'optOr',作業中:'optWip',納品済:'optDn',請求済:'optIv'};
+  const m={受注済:'optOr',作業中:'optOr',納品済:'optDn',請求済:'optIv'};
   return m[s]?t(m[s]):s;
 }
 // 作業工程の翻訳（JA→VN）
@@ -1232,11 +1230,11 @@ function getStatus(o){
   const cuts=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
   const done=cuts.filter(c=>c.done).length;
   const total=cuts.length;
-  if(done>0&&done<total) return '作業中';
+  if(done>0&&done<total) return '受注済';
   if(done>0&&done===total) return '納品済';
   return o.status||'受注済';
 }
-function pillCls(s){ return {受注済:'p-or',作業中:'p-wip',納品済:'p-dn',請求済:'p-iv'}[s]||'p-or'; }
+function pillCls(s){ return {受注済:'p-or',作業中:'p-or',納品済:'p-dn',請求済:'p-iv'}[s]||'p-or'; }
 // 個別単価を考慮した受注合計を計算（個別単価が設定されているカットがある場合のみ）
 function calcPriceWithCutPrices(o){
   const cuts=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
@@ -2039,7 +2037,7 @@ async function saveCutsToFb(o){
 function autoStatus(o){
   const done=(o.cuts||[]).filter(c=>c.done).length;
   const total=(o.cuts||[]).length;
-  if(done>0&&done<total) o.status='作業中';
+  if(done>0&&done<total) o.status='受注済';
   else if(done>0&&done===total) o.status='納品済';
 }
 function updateSumCard(o){
