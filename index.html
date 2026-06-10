@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.5</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.6</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
@@ -1729,7 +1729,7 @@ function renderCuts(o){
       '</div>';
     });
   }
-  // 数量に対してカット番号が不足している場合、ブランクカードを追加
+  // 受注カット数分のカードを必ず表示（未登録分はブランク）
   const qty=Number(o.qty)||0;
   const blankCount=Math.max(0, qty-cards.length);
   for(let i=0;i<blankCount;i++){
