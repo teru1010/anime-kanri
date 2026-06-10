@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.7</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.8</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
@@ -1346,7 +1346,12 @@ function makeCard(o){
           return '<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:500;background:'+(isDone?'#E0ECFF':'var(--sur2)')+';color:'+(isDone?'#003A8C':'var(--txt2)')+';border:0.5px solid '+(isDone?'#80B0F0':'var(--bdr2)')+';white-space:nowrap">'+(isDone?'✓ ':'')+String(c.id)+(c.price?'<sup style="color:#C07010;font-size:9px">＊</sup>':'')+'</span>';
         }).join('');
       }
-      if(!chips) return '';
+      if(!chips){
+        // カット番号未登録でも受注カット数分のブランクチップを表示
+        var qty2=Number(o.qty)||0;
+        if(!qty2) return '';
+        chips=Array(qty2).fill('<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:500;background:#E8E8E8;color:#999;border:0.5px solid #C8C8C8;white-space:nowrap">----</span>').join('');
+      }
       return '<div onclick="event.stopPropagation()" style="padding:5px 0 3px;border-top:0.5px solid var(--bdr);margin-top:5px;display:flex;flex-wrap:wrap;gap:3px;align-items:center">'+chips+'<span style="margin-left:auto;font-size:11px;color:#0060E0;font-weight:500">'+doneCnt+'/'+totalCnt+'</span></div>';
     })()}
     <div class="pbar">
