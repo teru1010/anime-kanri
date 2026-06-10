@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.5</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.6</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
@@ -1336,7 +1336,7 @@ function updateBadges(){
 }
 function makeCard(o){
   const st=getStatus(o);
-  const {done,total,pct}=progOf(o);
+  const {done,total,pct,useSheets}=progOf(o);
   const cprice2=calcPriceWithCutPrices(o);
   const rawDisp=o.cutsRaw||'';
   const cutsArr2=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
@@ -1512,7 +1512,7 @@ function renderList(){
   const cards=[];
   list.forEach(o=>{
     const st=getStatus(o);
-    const {done,total,pct}=progOf(o);
+    const {done,total,pct,useSheets}=progOf(o);
     const pctStr=o.marginPct!=null?Number(o.marginPct).toFixed(1)+'%':'-';
     // 月別ヘッダー
     const month=o.orderDate?o.orderDate.slice(0,7):'';
