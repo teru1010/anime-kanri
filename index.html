@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.2</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.3</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
@@ -795,7 +795,7 @@ ja:{
   optDesc:'新しい順', optAsc:'古い順', optGoAsc:'古い順', optGoDesc:'新しい順',
   goAll:'すべて', goMonth:'受注月', goTitle:'タイトル', goCust:'顧客', goDue:'納期月',
   cutProgTitle:'✂ カット進捗', btnAlldone:'全完了',
-  progLbl:'進捗（完了 ／ 受注カット数）',
+  progLbl:'進捗（完了 ／ 受注カット数）', progLblSheet:'進捗（完了枚数 ／ 受注枚数）',
   progSub:'完了カット数 ／ 受注カット数・納期近い順',
   dDelTtl:'🚚 納品・請求ステータス',
   lblDelDl:'納品日', lblDelInv:'請求日', lblDelSt:'ステータス',
@@ -1248,9 +1248,14 @@ function calcPriceWithCutPrices(o){
   return {totalPriceEx:tex,totalPriceIn:tin,atTotalPrice:at,margin:mg,marginPct:mpct};
 }
 function progOf(o){
-  const done=(o.cuts||[]).filter(c=>c.done).length;
+  const cuts=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
+  const useSheets=isSheetProc(o)&&cuts.some(c=>c.sheets);
+  // 動画系工程で枚数があれば枚数合計で計算
+  const done=useSheets
+    ?cuts.filter(c=>c.done).reduce((s,c)=>s+(c.sheets||1),0)
+    :cuts.filter(c=>c.done).length;
   const total=Number(o.qty)||0;
-  return {done,total,pct:total>0?Math.round(done/total*100):0};
+  return {done,total,pct:total>0?Math.round(done/total*100):0,useSheets};
 }
 function invMonth(o){
   if(!o.invoiceDate) return t('optUn');
@@ -1316,8 +1321,9 @@ function makeCard(o){
   const cprice2=calcPriceWithCutPrices(o);
   const rawDisp=o.cutsRaw||'';
   const cutsArr2=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
-  const doneCnt=cutsArr2.filter(c=>c.done).length;
-  const totalCnt=cutsArr2.length;
+  const useSheets2=isSheetProc(o)&&cutsArr2.some(c=>c.sheets);
+  const doneCnt=useSheets2?cutsArr2.filter(c=>c.done).reduce((s,c)=>s+(c.sheets||1),0):cutsArr2.filter(c=>c.done).length;
+  const totalCnt=useSheets2?cutsArr2.reduce((s,c)=>s+(c.sheets||1),0):cutsArr2.length;
   const vf3=debugMode?getVerified(o.id):{};
   const verCls=debugMode?(vf3.order&&vf3.delivery?' v-both':vf3.order?' v-order':vf3.delivery?' v-delivery':''):'';
   return `<div class="card${verCls}" onclick="showDetail('${o.id}')">
@@ -1363,7 +1369,7 @@ function makeCard(o){
       return '<div onclick="event.stopPropagation()" style="padding:5px 0 3px;border-top:0.5px solid var(--bdr);margin-top:5px;display:flex;flex-wrap:wrap;gap:3px;align-items:center">'+chips+'<span style="margin-left:auto;font-size:11px;color:#0060E0;font-weight:500">'+doneCnt+'/'+totalCnt+'</span></div>';
     })()}
     <div class="pbar">
-      <div class="pbar-lbl"><span>${done}/${total}</span><span>${pct}%</span></div>
+      <div class="pbar-lbl"><span>${done}/${total}${useSheets?'枚':''}</span><span>${pct}%</span></div>
       <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%"></div></div>
     </div>
     <div class="acts" onclick="event.stopPropagation()" style="flex-wrap:wrap">
@@ -1629,7 +1635,11 @@ function showDetail(id){
   // テキスト更新
   (document.getElementById('h-cut')||{textContent:''}).textContent=t('cutProgTitle');
   (document.getElementById('btn-alldone')||{textContent:''}).textContent=t('btnAllDone');
-  (document.getElementById('prog-lbl')||{textContent:''}).textContent=t('progLbl');
+  const progLblEl=document.getElementById('prog-lbl');
+  if(progLblEl){
+    const o2=orders.find(x=>x.id===currentId);
+    progLblEl.textContent=isSheetProc(o2)?t('progLblSheet'):t('progLbl');
+  }
   (document.getElementById('d-del-ttl')||{textContent:''}).textContent=t('dDelTtl');
   (document.getElementById('lbl-deldl')||{textContent:''}).textContent=t('lblDelDl');
   (document.getElementById('lbl-delinv')||{textContent:''}).textContent=t('lblDelInv');
