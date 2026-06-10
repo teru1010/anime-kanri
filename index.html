@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.4</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.5</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
@@ -472,6 +472,7 @@ button,input,select,textarea{font-family:inherit}
         <option value="orderMonth" id="go-month">受注月</option>
         <option value="invoiceMonth" id="go-inv">請求月</option>
         <option value="deliveryMonth" id="go-del">納入月</option>
+        <option value="dueMonth" id="go-due">納期月</option>
         <option value="title" id="go-title">タイトル</option>
         <option value="customer" id="go-cust">顧客</option>
       </select>
@@ -787,7 +788,7 @@ ja:{
   optAll:'すべて', optOr:'受注済', optWip:'作業中', optDn:'納品済',
   optIv:'請求済', optUn:'未請求', optFall:'すべてのステータス',
   optDesc:'新しい順', optAsc:'古い順', optGoAsc:'古い順', optGoDesc:'新しい順',
-  goAll:'すべて', goMonth:'受注月', goTitle:'タイトル', goCust:'顧客',
+  goAll:'すべて', goMonth:'受注月', goTitle:'タイトル', goCust:'顧客', goDue:'納期月',
   cutProgTitle:'✂ カット進捗', btnAlldone:'全完了',
   progLbl:'進捗（完了 ／ 受注カット数）',
   progSub:'完了カット数 ／ 受注カット数・納期近い順',
@@ -853,7 +854,7 @@ vi:{
   optAll:'Tất cả', optOr:'Đã đặt', optWip:'Đang làm', optDn:'Đã giao',
   optIv:'Đã HĐ', optUn:'Chưa HĐ', optFall:'Tất cả trạng thái',
   optDesc:'Mới nhất', optAsc:'Cũ nhất', optGoAsc:'Cũ nhất', optGoDesc:'Mới nhất',
-  goAll:'Tất cả', goMonth:'Tháng đặt', goTitle:'Tác phẩm', goCust:'Khách hàng',
+  goAll:'Tất cả', goMonth:'Tháng đặt', goTitle:'Tác phẩm', goCust:'Khách hàng', goDue:'Tháng hạn',
   cutProgTitle:'✂ Tiến độ cảnh', btnAlldone:'Hoàn thành tất cả',
   progLbl:'Tiến độ（hoàn thành ／ số cảnh đặt）',
   progSub:'Cảnh hoàn thành ／ Cảnh đặt・Gần hạn',
@@ -991,7 +992,7 @@ function applyLang(){
     'opt-all':'optAll','opt-or':'optOr','opt-wip':'optWip',
     'opt-dn':'optDn','opt-iv':'optIv','opt-un':'optUn',
     'opt-desc':'optDesc','opt-asc':'optAsc',
-    'go-all':'goAll','go-month':'goMonth','go-title':'goTitle','go-cust':'goCust',
+    'go-all':'goAll','go-month':'goMonth','go-title':'goTitle','go-cust':'goCust','go-due':'goDue',
     'go-asc':'optGoAsc','go-desc':'optGoDesc',
     'go-fall':'optFall','go-for':'optOr','go-fwip':'optWip',
     'go-fdn':'optDn','go-fiv':'optIv','go-fun':'optUn',
@@ -1374,7 +1375,7 @@ function makeBanner(o){
       <span>${o.title||'-'}</span><span class="bn-abbr">${abbr}</span>
       <span class="bn-ep">${ep}</span>
     </div>
-    <span class="bn-r" style="color:${b.tx}">${o.orderDate||''}</span>
+    <span class="bn-r" style="color:${b.tx};${o.orderDate?'':'font-style:italic;opacity:0.6'}">${o.orderDate||'受注日不明'}</span>
   </div>`;
 }
 
@@ -1727,6 +1728,16 @@ function renderCuts(o){
         '</div>'+
       '</div>';
     });
+  }
+  // 数量に対してカット番号が不足している場合、ブランクカードを追加
+  const qty=Number(o.qty)||0;
+  const blankCount=Math.max(0, qty-cards.length);
+  for(let i=0;i<blankCount;i++){
+    cards.push('<div class="cc cc-blank" style="opacity:0.4;border:0.5px dashed var(--bdr2);background:var(--sur2)">'+
+      '<div class="ck" style="background:var(--bdr2)"></div>'+
+      '<span class="cn" style="color:var(--txt3);font-size:10px">----</span>'+
+      '<div class="cc-acts"></div>'+
+    '</div>');
   }
   grid.innerHTML=cards.join('');
 }
@@ -2271,7 +2282,7 @@ function renderGroup(){
   const monthFilter=document.getElementById('grp-month-filter');
   const selectedMonth=monthFilter?monthFilter.value:'';
   if(selectedMonth){
-    const dateKey=by==='orderMonth'?'orderDate':by==='invoiceMonth'?'invoiceDate':'deliveryDate';
+    const dateKey=by==='orderMonth'?'orderDate':by==='invoiceMonth'?'invoiceDate':by==='dueMonth'?'dueDate':'deliveryDate';
     src=src.filter(o=>(o[dateKey]||'').startsWith(selectedMonth));
   }
   const custFilter=document.getElementById('grp-cust-filter');
@@ -2294,6 +2305,11 @@ function renderGroup(){
       if(currentLang==='vi'&&m){const[yr,mo]=m.split('-');return 'Tháng '+parseInt(mo)+' năm '+yr;}
       return m?m.replace('-','年')+'月':t('orderNotSet');
     }
+    if(by==='dueMonth'){
+      const m=o.dueDate?o.dueDate.slice(0,7):'';
+      if(currentLang==='vi'&&m){const[yr,mo]=m.split('-');return 'Tháng '+parseInt(mo)+' năm '+yr;}
+      return m?m.replace('-','年')+'月':t('orderNotSet');
+    }
     if(by==='title'){
       // 話数フィルターが選択されている場合は話数+作業でグループ分け
       if(selectedEp){
@@ -2308,7 +2324,7 @@ function renderGroup(){
   // allモードの場合はsrc自体をorderDateでソートしてからグループ化
   if(by==='all'){
     src.sort((a,b)=>{
-      const da=a.orderDate||'9999', db=b.orderDate||'9999';
+      const da=a.orderDate||'0000', db=b.orderDate||'0000';
       return sdir==='desc'?db.localeCompare(da):da.localeCompare(db);
     });
   }
@@ -2339,7 +2355,7 @@ function renderGroup(){
     const tMg=tIn-tAt;
     const bc=bcOf(k);
     const sortedItems=[...items].sort((a,b)=>{
-      const da=a.orderDate||'9999', db=b.orderDate||'9999';
+      const da=a.orderDate||'0000', db=b.orderDate||'0000';
       return (sdir==='desc'||sdir==='za')?db.localeCompare(da):da.localeCompare(db);
     });
     const rows=sortedItems.map(o=>makeCard(o)).join('');
@@ -2374,10 +2390,10 @@ function onGrpByChange(){
   const by=document.getElementById('grp-by').value;
   const tf=document.getElementById('grp-title-filter');
   const mf=document.getElementById('grp-month-filter');
-  const isMonth=(by==='orderMonth'||by==='invoiceMonth'||by==='deliveryMonth');
+  const isMonth=(by==='orderMonth'||by==='invoiceMonth'||by==='deliveryMonth'||by==='dueMonth');
   // 月フィルター
   if(isMonth&&mf){
-    const dateKey=by==='orderMonth'?'orderDate':by==='invoiceMonth'?'invoiceDate':'deliveryDate';
+    const dateKey=by==='orderMonth'?'orderDate':by==='invoiceMonth'?'invoiceDate':by==='dueMonth'?'dueDate':'deliveryDate';
     const months=[...new Set(orders.map(o=>o[dateKey]?o[dateKey].slice(0,7):'').filter(Boolean))].sort();
     const allLbl=currentLang==='vi'?'Tất cả tháng':'すべての月';
     mf.innerHTML='<option value="">'+allLbl+'</option>'+
