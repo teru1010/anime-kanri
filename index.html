@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.1</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.2</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
@@ -1339,10 +1339,7 @@ function makeCard(o){
       if(rawDisp){
         var grps=parseGroups(rawDisp);
         grps.sort(function(a,b){
-          var ma=String(a.label).match(/(\d+)(?!.*\d)/); var mb=String(b.label).match(/(\d+)(?!.*\d)/);
-          var na=ma?parseInt(ma[1]):0; var nb=mb?parseInt(mb[1]):0;
-          if(na!==nb) return na-nb;
-          return String(a.label).localeCompare(String(b.label));
+          return String(a.label).localeCompare(String(b.label),undefined,{numeric:true,sensitivity:'base'});
         });
         chips=grps.map(function(g){
           var gc=cutsArr2.filter(function(c){return g.ids.some(function(id){return id.toUpperCase()===String(c.id).toUpperCase();});});
@@ -1351,7 +1348,7 @@ function makeCard(o){
           return '<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:500;background:'+(isDone?'#E0ECFF':'var(--sur2)')+';color:'+(isDone?'#003A8C':'var(--txt2)')+';border:0.5px solid '+(isDone?'#80B0F0':'var(--bdr2)')+';white-space:nowrap">'+(isDone?'✓ ':'')+g.label+(hasGrpPrice?'<sup style="color:#C07010;font-size:9px">＊</sup>':'')+'</span>';
         }).join('');
       } else if(cutsArr2.length>0){
-        var sorted=[...cutsArr2].sort(function(a,b){return String(a.id).localeCompare(String(b.id),undefined,{numeric:true});});
+        var sorted=[...cutsArr2].sort(function(a,b){return String(a.id).localeCompare(String(b.id),undefined,{numeric:true,sensitivity:'base'});});
         chips=sorted.map(function(c){
           var isDone=c.done;
           return '<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:500;background:'+(isDone?'#E0ECFF':'var(--sur2)')+';color:'+(isDone?'#003A8C':'var(--txt2)')+';border:0.5px solid '+(isDone?'#80B0F0':'var(--bdr2)')+';white-space:nowrap">'+(isDone?'✓ ':'')+String(c.id)+(c.price?'<sup style="color:#C07010;font-size:9px">＊</sup>':'')+'</span>';
@@ -1695,11 +1692,7 @@ function renderCuts(o){
     // cutsRawがある場合：グループ表示・昇順ソート
     const groups=parseGroups(o.cutsRaw);
     // 昇順ソート：兼用カットは先頭カット番号の数値を基準に
-    groups.sort((a,b)=>{
-      // 先頭IDから数値部分を抽出
-      const numOf=id=>{const m=String(id).match(/(\d+)(?!.*\d)/);return m?parseInt(m[0]):0;};
-      return numOf(a.ids[0])-numOf(b.ids[0]);
-    });
+    groups.sort((a,b)=>String(a.label).localeCompare(String(b.label),undefined,{numeric:true,sensitivity:'base'}));
     cards=groups.map((g,gi)=>{
       const gkey='g'+gi;
       window._cutGroups[currentId][gkey]=g.ids;
@@ -1769,9 +1762,12 @@ function renderCuts(o){
       '</div>';
     });
   }
-  // 受注カット数分のカードを必ず表示（未登録分はブランク）
+  // 受注カット数分のカードを必ず表示（動画系工程は枚数ではなくカット数基準）
   const qty=Number(o.qty)||0;
-  const blankCount=Math.max(0, qty-cards.length);
+  // 動画系工程は登録済みカット数から枚数合計を引いた差ではなく
+  // cutsRawのグループ数またはcutsの件数をカット数として使用
+  const cutCount=isSheetProc(o)?cuts.length:qty;
+  const blankCount=Math.max(0, (isSheetProc(o)?cutCount:qty)-cards.length);
   for(let i=0;i<blankCount;i++){
     cards.push('<div class="cc cc-blank" style="opacity:0.4;border:0.5px dashed var(--bdr2);background:var(--sur2)">'+
       '<div class="ck" style="background:var(--bdr2)"></div>'+
