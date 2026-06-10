@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.2</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.3</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
@@ -1248,7 +1248,7 @@ function calcPriceWithCutPrices(o){
   let tex=0, at=0;
   cuts.forEach(c=>{
     const cp=c.price||up;
-    const cap=ap&&up?Math.round(cp*(ap/up)):ap;
+    const cap=c.atPrice?c.atPrice:(ap&&up?Math.round(cp*(ap/up)):ap);
     tex+=cp; at+=cap;
   });
   const tin=Math.round(tex*(1+TAX));
@@ -1335,10 +1335,10 @@ function makeCard(o){
     <div class="meta">
       <span>${t('work')} <b>${tProc(o.process)||'-'}</b></span>
       <span>${t('qty')} <b>${o.qty}${currentLang==='vi'?' cảnh':'カット'}</b></span>
-      <span>受注単価 <b>¥${fmt(o.unitPrice)}</b></span>
-      <span>発注単価 <b>¥${fmt(o.atUnitPrice)}</b></span>&nbsp;&nbsp;
-      <span style="white-space:nowrap">受注・税込 <b>¥${fmt(cprice2?cprice2.totalPriceIn:o.totalPriceIn)}</b>${cprice2?'<span style="font-size:10px;color:#C07010;font-weight:500">*</span>':''}</span>&nbsp;&nbsp;
-      <span>発注 <b>¥${fmt(cprice2?cprice2.atTotalPrice:o.atTotalPrice)}</b></span>
+      <span>${currentLang==='vi'?'Đơn giá đặt':'受注単価'} <b>¥${fmt(o.unitPrice)}</b></span>
+      <span>${currentLang==='vi'?'Đơn giá phát':'発注単価'} <b>¥${fmt(o.atUnitPrice)}</b></span>&nbsp;&nbsp;
+      <span style="white-space:nowrap">${currentLang==='vi'?'Đặt hàng(VAT)':'受注・税込'} <b>¥${fmt(cprice2?cprice2.totalPriceIn:o.totalPriceIn)}</b>${cprice2?'<span style="font-size:10px;color:#C07010;font-weight:500">*</span>':''}</span>&nbsp;&nbsp;
+      <span>${currentLang==='vi'?'Phát lệnh':'発注'} <b>¥${fmt(cprice2?cprice2.atTotalPrice:o.atTotalPrice)}</b></span>
       <span>${t('dueLabel')} <b>${o.dueDate||'-'}</b></span>
       ${dueBadge(o.dueDate,st)}
       <span class="pill ${pillCls(st)}" style="text-align:center;justify-content:center">${tSt(st)}</span>
@@ -1694,8 +1694,15 @@ function renderCuts(o){
       const oid=currentId;
       // 個別単価（グループ内最初のカットの単価を代表値として使用）
       const grpPrice=gc.length>0&&gc[0].price?gc[0].price:'';
+      const grpAtPrice=gc.length>0&&gc[0].atPrice?gc[0].atPrice:'';
       const priceHtml=grpPrice
-        ?'<span class="cc-price" onclick="event.stopPropagation()"><input type="number" value="'+grpPrice+'" min="0" style="width:52px;font-size:9px;padding:1px 3px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation()"><span onclick="clearCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" style="font-size:9px;color:#C07010;cursor:pointer;margin-left:1px" title="単価削除">✕</span></span>'
+        ?'<span class="cc-price" onclick="event.stopPropagation()" style="display:inline-flex;flex-direction:column;gap:1px">'+
+          '<span style="font-size:7px;color:#888">受注</span>'+
+          '<input type="number" value="'+grpPrice+'" min="0" style="width:48px;font-size:8px;padding:1px 2px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" data-field="price" onclick="event.stopPropagation()">'+
+          '<span style="font-size:7px;color:#888">発注</span>'+
+          '<input type="number" value="'+grpAtPrice+'" placeholder="-" min="0" style="width:48px;font-size:8px;padding:1px 2px;border:0.5px solid #93C5FD;border-radius:3px;background:#EFF6FF;color:#1D4ED8;font-weight:500;" onchange="setCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" data-field="atPrice" onclick="event.stopPropagation()">'+
+          '<span onclick="clearCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" style="font-size:9px;color:#C07010;cursor:pointer;text-align:center" title="単価削除">✕</span>'+
+          '</span>'
         :'<span class="cc-add-price" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation();openCutPrice(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;padding:1px 4px;border:0.5px dashed var(--bdr2);border-radius:3px;white-space:nowrap">＋単価</span>';
       return '<div class="cc'+dnCls+'">'+
         '<div class="ck">'+svg+'</div>'+
@@ -1718,8 +1725,15 @@ function renderCuts(o){
       const btnTxt=c.done?t('cutUndone'):t('cutDone');
       const delTxt=t('cutDel');
       const singlePrice=c.price||'';
+      const sAtPrice=c.atPrice||'';
       const sPriceHtml=singlePrice
-        ?'<span class="cc-price" onclick="event.stopPropagation()"><input type="number" value="'+singlePrice+'" min="0" style="width:52px;font-size:9px;padding:1px 3px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" onclick="event.stopPropagation()"><span onclick="clearCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" style="font-size:9px;color:#C07010;cursor:pointer;margin-left:1px" title="単価削除">✕</span></span>'
+        ?'<span class="cc-price" onclick="event.stopPropagation()" style="display:inline-flex;flex-direction:column;gap:1px">'+
+          '<span style="font-size:7px;color:#888">受注</span>'+
+          '<input type="number" value="'+singlePrice+'" min="0" style="width:48px;font-size:8px;padding:1px 2px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" data-field="price" onclick="event.stopPropagation()">'+
+          '<span style="font-size:7px;color:#888">発注</span>'+
+          '<input type="number" value="'+sAtPrice+'" placeholder="-" min="0" style="width:48px;font-size:8px;padding:1px 2px;border:0.5px solid #93C5FD;border-radius:3px;background:#EFF6FF;color:#1D4ED8;font-weight:500;" onchange="setCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" data-field="atPrice" onclick="event.stopPropagation()">'+
+          '<span onclick="clearCutPriceSingle(this)" data-oid="'+currentId+'" data-cid="'+c.id+'" style="font-size:9px;color:#C07010;cursor:pointer;text-align:center" title="単価削除">✕</span>'+
+          '</span>'
         :'<span class="cc-add-price" data-oid="'+currentId+'" data-cid="'+c.id+'" onclick="event.stopPropagation();openCutPriceSingle(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;padding:1px 4px;border:0.5px dashed var(--bdr2);border-radius:3px;white-space:nowrap">＋単価</span>';
       return '<div class="cc'+dnCls+'">'+
         '<div class="ck"><svg width="8" height="7" viewBox="0 0 8 7" fill="none" stroke="#fff" stroke-width="1.5"><path d="M1 3.5l2 2 4-4"/></svg></div>'+
@@ -2456,66 +2470,21 @@ function renderSearchView(){
   let html='';
   procKeys.forEach(proc=>{
     const orders2=procs[proc];
-    // 工程内の全カットをまとめて収集
-    const allCuts=[];
+    if(!orders2.length) return;
+    let totalCount=0, doneCount=0;
     orders2.forEach(o=>{
       const cutsArr=Array.isArray(o.cuts)?o.cuts:Object.values(o.cuts||{});
-      // cutsRaw（またはcutsRawCache）がある場合はparseGroupsでグループラベルを使用（兼用カットを正しく表示）
-      const rawStr = o.cutsRaw || (cutsRawCache&&cutsRawCache[o.id]) || '';
-      if(rawStr){
-        const groups=parseGroups(rawStr);
-        groups.forEach(g=>{
-          // グループ内いずれかのIDに対応するcutsの完了状態を参照
-          const matched=cutsArr.filter(c=>g.ids.some(gid=>String(c.id).toUpperCase()===gid.toUpperCase()||String(c.id)===gid));
-          const done=matched.length>0&&matched.every(c=>c.done);
-          const date=matched.length>0&&matched[0].date?matched[0].date:'';
-          allCuts.push({c:{id:g.label, done, date}, oid:o.id});
-        });
-      } else {
-        // cutsRawがなくても、cuts内のIDにハイフン/アンダースコアが含まれる場合は兼用カットとして表示
-        // 同じラベルの重複を防ぐためにグループ化
-        const seen={};
-        cutsArr.forEach(c=>{
-          const rawId=String(c.id);
-          if(!seen[rawId]){
-            seen[rawId]=true;
-            allCuts.push({c, oid:o.id});
-          }
-        });
-      }
+      totalCount+=cutsArr.length;
+      doneCount+=cutsArr.filter(c=>c.done).length;
     });
-    if(!allCuts.length) return; // カット未登録の工程は非表示
-    const sorted=allCuts.sort((a,b)=>String(a.c.id).localeCompare(String(b.c.id),undefined,{numeric:true}));
-    html+='<div class="csec" style="margin-bottom:1rem">';
-    const doneCount=sorted.filter(({c})=>c.done).length;
-    const totalCount=sorted.length;
-    const procOrders2=procs[proc];
-    const procOids=procOrders2.map(o=>o.id);
+    const procOids=orders2.map(o=>o.id);
     const svVerified=JSON.parse(localStorage.getItem('animeVerified')||'{}');
     const svOAll=svDebugMode&&procOids.every(id=>svVerified[id]&&svVerified[id].order);
     const svDAll=svDebugMode&&procOids.every(id=>svVerified[id]&&svVerified[id].delivery);
-    let dbgBtns='';
-    if(svDebugMode){
-      dbgBtns='<button class="vbtn vbtn-order'+(svOAll?' on':'')+' sm" style="font-size:10px;margin-left:8px" onclick="svVerifyProc(\''+proc+'\',\'order\')">'+(svOAll?'✔ 受注確認済':'○ 受注確認')+'</button>'+
-              '<button class="vbtn vbtn-delivery'+(svDAll?' on':'')+' sm" style="font-size:10px" onclick="svVerifyProc(\''+proc+'\',\'delivery\')">'+(svDAll?'✔ 納品確認済':'○ 納品確認')+'</button>';
-    }
+    const dbgBtns=svDebugMode?svMakeDebugBtns(proc,svOAll,svDAll):'';
+    html+='<div class="csec" style="margin-bottom:1rem">';
     html+='<div class="csec-hd"><h3>✂ '+tProc(proc)+'</h3><span style="font-size:12px;color:var(--txt2)">全'+totalCount+'カット&nbsp;&nbsp;完了 <b style="color:#0060E0">'+doneCount+'</b>&nbsp;&nbsp;未完 <b style="color:#C07010">'+(totalCount-doneCount)+'</b></span>'+dbgBtns+'</div>';
-    html+='<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 0 8px">';
-    sorted.forEach(({c, oid})=>{
-      const isDone=c.done;
-      const dateStr=isDone&&c.date?c.date.slice(5):'';
-      const bg=isDone?'#E0ECFF':'var(--sur2)';
-      const col=isDone?'#003A8C':'var(--txt2)';
-      const bd=isDone?'#80B0F0':'var(--bdr2)';
-      html+='<div style="display:inline-flex;flex-direction:column;align-items:center;'+
-        'background:'+bg+';border:0.5px solid '+bd+';border-radius:var(--r);'+
-        'padding:4px 8px;min-width:52px;cursor:pointer" data-oid="'+oid+'" onclick="svCutClick(this)">'
-      html+='<span style="font-size:12px;font-weight:600;color:'+col+'">'+String(c.id)+'</span>';
-      html+='<span style="font-size:10px;color:'+(isDone?'#0060E0':'var(--txt3)')+'">'+
-        (isDone?'✓ '+(dateStr||t('svDone')):t('svTodo'))+'</span>';
-      html+='</div>';
-    });
-    html+='</div>';
+    html+=orders2.map(o=>makeCard(o)).join('');
     html+='</div>';
   });
   body.innerHTML=html;
@@ -2910,7 +2879,7 @@ function svVerifyProc(proc,type){
   renderList();
 }
 // カット個別単価の設定
-async function setCutPrice(el){ const oid=el.dataset.oid; const gkey=el.dataset.gkey; const val=el.value;
+async function setCutPrice(el){ const oid=el.dataset.oid; const gkey=el.dataset.gkey; const val=el.value; const field=el.dataset.field||'price';
   orders=window.orders;
   const o=orders.find(x=>x.id===oid); if(!o) return;
   const ids=(window._cutGroups[oid]||{})[gkey]||[];
@@ -2918,27 +2887,29 @@ async function setCutPrice(el){ const oid=el.dataset.oid; const gkey=el.dataset.
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   ids.forEach(id=>{
     const c=o.cuts.find(c=>String(c.id)===String(id));
-    if(c){ if(price) c.price=price; else delete c.price; }
+    if(c){ if(price) c[field]=price; else delete c[field]; }
   });
   await saveCutsToFb(o);
+  renderCuts(o);
 }
-async function setCutPriceSingle(el){ const oid=el.dataset.oid; const cid=el.dataset.cid; const val=el.value;
+async function setCutPriceSingle(el){ const oid=el.dataset.oid; const cid=el.dataset.cid; const val=el.value; const field=el.dataset.field||'price';
   orders=window.orders;
   const o=orders.find(x=>x.id===oid); if(!o) return;
   if(!Array.isArray(o.cuts)) o.cuts=Object.values(o.cuts||{});
   const c=o.cuts.find(c=>String(c.id)===String(cid)); if(!c) return;
   const price=val?parseFloat(val):null;
-  if(price) c.price=price; else delete c.price;
+  if(price) c[field]=price; else delete c[field];
   await saveCutsToFb(o);
+  renderCuts(o);
 }
 // ＋単価ボタン：インライン入力に切り替え
 function openCutPrice(el){
   const oid=el.dataset.oid; const gkey=el.dataset.gkey;
-  el.outerHTML='<span class="cc-price" onclick="event.stopPropagation()"><input type="number" placeholder="単価" min="0" autofocus style="width:52px;font-size:9px;padding:1px 3px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation()"><span onclick="cancelCutPrice(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;margin-left:1px">✕</span></span>';
+  el.outerHTML='<span class="cc-price" onclick="event.stopPropagation()"><input type="number" placeholder="単価" min="0" autofocus style="width:48px;font-size:8px;padding:1px 2px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPrice(this)" data-oid="'+oid+'" data-gkey="'+gkey+'" onclick="event.stopPropagation()"><span onclick="cancelCutPrice(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;margin-left:1px">✕</span></span>';
 }
 function openCutPriceSingle(el){
   const oid=el.dataset.oid; const cid=el.dataset.cid;
-  el.outerHTML='<span class="cc-price" onclick="event.stopPropagation()"><input type="number" placeholder="単価" min="0" autofocus style="width:52px;font-size:9px;padding:1px 3px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPriceSingle(this)" data-oid="'+oid+'" data-cid="'+cid+'" onclick="event.stopPropagation()"><span onclick="cancelCutPrice(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;margin-left:1px">✕</span></span>';
+  el.outerHTML='<span class="cc-price" onclick="event.stopPropagation()"><input type="number" placeholder="単価" min="0" autofocus style="width:48px;font-size:8px;padding:1px 2px;border:0.5px solid #F59E0B;border-radius:3px;background:#FFFBEB;color:#C07010;font-weight:500;" onchange="setCutPriceSingle(this)" data-oid="'+oid+'" data-cid="'+cid+'" onclick="event.stopPropagation()"><span onclick="cancelCutPrice(this)" style="font-size:9px;color:var(--txt3);cursor:pointer;margin-left:1px">✕</span></span>';
 }
 function cancelCutPrice(el){ renderCuts(); }
 async function clearCutPrice(el){
@@ -2963,6 +2934,13 @@ window.openCutPrice=openCutPrice; window.openCutPriceSingle=openCutPriceSingle;
 window.cancelCutPrice=cancelCutPrice; window.clearCutPrice=clearCutPrice; window.clearCutPriceSingle=clearCutPriceSingle;
 window.setCutPrice=setCutPrice; window.setCutPriceSingle=setCutPriceSingle;
 
+function svMakeDebugBtns(proc,svOAll,svDAll){
+  return '<button class="vbtn vbtn-order'+(svOAll?' on':'')+' sm" style="font-size:10px;margin-left:8px" onclick="svVerifyProcEl(this)" data-proc="'+proc+'" data-vtype="order">'+(svOAll?'✔ 受注確認済':'○ 受注確認')+'</button>'+
+         '<button class="vbtn vbtn-delivery'+(svDAll?' on':'')+' sm" style="font-size:10px" onclick="svVerifyProcEl(this)" data-proc="'+proc+'" data-vtype="delivery">'+(svDAll?'✔ 納品確認済':'○ 納品確認')+'</button>';
+}
+window.svMakeDebugBtns=svMakeDebugBtns;
+function svVerifyProcEl(el){ svVerifyProc(el.dataset.proc, el.dataset.vtype); }
+window.svVerifyProcEl=svVerifyProcEl;
 function svCutClick(el){ showDetail(el.dataset.oid); }
 window.svCutClick=svCutClick; window.svToggleDebug=svToggleDebug; window.svVerifyAll=svVerifyAll; window.svClearVerify=svClearVerify; window.svVerifyProc=svVerifyProc; window.updateSvDebugBtnText=updateSvDebugBtnText;
 window.getSvData=getSvData; window.onSvTitleChange=onSvTitleChange; window.renderSearchView=renderSearchView; window.exportSearchView=exportSearchView; window.printSearchView=printSearchView;
