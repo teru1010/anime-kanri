@@ -106,8 +106,8 @@ button,input,select,textarea{font-family:inherit}
 /* MONTH HEADER */
 .mhdr{display:flex;align-items:center;padding:6px 4px 5px;
   border-bottom:2px solid var(--bl);margin-bottom:4px}
-.mhdr span{background:var(--bl);color:#fff;padding:2px 10px;
-  border-radius:99px;font-size:12px;font-weight:600}
+.mhdr span{background:#EEF4FF;color:var(--bl);padding:2px 10px;
+  border-radius:99px;font-size:12px;font-weight:600;border:0.5px solid #BDD0F8}
 
 /* FORM */
 .fcard{background:var(--sur);border:0.5px solid var(--bdr);border-radius:var(--rl);
@@ -339,12 +339,12 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.7</span></div>
+  <div class="logo" style="font-size:16px"><span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.8</span></div>
   <nav class="nav">
-    <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
-    <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
-    <div class="nt" onclick="showView('progress')" id="tab-progress">カット進捗<span class="nbadge" id="b-prog">0</span></div>
-    <div class="nt" onclick="showView('group')" id="tab-group">グループ表示</div>
+    <div class="nt on" onclick="showView('list')" id="tab-list">📋 受注一覧<span class="nbadge" id="b-all">0</span></div>
+    <div class="nt" onclick="showView('new')" id="tab-new">➕ 新規受注</div>
+    <div class="nt" onclick="showView('progress')" id="tab-progress">✂ カット進捗<span class="nbadge" id="b-prog">0</span></div>
+    <div class="nt" onclick="showView('group')" id="tab-group">🗂 グループ表示</div>
     <div class="nt" onclick="showView('kosu')" id="tab-kosu">📊 受注工数</div>
     <div class="nt" onclick="showView('search')" id="tab-search">🔍 検索</div>
   </nav>
@@ -507,6 +507,7 @@ button,input,select,textarea{font-family:inherit}
         <option value="uninvoiced" id="go-fun">未請求</option>
       </select>
       <button class="btn" onclick="printGroup()" id="btn-print">🖨 印刷</button>
+      <button class="btn sm" onclick="resetGroup()" style="color:var(--rd);margin-left:4px">↺ リセット</button>
     </div>
 
     <div id="grp-body"></div>
@@ -793,7 +794,7 @@ const DICT = {
 ja:{
   synced:'同期済み', syncing:'同期中...', syncErr:'同期エラー',
   appTitle:'アニメ受注管理',
-  tabList:'受注一覧', tabNew:'新規受注', tabProg:'カット進捗', tabGrp:'グループ表示',
+  tabList:'📋 受注一覧', tabNew:'新規受注', tabProg:'カット進捗', tabGrp:'グループ表示',
   btnNew:'新規受注', btnRefresh:'↺ 更新', btnCancel:'キャンセル',
   btnSave:'💾 保存', btnDelForm:'🗑 この受注を削除', btnBack:'← 戻る',
   dailyReport:'日報入力',
@@ -859,7 +860,7 @@ ja:{
 vi:{
   synced:'Đã đồng bộ', syncing:'Đang đồng bộ...', syncErr:'Lỗi đồng bộ',
   appTitle:'Quản lý Anime',
-  tabList:'Danh sách', tabNew:'＋ Đặt mới', tabProg:'Tiến độ cảnh', tabGrp:'Nhóm',
+  tabList:'📋 Danh sách', tabNew:'＋ Đặt mới', tabProg:'✂ Tiến độ cảnh', tabGrp:'Nhóm',
   btnNew:'＋ Đặt mới', btnRefresh:'↺ Cập nhật', btnCancel:'Hủy',
   btnSave:'💾 Lưu', btnDelForm:'🗑 Xóa đơn này', btnBack:'← Quay lại',
   dailyReport:'Nhật ký',
@@ -1541,7 +1542,8 @@ function renderList(){
       },0);
       cards.push(`<div class="mhdr" style="margin-top:${cards.length?'1rem':'0'};display:flex;align-items:center;gap:8px">
         <span>${mLabel}</span>
-        <span style="font-size:11px;color:var(--txt2);margin-left:4px">受注税込 <b style="color:var(--bl)">¥${fmt(mTin)}</b>　発注 <b style="color:#C07010">¥${fmt(mAt)}</b></span>
+        <span style="font-size:11px;color:var(--txt2);margin-left:4px;background:#F0F5FF;padding:2px 8px;border-radius:99px;border:0.5px solid #BDD0F8">受注税込 <b style="color:var(--bl)">¥${fmt(mTin)}</b></span>
+        <span style="font-size:11px;color:var(--txt2);background:#FFF8F0;padding:2px 8px;border-radius:99px;border:0.5px solid #F8D0A0">発注 <b style="color:#C07010">¥${fmt(mAt)}</b></span>
         </div>`);
       lastMonth=mLabel;
     }
