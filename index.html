@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.4</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.5</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
@@ -1527,7 +1527,7 @@ function renderList(){
     if(mLabel!==lastMonth){
       // その月の受注金額・発注金額合計を計算
       const mMonth=month;
-      const mOrders=src.filter(o2=>{
+      const mOrders=list.filter(o2=>{
         const om=o2.orderDate?o2.orderDate.slice(0,7):'';
         return om===mMonth;
       });
