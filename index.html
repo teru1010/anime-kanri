@@ -339,10 +339,10 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo">✂ <span id="logo-txt">受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.1</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.2</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
-    <div class="nt" onclick="showView('new')" id="tab-new">＋ 新規受注</div>
+    <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
     <div class="nt" onclick="showView('progress')" id="tab-progress">カット進捗<span class="nbadge" id="b-prog">0</span></div>
     <div class="nt" onclick="showView('group')" id="tab-group">グループ表示</div>
     <div class="nt" onclick="showView('search')" id="tab-search">🔍 検索</div>
@@ -372,7 +372,7 @@ button,input,select,textarea{font-family:inherit}
         <option id="opt-iv">請求済</option>
         <option value="uninvoiced" id="opt-un">未請求</option>
       </select>
-      <button class="btn pri" onclick="showView('new')" id="btn-new">＋ 新規受注</button>
+      <button class="btn pri" onclick="showView('new')" id="btn-new">新規受注</button>
       <button class="btn" onclick="loadAll()" id="btn-refresh">↺ 更新</button>
     </div>
 
@@ -386,6 +386,9 @@ button,input,select,textarea{font-family:inherit}
 
   <!-- NEW/EDIT -->
   <div class="view" id="view-new">
+    <div style="margin-bottom:10px">
+      <button class="back" onclick="event.stopPropagation();cancelForm()" style="font-size:13px">← 戻る</button>
+    </div>
     <div class="fcard">
       <div class="fttl">📄 <span id="form-ttl">新規受注入力</span></div>
       <div class="fgrid g4">
@@ -784,9 +787,9 @@ function sync(s){
 const DICT = {
 ja:{
   synced:'同期済み', syncing:'同期中...', syncErr:'同期エラー',
-  appTitle:'受注管理',
-  tabList:'受注一覧', tabNew:'＋ 新規受注', tabProg:'カット進捗', tabGrp:'グループ表示',
-  btnNew:'＋ 新規受注', btnRefresh:'↺ 更新', btnCancel:'キャンセル',
+  appTitle:'アニメ受注管理',
+  tabList:'受注一覧', tabNew:'新規受注', tabProg:'カット進捗', tabGrp:'グループ表示',
+  btnNew:'新規受注', btnRefresh:'↺ 更新', btnCancel:'キャンセル',
   btnSave:'💾 保存', btnDelForm:'🗑 この受注を削除', btnBack:'← 戻る',
   dailyReport:'日報入力',
   btnDel:'🗑 削除', btnEdit:'✏ 編集', btnAllDone:'全完了', btnPrint:'🖨 印刷',
@@ -850,7 +853,7 @@ ja:{
 },
 vi:{
   synced:'Đã đồng bộ', syncing:'Đang đồng bộ...', syncErr:'Lỗi đồng bộ',
-  appTitle:'Quản lý đặt hàng',
+  appTitle:'Quản lý Anime',
   tabList:'Danh sách', tabNew:'＋ Đặt mới', tabProg:'Tiến độ cảnh', tabGrp:'Nhóm',
   btnNew:'＋ Đặt mới', btnRefresh:'↺ Cập nhật', btnCancel:'Hủy',
   btnSave:'💾 Lưu', btnDelForm:'🗑 Xóa đơn này', btnBack:'← Quay lại',
