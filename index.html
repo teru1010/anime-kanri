@@ -70,9 +70,9 @@ button,input,select,textarea{font-family:inherit}
 .p-iv{background:var(--pk-bg);color:var(--pk-dk);border:0.5px solid var(--pk-md)}
 
 /* DUE WARN */
-.due{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:500;
-  padding:2px 8px;border-radius:99px;background:var(--rd-bg);color:#6B1818;
-  border:0.5px solid #EE9090;white-space:nowrap}
+.due{display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:500;
+  padding:2px 6px;border-radius:99px;background:var(--rd-bg);color:#6B1818;
+  border:0.5px solid #EE9090;white-space:nowrap;max-width:120px;overflow:hidden}
 .due.soon{background:var(--am-bg);color:#5C3800;border-color:#E8A030}
 
 /* CARD */
@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.3</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.4</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
@@ -479,6 +479,10 @@ button,input,select,textarea{font-family:inherit}
         style="display:none;font-size:13px;padding:6px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
         <option value="">すべての月</option>
       </select>
+      <select id="grp-cust-filter" onchange="renderGroup()"
+        style="display:none;font-size:13px;padding:6px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
+        <option value="">すべての顧客</option>
+      </select>
       <select id="grp-title-filter" onchange="onTitleFilterChange()"
         style="display:none;font-size:13px;padding:6px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt)">
         <option value="">すべてのタイトル</option>
@@ -526,29 +530,6 @@ button,input,select,textarea{font-family:inherit}
       <div id="srch-result" style="display:none;margin-top:10px"></div>
     </div>
 
-    <!-- タイトル・話数別カット一覧 -->
-    <div class="fcard" style="margin-bottom:1rem">
-      <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--txt2)" id="sv-lbl-title">📋 タイトル・話数別カット一覧</div>
-      <div class="fgrid g3" style="gap:10px">
-        <div class="fg">
-          <label id="sv-lbl-ttl-sel">作品タイトル</label>
-          <select id="sv-title" onchange="onSvTitleChange()" style="font-size:13px;padding:7px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt);width:100%">
-            <option value="">-- タイトルを選択 --</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label id="sv-lbl-ep-sel">話数</label>
-          <select id="sv-ep" onchange="renderSearchView()" style="font-size:13px;padding:7px 10px;border:0.5px solid var(--bdr2);border-radius:var(--r);background:var(--sur);color:var(--txt);width:100%">
-            <option value="">-- 話数を選択 --</option>
-          </select>
-        </div>
-        <div class="fg" style="justify-content:flex-end;flex-direction:row;align-items:flex-end;gap:8px">
-          <button class="btn sm" onclick="exportSearchView()" id="sv-btn-copy">📋 コピー</button>
-          <button class="btn sm" onclick="printSearchView()" id="sv-btn-print">🖨 印刷</button>
-          <button class="btn sm" id="sv-btn-debug" onclick="svToggleDebug()" style="opacity:.5" title="デバッグモード">🔧</button>
-        </div>
-      </div>
-    </div>
     <!-- デバッグ確認ボタンエリア（デバッグモード時のみ表示） -->
     <div id="sv-debug-bar" style="display:none;margin-bottom:1rem;padding:10px 14px;background:var(--sur);border:1.5px solid #1d4ed8;border-radius:var(--rl);flex-direction:row;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px">
       🔧 <span id="sv-debug-lbl" style="color:#1d4ed8;font-weight:500">確認チェック：</span>
@@ -2293,6 +2274,9 @@ function renderGroup(){
     const dateKey=by==='orderMonth'?'orderDate':by==='invoiceMonth'?'invoiceDate':'deliveryDate';
     src=src.filter(o=>(o[dateKey]||'').startsWith(selectedMonth));
   }
+  const custFilter=document.getElementById('grp-cust-filter');
+  const selectedCust=custFilter?custFilter.value:'';
+  if(selectedCust) src=src.filter(o=>o.customer===selectedCust);
   const keyOf=o=>{
     if(by==='all') return t('goAll');
     if(by==='orderMonth'){
@@ -2407,6 +2391,7 @@ function onGrpByChange(){
     mf.value='';
   }
   // タイトルフィルター
+  const cf=document.getElementById('grp-cust-filter');
   if(by==='title'){
     const titles=[...new Set(orders.map(o=>o.title).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
     tf.innerHTML='<option value="">すべてのタイトル</option>'+
@@ -2416,6 +2401,21 @@ function onGrpByChange(){
     tf.style.display='none';
     tf.value='';
   }
+  // 顧客フィルター
+  if(by==='customer'){
+    const custs=[...new Set(orders.map(o=>o.customer).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
+    if(cf){
+      cf.innerHTML='<option value="">すべての顧客</option>'+
+        custs.map(c=>`<option value="${c}">${c}</option>`).join('');
+      cf.style.display='block';
+    }
+  } else if(cf){
+    cf.style.display='none';
+    cf.value='';
+  }
+  // 月選択時は話数フィルターを非表示
+  const epf=document.getElementById('grp-ep-filter');
+  if(epf&&isMonth){ epf.style.display='none'; epf.value=''; }
   renderGroup();
 }
 function toggleGrp(id){
