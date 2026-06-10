@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.6</span></div>
+  <div class="logo" style="font-size:17px">🎬 <span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.8.7</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">新規受注</div>
@@ -1646,7 +1646,21 @@ function renderCuts(o){
   (document.getElementById('cut-hint')||{textContent:''}).textContent=t('cutHint');
   const grid=document.getElementById('cut-grid');
   if(!cuts.length){
-    grid.innerHTML='<div style="font-size:13px;color:var(--txt3);padding:10px 0">'+t('cutEmpty')+'</div>';
+    // cutsが空でも受注カット数分のブランクカードを表示
+    const qty=Number(o.qty)||0;
+    if(!qty){
+      grid.innerHTML='<div style="font-size:13px;color:var(--txt3);padding:10px 0">'+t('cutEmpty')+'</div>';
+      return;
+    }
+    let blanks='';
+    for(let i=0;i<qty;i++){
+      blanks+='<div class="cc cc-blank" style="opacity:0.4;border:0.5px dashed var(--bdr2);background:var(--sur2)">'+
+        '<div class="ck" style="background:var(--bdr2)"></div>'+
+        '<span class="cn" style="color:var(--txt3);font-size:10px">----</span>'+
+        '<div class="cc-acts"></div>'+
+      '</div>';
+    }
+    grid.innerHTML=blanks;
     return;
   }
   // グループキャッシュをリセット
