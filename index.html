@@ -106,8 +106,8 @@ button,input,select,textarea{font-family:inherit}
 /* MONTH HEADER */
 .mhdr{display:flex;align-items:center;padding:6px 4px 5px;
   border-bottom:2px solid var(--bl);margin-bottom:4px}
-.mhdr span{background:#EEF4FF;color:var(--bl);padding:2px 10px;
-  border-radius:99px;font-size:12px;font-weight:600;border:0.5px solid #BDD0F8}
+.mhdr span{background:#EEF4FF;color:var(--bl);padding:3px 12px;
+  border-radius:99px;font-size:14px;font-weight:700;border:0.5px solid #BDD0F8}
 
 /* FORM */
 .fcard{background:var(--sur);border:0.5px solid var(--bdr);border-radius:var(--rl);
@@ -339,7 +339,7 @@ button,input,select,textarea{font-family:inherit}
 </div>
 
 <header class="hdr">
-  <div class="logo" style="font-size:16px"><span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v2.9.8</span></div>
+  <div class="logo" style="font-size:16px"><span id="logo-txt">アニメ受注管理</span><span id="app-ver" style="font-size:10px;color:var(--txt3);margin-left:6px;font-weight:400;vertical-align:middle">v3.0.1</span></div>
   <nav class="nav">
     <div class="nt on" onclick="showView('list')" id="tab-list">📋 受注一覧<span class="nbadge" id="b-all">0</span></div>
     <div class="nt" onclick="showView('new')" id="tab-new">➕ 新規受注</div>
@@ -2669,7 +2669,7 @@ function printSearchView(){
     });
     html+='</tbody></table>';
   });
-  html+='</body></html>';
+  html+='<\/body><\/html>';
   const w=window.open('','_blank','width=800,height=700');
   w.document.write(html); w.document.close();
   w.addEventListener('load',function(){ w.print(); });
